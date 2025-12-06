@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
-import "./globals.css";
 import { PwaInit } from "@/components/pwa-init";
+import { Footer } from "@/components/footer";
+import { Header } from "@/components/header";
+import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -41,8 +43,13 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <PwaInit />
-          {children}
+          <div className="min-h-screen flex flex-col">
+            <PwaInit />
+
+            <Header />
+            {children}
+            <Footer />
+          </div>
         </ThemeProvider>
       </body>
     </html>
