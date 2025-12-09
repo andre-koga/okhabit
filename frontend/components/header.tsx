@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { DeployButton } from "./deploy-button";
 import { hasEnvVars } from "@/lib/utils";
 import { EnvVarWarning } from "./env-var-warning";
 import { Suspense } from "react";
