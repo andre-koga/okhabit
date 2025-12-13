@@ -1,7 +1,7 @@
 CREATE TABLE daily_entries (
-    id uuid primary key default gen_random_uuid(),
-    user_id uuid not null references auth.users on delete cascade,
-    day_start_at timestamptz,
+    id uuid PRIMARY KEY default gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    day_start_at TIMESTAMPTZ,
     completed_tasks uuid []
 );
 -- RLS

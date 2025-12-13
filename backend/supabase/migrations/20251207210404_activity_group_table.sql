@@ -1,10 +1,10 @@
 CREATE TABLE activity_groups (
-    id uuid primary key default gen_random_uuid(),
-    user_id uuid not null references auth.users on delete cascade,
-    created_at timestamptz default now(),
-    name text,
-    color text,
-    is_archived bit
+    id uuid PRIMARY KEY default gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ default NOW(),
+    name TEXT,
+    color TEXT,
+    is_archived BIT
 );
 -- RLS
 ALTER TABLE activity_groups ENABLE ROW LEVEL SECURITY;

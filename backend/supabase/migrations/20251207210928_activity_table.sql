@@ -1,12 +1,12 @@
 CREATE TABLE activities (
-    id uuid primary key default gen_random_uuid(),
-    user_id uuid not null references auth.users on delete cascade,
-    group_id uuid not null references "activity_groups" on delete cascade,
-    created_at timestamptz default now(),
-    name text,
-    color text,
-    routine text,
-    is_completed bit
+    id uuid PRIMARY KEY default gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    group_id uuid NOT NULL REFERENCES "activity_groups" ON DELETE CASCADE,
+    created_at timestamptz default NOW(),
+    name TEXT,
+    color TEXT,
+    routine TEXT,
+    is_completed BIT
 );
 -- RLS
 ALTER TABLE activities ENABLE ROW LEVEL SECURITY;

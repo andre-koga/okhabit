@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { hasEnvVars } from "@/lib/utils";
-import { EnvVarWarning } from "./env-var-warning";
 import { Suspense } from "react";
 import { AuthButton } from "./auth-button";
 
@@ -11,13 +9,9 @@ export function Header() {
         <div className="flex gap-5 items-center font-semibold">
           <Link href={"/"}>okhabit</Link>
         </div>
-        {!hasEnvVars ? (
-          <EnvVarWarning />
-        ) : (
-          <Suspense>
-            <AuthButton />
-          </Suspense>
-        )}
+        <Suspense>
+          <AuthButton />
+        </Suspense>
       </div>
     </nav>
   );

@@ -1,9 +1,9 @@
 CREATE TABLE time_entries (
-    id uuid primary key default gen_random_uuid(),
-    user_id uuid not null references auth.users on delete cascade,
-    activity_id uuid not null references "activities" on delete cascade,
-    time_start timestamptz default now(),
-    time_end timestamptz default NULL
+    id uuid PRIMARY KEY default gen_random_uuid(),
+    user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    activity_id uuid NOT NULL REFERENCES "activities" ON DELETE CASCADE,
+    time_start TIMESTAMPTZ default NOW(),
+    time_end TIMESTAMPTZ default NULL
 );
 -- RLS
 ALTER TABLE time_entries ENABLE ROW LEVEL SECURITY;
