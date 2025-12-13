@@ -14,20 +14,15 @@ async function UserDetails() {
     redirect("/auth/login");
   }
 
-  console.log(uid);
-
-  const { data: userRow, error: rowError } = await supabase
+  const { data: userRow } = await supabase
     .from("users")
     .select("*")
     .eq("id", uid)
     .single();
 
-  console.log(userRow, "userrow");
-  return <div></div>;
-
   const user = userRow as User;
 
-  return <DailyTasks user={user} />;
+  return <DailyTasks userId={user.id} />;
 }
 
 export default async function Home() {

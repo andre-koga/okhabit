@@ -1,5 +1,7 @@
 {
 	"scripts": {
+		"reset": "supabase db reset",
+		"push": "supabase db push",
 		"types": "supabase gen types typescript --linked > ../frontend/lib/supabase/types.ts"
 	},
 	"devDependencies": {

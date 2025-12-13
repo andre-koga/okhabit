@@ -1,34 +1,70 @@
-import { createClient } from "@/lib/supabase/server";
-import { Suspense, useCallback } from "react";
-import { type User } from "@supabase/supabase-js";
+"use client";
 
-export default function DailyTasks({ user }: { user: User | null }) {
+import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
+import { TablesInsert } from "@/lib/supabase/types";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { v4 } from "uuid";
+
+export default function DailyTasks({ userId }: { userId: string }) {
+  const [tasks, setTasks] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
   const retrieveTasks = useCallback(async () => {
     try {
-      const supabase = await createClient();
+      setLoading(true);
+
+      const supabase = createClient();
 
       const { data, error, status } = await supabase
         .from("daily_entries")
         .select(`id, day_start_at, completed_tasks`)
-        .eq("user_id", user?.id)
-        .single();
+        .eq("user_id", userId);
 
-      if (error && status !== 406) {
-        console.log(error);
-        throw error;
-      }
+      if (error && status !== 406) throw error;
 
-      return data;
+      setTasks(data);
     } catch (error) {
-      console.log("Error loading user data");
+      console.log("Error loading user data! ", error);
+    } finally {
+      setLoading(false);
     }
-  }, [user]);
+  }, [userId]);
+
+  useEffect(() => {
+    retrieveTasks();
+  }, [retrieveTasks]);
+
+  const addTask = async () => {
+    try {
+      const supabase = createClient();
+
+      const insertPayload: TablesInsert<"daily_entries"> = {
+        completed_tasks: [],
+        day_start_at: new Date().toISOString(),
+        user_id: userId,
+        id: v4(),
+      };
+
+      const { error } = await supabase
+        .from("daily_entries")
+        .insert(insertPayload);
+
+      if (error) throw error;
+
+      retrieveTasks();
+    } catch (error) {
+      console.log("Error inserting new task! ", error);
+    }
+  };
 
   return (
     <div>
       <p>these are your tasks for today</p>
-      <Suspense>{retrieveTasks().then()}</Suspense>
-      {/* <Button onClick={AddDailyTask()} /> */}
+      <Button onClick={retrieveTasks}>Load Tasks</Button>
+      <Button onClick={addTask}>Add Task</Button>
+      {loading && <p>Loading…</p>}
+      {tasks && <pre>{JSON.stringify(tasks, null, 2)}</pre>}
     </div>
   );
 }
