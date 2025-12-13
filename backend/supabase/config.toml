@@ -122,11 +122,11 @@ file_size_limit = "50MiB"
 
 # Store analytical data in S3 for running ETL jobs over Iceberg Catalog
 # This feature is only available on the hosted platform.
-[storage.analytics]
-enabled = false
-max_namespaces = 5
-max_tables = 10
-max_catalogs = 2
+# [storage.analytics]
+# enabled = false
+# max_namespaces = 5
+# max_tables = 10
+# max_catalogs = 2
 
 # Analytics Buckets is available to Supabase Pro plan.
 # [storage.analytics.buckets.my-warehouse]
@@ -134,9 +134,9 @@ max_catalogs = 2
 # Store vector embeddings in S3 for large and durable datasets
 # This feature is only available on the hosted platform.
 [storage.vector]
-enabled = false
-max_buckets = 10
-max_indexes = 5
+# enabled = false
+# max_buckets = 10
+# max_indexes = 5
 
 # Vector Buckets is available to Supabase Pro plan.
 # [storage.vector.buckets.documents-openai]

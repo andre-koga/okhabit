@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       supabase:
-        specifier: ^2.65.6
-        version: 2.65.6
+        specifier: ^2.67.1
+        version: 2.67.1
 
 packages:
 
@@ -99,8 +99,8 @@ packages:
     resolution: {integrity: sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==}
     engines: {node: '>=14'}
 
-  supabase@2.65.6:
-    resolution: {integrity: sha512-PKeKFwIpx/H65WZ8BVqvQU1cve2n2Er++Yo0EGjSfV/vNwnLkpdnlpD9o8ZJJLDF/hxlduOCwxHiTnBimnbXdA==}
+  supabase@2.67.1:
+    resolution: {integrity: sha512-d/trGytTjB/Hi625zHh2RFFttjLOkSdRTsY/N1pjxoAfG0blDiHKqPwu12VJYitg4nzgjfhjnD3pLyfU0ko5vg==}
     engines: {npm: '>=8'}
     hasBin: true
 
@@ -188,7 +188,7 @@ snapshots:
 
   signal-exit@4.1.0: {}
 
-  supabase@2.65.6:
+  supabase@2.67.1:
     dependencies:
       bin-links: 6.0.0
       https-proxy-agent: 7.0.6
