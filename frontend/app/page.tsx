@@ -36,7 +36,9 @@ async function DashboardOverview() {
     <div className="space-y-6 p-4">
       <div>
         <h1 className="text-3xl font-bold">OKHabit</h1>
-        <p className="text-muted-foreground">Track your habits, build routines</p>
+        <p className="text-muted-foreground">
+          Track your habits, build routines
+        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -62,7 +64,9 @@ async function DashboardOverview() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{activitiesCount}</div>
-            <p className="text-xs text-muted-foreground">{groupsCount} groups</p>
+            <p className="text-xs text-muted-foreground">
+              {groupsCount} groups
+            </p>
           </CardContent>
         </Card>
       </div>
