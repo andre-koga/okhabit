@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { TablesInsert } from "@/lib/supabase/types";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { v4 } from "uuid";
 
 export default function DailyTasks({ userId }: { userId: string }) {
@@ -18,7 +18,7 @@ export default function DailyTasks({ userId }: { userId: string }) {
 
       const { data, error, status } = await supabase
         .from("daily_entries")
-        .select(`id, day_start_at, completed_tasks`)
+        .select(`id, date, completed_tasks`)
         .eq("user_id", userId);
 
       if (error && status !== 406) throw error;
@@ -41,14 +41,15 @@ export default function DailyTasks({ userId }: { userId: string }) {
 
       const insertPayload: TablesInsert<"daily_entries"> = {
         completed_tasks: [],
-        day_start_at: new Date().toISOString(),
+        date: new Date().toISOString(),
         user_id: userId,
         id: v4(),
       };
 
       const { error } = await supabase
         .from("daily_entries")
-        .insert(insertPayload);
+        .upsert(insertPayload)
+        .eq("dae", "");
 
       if (error) throw error;
 

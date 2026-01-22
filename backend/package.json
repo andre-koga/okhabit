@@ -5,6 +5,6 @@
 		"types": "supabase gen types typescript --linked > ../frontend/lib/supabase/types.ts"
 	},
 	"devDependencies": {
-		"supabase": "^2.67.1"
+		"supabase": "^2.72.8"
 	}
 }

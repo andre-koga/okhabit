@@ -1,10 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import DailyTasks from "./daily-tasks";
-import { type User } from "@supabase/supabase-js";
+import HabitTrackerDashboard from "@/components/habit-tracker-dashboard";
 import { Suspense } from "react";
 
-async function UserDetails() {
+async function Dashboard() {
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.getClaims();
@@ -14,24 +13,24 @@ async function UserDetails() {
     redirect("/auth/login");
   }
 
-  const { data: userRow } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", uid)
-    .single();
-
-  const user = userRow as User;
-
-  return <DailyTasks userId={user.id} />;
+  return <HabitTrackerDashboard userId={uid} />;
 }
 
 export default async function Home() {
   return (
     <main className="flex flex-col items-center">
       <div className="flex-1 w-full flex flex-col gap-20 items-center">
-        <div className="flex-1 flex flex-col gap-20 max-w-5xl p-5">
-          <Suspense fallback="Loading user data...">
-            <UserDetails />
+        <div className="flex-1 flex flex-col gap-20 max-w-7xl p-5 w-full">
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center py-12">
+                <p className="text-muted-foreground">
+                  Loading your dashboard...
+                </p>
+              </div>
+            }
+          >
+            <Dashboard />
           </Suspense>
         </div>
       </div>
