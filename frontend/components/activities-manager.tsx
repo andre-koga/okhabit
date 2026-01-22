@@ -109,7 +109,7 @@ export default function ActivitiesManager({
 
   const handleEdit = (activity: Activity) => {
     setEditingId(activity.id);
-    
+
     // Parse routine config
     const routine = activity.routine || "daily";
     let baseRoutine = routine;
@@ -186,7 +186,7 @@ export default function ActivitiesManager({
 
   const formatRoutineDisplay = (routine: string | null) => {
     if (!routine) return "daily";
-    
+
     if (routine.startsWith("weekly:")) {
       const days = routine.split(":")[1].split(",").map(Number);
       const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -198,7 +198,7 @@ export default function ActivitiesManager({
       const parts = routine.split(":");
       return `Every ${parts[1]} ${parts[2]}`;
     }
-    
+
     return routine;
   };
 
@@ -312,7 +312,7 @@ export default function ActivitiesManager({
                         >
                           {day}
                         </Button>
-                      )
+                      ),
                     )}
                   </div>
                 </div>

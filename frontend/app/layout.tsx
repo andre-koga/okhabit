@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { PwaInit } from "@/components/pwa-init";
-import { Footer } from "@/components/footer";
-import { Header } from "@/components/header";
+import { BottomNav } from "@/components/bottom-nav";
 import "./globals.css";
 
 const defaultUrl = process.env.VERCEL_URL
@@ -12,8 +11,8 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Next.js and Supabase Starter Kit",
-  description: "The fastest way to build apps with Next.js and Supabase",
+  title: "OKHabit - Habit Tracker",
+  description: "Track your habits and build better routines",
 };
 
 const geistSans = Geist({
@@ -43,12 +42,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="min-h-screen flex flex-col">
+          <div className="min-h-screen flex flex-col pb-16">
             <PwaInit />
-
-            <Header />
             {children}
-            <Footer />
+            <BottomNav />
           </div>
         </ThemeProvider>
       </body>
