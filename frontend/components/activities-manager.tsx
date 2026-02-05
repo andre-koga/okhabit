@@ -188,16 +188,19 @@ export default function ActivitiesManager({
   const formatRoutineDisplay = (routine: string | null) => {
     if (!routine) return "daily";
 
+    if (routine === "anytime") return "anytime";
+    if (routine === "never") return "never";
+
     if (routine.startsWith("weekly:")) {
       const days = routine.split(":")[1].split(",").map(Number);
-      const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      return `Weekly: ${days.map((d) => dayNames[d]).join(", ")}`;
+      const dayNames = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+      return `weekly: ${days.map((d) => dayNames[d]).join(", ")}`;
     } else if (routine.startsWith("monthly:")) {
       const day = routine.split(":")[1];
-      return `Monthly: Day ${day}`;
+      return `monthly: day ${day}`;
     } else if (routine.startsWith("custom:")) {
       const parts = routine.split(":");
-      return `Every ${parts[1]} ${parts[2]}`;
+      return `every ${parts[1]} ${parts[2]}`;
     }
 
     return routine;
@@ -286,10 +289,12 @@ export default function ActivitiesManager({
                 }
                 className="w-full px-3 py-2 border rounded-md"
               >
+                <option value="anytime">Anytime (no schedule)</option>
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
                 <option value="monthly">Monthly</option>
                 <option value="custom">Custom</option>
+                <option value="never">Never (avoid this)</option>
               </select>
 
               {/* Weekly days selection */}

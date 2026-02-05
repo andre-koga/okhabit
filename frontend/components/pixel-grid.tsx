@@ -22,6 +22,7 @@ interface PixelGridProps {
 }
 
 export default function PixelGrid({ userId }: PixelGridProps) {
+  const [isLoading, setIsLoading] = useState(true);
   const [isAwake, setIsAwake] = useState(false);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [groups, setGroups] = useState<ActivityGroup[]>([]);
@@ -48,19 +49,21 @@ export default function PixelGrid({ userId }: PixelGridProps) {
   // Load activities and daily entry
   useEffect(() => {
     const loadData = async () => {
+      setIsLoading(true);
       await loadGroups();
       await loadActivities();
       await loadTodayEntry();
+      setIsLoading(false);
     };
     loadData();
   }, [userId]);
 
   // Reload periods when groups change
   useEffect(() => {
-    if (dailyEntry && groups.length > 0) {
+    if (dailyEntry) {
       loadActivityPeriods(dailyEntry.id);
     }
-  }, [groups]);
+  }, [groups, dailyEntry]);
 
   const loadGroups = async () => {
     try {
@@ -121,9 +124,6 @@ export default function PixelGrid({ userId }: PixelGridProps) {
             .single();
           setCurrentActivity(activity);
         }
-
-        // Load activity periods for today
-        await loadActivityPeriods(data.id);
       }
     } catch (error) {
       console.error("Error loading today's entry:", error);
@@ -294,16 +294,21 @@ export default function PixelGrid({ userId }: PixelGridProps) {
   };
 
   // Calculate which activity (if any) was active at a specific time
+  // If multiple activities exist in the minute, show the one with majority coverage
   const getActivityAtTime = (
     hour: number,
     minute: number,
   ): MinuteData | null => {
     if (!dailyEntry?.wake_time) return null;
 
-    // Create a date for this specific minute
-    const targetDate = new Date(dailyEntry.date!);
-    targetDate.setHours(hour, minute, 0, 0);
-    const targetTime = targetDate.getTime();
+    // Define the minute boundaries
+    const minuteStart = new Date(dailyEntry.date!);
+    minuteStart.setHours(hour, minute, 0, 0);
+    const minuteEnd = new Date(minuteStart);
+    minuteEnd.setMinutes(minuteEnd.getMinutes() + 1);
+
+    const minuteStartTime = minuteStart.getTime();
+    const minuteEndTime = minuteEnd.getTime();
 
     // Check if this time is within wake/sleep bounds
     const wakeTime = new Date(dailyEntry.wake_time).getTime();
@@ -311,23 +316,47 @@ export default function PixelGrid({ userId }: PixelGridProps) {
       ? new Date(dailyEntry.sleep_time).getTime()
       : Date.now();
 
-    if (targetTime < wakeTime || targetTime > sleepTime) {
+    if (minuteStartTime < wakeTime || minuteStartTime > sleepTime) {
       return null;
     }
 
-    // Find which period contains this minute
+    // Find all periods that overlap with this minute and calculate their duration
+    const overlappingActivities: {
+      activity_id: string;
+      color: string;
+      duration: number;
+    }[] = [];
+
     for (const period of activityPeriods) {
-      const startTime = new Date(period.start_time).getTime();
-      const endTime = period.end_time
+      const periodStart = new Date(period.start_time).getTime();
+      const periodEnd = period.end_time
         ? new Date(period.end_time).getTime()
         : Date.now();
 
-      if (targetTime >= startTime && targetTime < endTime) {
-        return {
+      // Check if period overlaps with this minute
+      if (periodEnd > minuteStartTime && periodStart < minuteEndTime) {
+        // Calculate overlap duration
+        const overlapStart = Math.max(periodStart, minuteStartTime);
+        const overlapEnd = Math.min(periodEnd, minuteEndTime);
+        const overlapDuration = overlapEnd - overlapStart;
+
+        overlappingActivities.push({
           activity_id: period.activity_id,
           color: period.color || "#cccccc",
-        };
+          duration: overlapDuration,
+        });
       }
+    }
+
+    // Return the activity with the longest duration in this minute
+    if (overlappingActivities.length > 0) {
+      const majorityActivity = overlappingActivities.reduce((prev, current) =>
+        current.duration > prev.duration ? current : prev,
+      );
+      return {
+        activity_id: majorityActivity.activity_id,
+        color: majorityActivity.color,
+      };
     }
 
     return null;
@@ -361,15 +390,25 @@ export default function PixelGrid({ userId }: PixelGridProps) {
     return hour === now.getHours() && minute === now.getMinutes();
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-4 p-4">
+        <div className="flex items-center justify-center p-12">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4 p-4">
       {/* Header with Wake Up / Sleep button */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-3xl font-bold" suppressHydrationWarning>
             {currentTime.toLocaleDateString()}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground" suppressHydrationWarning>
             {currentTime.toLocaleTimeString()}
           </p>
         </div>

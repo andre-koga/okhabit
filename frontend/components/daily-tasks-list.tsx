@@ -9,17 +9,20 @@ import { createClient } from "@/lib/supabase/client";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 
 type Activity = Tables<"activities">;
+type ActivityGroup = Tables<"activity_groups">;
 type DailyEntry = Tables<"daily_entries">;
 
 interface DailyTasksListProps {
   userId: string;
   activities: Activity[];
+  groups: ActivityGroup[];
   onRefresh: () => void;
 }
 
 export default function DailyTasksList({
   userId,
   activities,
+  groups,
   onRefresh,
 }: DailyTasksListProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -121,6 +124,8 @@ export default function DailyTasksList({
   const shouldShowActivity = (activity: Activity) => {
     const routine = activity.routine || "daily";
 
+    if (routine === "anytime") return true;
+    if (routine === "never") return true;
     if (routine === "daily") return true;
 
     if (routine.startsWith("weekly:")) {
@@ -139,16 +144,54 @@ export default function DailyTasksList({
       const interval = parseInt(parts[1]);
       const unit = parts[2];
 
-      // For custom routines, we'd need a reference date (e.g., activity creation date)
-      // For now, we'll show them daily as a fallback
-      // TODO: Implement proper custom interval logic with reference dates
-      return true;
+      if (!activity.created_at) return false;
+
+      const creationDate = new Date(activity.created_at);
+      creationDate.setHours(0, 0, 0, 0);
+
+      const checkDate = new Date(currentDate);
+      checkDate.setHours(0, 0, 0, 0);
+
+      // Calculate difference based on unit
+      if (unit === "days") {
+        const daysDiff = Math.floor(
+          (checkDate.getTime() - creationDate.getTime()) /
+            (1000 * 60 * 60 * 24),
+        );
+        return daysDiff >= 0 && daysDiff % interval === 0;
+      } else if (unit === "weeks") {
+        const daysDiff = Math.floor(
+          (checkDate.getTime() - creationDate.getTime()) /
+            (1000 * 60 * 60 * 24),
+        );
+        const weeksDiff = Math.floor(daysDiff / 7);
+        return (
+          daysDiff >= 0 && weeksDiff % interval === 0 && daysDiff % 7 === 0
+        );
+      } else if (unit === "months") {
+        // For months, check if it's the same day of month and the right month interval
+        const monthsDiff =
+          (checkDate.getFullYear() - creationDate.getFullYear()) * 12 +
+          (checkDate.getMonth() - creationDate.getMonth());
+        return (
+          monthsDiff >= 0 &&
+          monthsDiff % interval === 0 &&
+          checkDate.getDate() === creationDate.getDate()
+        );
+      }
+
+      return false;
     }
 
     return routine === "daily" || !routine;
   };
 
   const dailyActivities = activities.filter(shouldShowActivity);
+
+  const getGroupColor = (activity: Activity): string => {
+    const group = groups.find((g) => g.id === activity.group_id);
+    return group?.color || "#cccccc";
+  };
 
   const completionRate =
     dailyActivities.length > 0
@@ -225,7 +268,7 @@ export default function DailyTasksList({
               >
                 <div
                   className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: activity.color || "#10b981" }}
+                  style={{ backgroundColor: getGroupColor(activity) }}
                 />
                 <span
                   className={
