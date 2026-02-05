@@ -22,9 +22,7 @@ async function SettingsContent() {
     <div className="space-y-4 p-4">
       <div>
         <h1 className="text-2xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">
-          Manage your account and preferences
-        </p>
+        <p className="text-muted-foreground">Manage your account and preferences</p>
       </div>
 
       <Card>
