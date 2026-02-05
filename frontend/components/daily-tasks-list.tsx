@@ -53,9 +53,9 @@ export default function DailyTasksList({
         .eq("user_id", userId)
         .gte("date", startOfDay.toISOString())
         .lte("date", endOfDay.toISOString())
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== "PGRST116") {
+      if (error) {
         throw error;
       }
 

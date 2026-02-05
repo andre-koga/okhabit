@@ -35,6 +35,8 @@ export default function PixelGrid({ userId }: PixelGridProps) {
     null,
   );
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [typicalWakeTime, setTypicalWakeTime] = useState("07:00:00");
+  const [typicalSleepTime, setTypicalSleepTime] = useState("23:00:00");
 
   const supabase = createClient();
 
@@ -50,6 +52,7 @@ export default function PixelGrid({ userId }: PixelGridProps) {
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
+      await loadUserPreferences();
       await loadGroups();
       await loadActivities();
       await loadTodayEntry();
@@ -64,7 +67,28 @@ export default function PixelGrid({ userId }: PixelGridProps) {
       loadActivityPeriods(dailyEntry.id);
     }
   }, [groups, dailyEntry]);
+  const loadUserPreferences = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select("typical_wake_time, typical_sleep_time")
+        .eq("id", userId)
+        .maybeSingle();
 
+      if (error) {
+        console.error("Error loading user preferences:", error);
+        return;
+      }
+
+      if (data) {
+        setTypicalWakeTime(data.typical_wake_time ?? "07:00:00");
+        setTypicalSleepTime(data.typical_sleep_time ?? "23:00:00");
+      }
+    } catch (error) {
+      // Silently use defaults if preferences can't be loaded
+      console.log("Using default wake/sleep times for new user");
+    }
+  };
   const loadGroups = async () => {
     try {
       const { data, error } = await supabase
@@ -107,9 +131,9 @@ export default function PixelGrid({ userId }: PixelGridProps) {
         .gte("date", today.toISOString())
         .order("date", { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== "PGRST116") throw error;
+      if (error) throw error;
 
       if (data) {
         setDailyEntry(data);
@@ -380,7 +404,34 @@ export default function PixelGrid({ userId }: PixelGridProps) {
       return getGroupColor(currentActivity);
     }
 
-    return "transparent";
+    // Empty cells: darker outside typical wake/sleep hours, lighter within
+    // Convert time strings to minutes since midnight for comparison
+    const timeToMinutes = (timeStr: string): number => {
+      const [h, m] = timeStr.split(":").map(Number);
+      return h * 60 + m;
+    };
+
+    const currentMinutes = hour * 60 + minute;
+    const wakeMinutes = timeToMinutes(typicalWakeTime);
+    const sleepMinutes = timeToMinutes(typicalSleepTime);
+
+    let isOutsideActiveHours: boolean;
+
+    if (sleepMinutes < wakeMinutes) {
+      // Night owl: sleep time is after midnight (e.g., wake at 10 AM, sleep at 2 AM)
+      // Active hours: sleepMinutes to wakeMinutes (e.g., 2 AM to 10 AM is sleep time)
+      isOutsideActiveHours =
+        currentMinutes >= sleepMinutes && currentMinutes < wakeMinutes;
+    } else {
+      // Normal schedule: sleep time is before midnight (e.g., wake at 7 AM, sleep at 11 PM)
+      // Active hours: wakeMinutes to sleepMinutes (e.g., 7 AM to 11 PM)
+      isOutsideActiveHours =
+        currentMinutes < wakeMinutes || currentMinutes >= sleepMinutes;
+    }
+
+    return isOutsideActiveHours
+      ? "hsl(var(--muted) / 0.6)" // Darker for sleep time
+      : "hsl(var(--muted) / 0.2)"; // Lighter for potential active time
   };
 
   // Check if this is the current minute
@@ -458,29 +509,30 @@ export default function PixelGrid({ userId }: PixelGridProps) {
 
       {/* 24x60 Pixel Grid */}
       <Card>
-        <CardContent className="p-4">
-          <div className="space-y-1 overflow-x-auto">
+        <CardContent className="p-2">
+          <div className="space-y-[1px]">
             {Array.from({ length: 24 }, (_, hour) => (
-              <div key={hour} className="flex gap-[1px]">
-                {/* Hour label */}
-                <div className="w-8 text-xs text-muted-foreground flex items-center justify-end pr-1 flex-shrink-0">
-                  {hour}
+              <div key={hour}>
+                <div className="flex gap-[1px]">
+                  {Array.from({ length: 60 }, (_, minute) => (
+                    <div
+                      key={`${hour}-${minute}`}
+                      className={`flex-1 h-3 rounded-full border border-border/20 ${
+                        isCurrentMinute(hour, minute)
+                          ? "ring-1 ring-primary"
+                          : ""
+                      }`}
+                      style={{
+                        backgroundColor: getCellColor(hour, minute),
+                      }}
+                      title={`${hour}:${minute.toString().padStart(2, "0")}`}
+                    />
+                  ))}
                 </div>
-                {/* Minutes */}
-                {Array.from({ length: 60 }, (_, minute) => (
-                  <div
-                    key={`${hour}-${minute}`}
-                    className={`w-2 h-2 border border-border/20 flex-shrink-0 ${
-                      isCurrentMinute(hour, minute)
-                        ? "ring-2 ring-primary ring-offset-1"
-                        : ""
-                    }`}
-                    style={{
-                      backgroundColor: getCellColor(hour, minute),
-                    }}
-                    title={`${hour}:${minute.toString().padStart(2, "0")}`}
-                  />
-                ))}
+                {/* Add thicker spacing after hours 5, 11, and 17 */}
+                {(hour === 5 || hour === 11 || hour === 17) && (
+                  <div className="h-1" />
+                )}
               </div>
             ))}
           </div>
