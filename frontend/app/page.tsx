@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import PixelGrid from "@/components/pixel-grid";
 
 async function DashboardOverview() {
@@ -18,7 +19,15 @@ async function DashboardOverview() {
 export default async function Home() {
   return (
     <main className="flex-1">
-      <DashboardOverview />
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center py-12">
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        }
+      >
+        <DashboardOverview />
+      </Suspense>
     </main>
   );
 }

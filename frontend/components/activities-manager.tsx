@@ -9,6 +9,7 @@ import { Tables, TablesInsert } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
 import { Pencil, Trash2, Plus, Play, Square } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { PATTERN_OPTIONS } from "@/lib/colors";
 
 type Activity = Tables<"activities">;
 type ActivityGroup = Tables<"activity_groups">;
@@ -34,7 +35,7 @@ export default function ActivitiesManager({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
-    color: "#10b981",
+    pattern: "solid",
     group_id: "",
     routine: "daily",
     weeklyDays: [] as number[], // 0 = Sunday, 1 = Monday, etc.
@@ -64,7 +65,7 @@ export default function ActivitiesManager({
           .from("activities")
           .update({
             name: formData.name,
-            color: formData.color,
+            pattern: formData.pattern,
             group_id: formData.group_id,
             routine: routineConfig,
           })
@@ -77,7 +78,7 @@ export default function ActivitiesManager({
         const insertPayload: TablesInsert<"activities"> = {
           user_id: userId,
           name: formData.name,
-          color: formData.color,
+          pattern: formData.pattern,
           group_id: formData.group_id,
           routine: routineConfig,
           is_completed: false,
@@ -93,7 +94,7 @@ export default function ActivitiesManager({
 
       setFormData({
         name: "",
-        color: "#10b981",
+        pattern: "solid",
         group_id: "",
         routine: "daily",
         weeklyDays: [],
@@ -134,7 +135,7 @@ export default function ActivitiesManager({
 
     setFormData({
       name: activity.name || "",
-      color: activity.color || "#10b981",
+      pattern: activity.pattern || "solid",
       group_id: activity.group_id,
       routine: baseRoutine,
       weeklyDays,
@@ -165,7 +166,7 @@ export default function ActivitiesManager({
     setEditingId(null);
     setFormData({
       name: "",
-      color: "#10b981",
+      pattern: "solid",
       group_id: "",
       routine: "daily",
       weeklyDays: [],
@@ -380,20 +381,24 @@ export default function ActivitiesManager({
               )}
             </div>
             <div>
-              <Label htmlFor="activity-color">Color</Label>
-              <div className="flex gap-2 items-center">
-                <Input
-                  id="activity-color"
-                  type="color"
-                  value={formData.color}
-                  onChange={(e) =>
-                    setFormData({ ...formData, color: e.target.value })
-                  }
-                  className="w-20 h-10"
-                />
-                <span className="text-sm text-muted-foreground">
-                  {formData.color}
-                </span>
+              <Label>Pattern</Label>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {PATTERN_OPTIONS.map((pattern) => (
+                  <button
+                    key={pattern.value}
+                    type="button"
+                    onClick={() =>
+                      setFormData({ ...formData, pattern: pattern.value })
+                    }
+                    className={`px-3 py-2 rounded-md border-2 transition-all text-sm ${
+                      formData.pattern === pattern.value
+                        ? "border-primary bg-primary/10 font-semibold"
+                        : "border-muted hover:border-muted-foreground"
+                    }`}
+                  >
+                    {pattern.name}
+                  </button>
+                ))}
               </div>
             </div>
             <div className="flex gap-2">
@@ -438,10 +443,11 @@ export default function ActivitiesManager({
                     >
                       <div className="flex items-center gap-2 flex-1">
                         <div
-                          className="w-3 h-3 rounded-full"
+                          className="w-3 h-3 rounded"
                           style={{
-                            backgroundColor: activity.color || "#10b981",
+                            backgroundColor: group.color || "#3b82f6",
                           }}
+                          title={`Pattern: ${activity.pattern || "solid"}`}
                         />
                         <span className="text-sm">{activity.name}</span>
                         <Badge variant="secondary" className="text-xs">

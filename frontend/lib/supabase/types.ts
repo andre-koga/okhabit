@@ -50,7 +50,7 @@ export interface Database {
                     group_id: string
                     created_at: string | null
                     name: string | null
-                    color: string | null
+                    pattern: string | null
                     routine: string | null
                     is_completed: boolean | null
                 }
@@ -60,7 +60,7 @@ export interface Database {
                     group_id: string
                     created_at?: string | null
                     name?: string | null
-                    color?: string | null
+                    pattern?: string | null
                     routine?: string | null
                     is_completed?: boolean | null
                 }
@@ -70,7 +70,7 @@ export interface Database {
                     group_id?: string
                     created_at?: string | null
                     name?: string | null
-                    color?: string | null
+                    pattern?: string | null
                     routine?: string | null
                     is_completed?: boolean | null
                 }

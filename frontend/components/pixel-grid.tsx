@@ -10,6 +10,7 @@ import { Sun, Moon } from "lucide-react";
 type Activity = Tables<"activities">;
 type DailyEntry = Tables<"daily_entries">;
 type ActivityPeriod = Tables<"activity_periods">;
+type ActivityGroup = Tables<"activity_groups">;
 
 interface MinuteData {
   activity_id: string;
@@ -23,6 +24,7 @@ interface PixelGridProps {
 export default function PixelGrid({ userId }: PixelGridProps) {
   const [isAwake, setIsAwake] = useState(false);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [groups, setGroups] = useState<ActivityGroup[]>([]);
   const [currentActivity, setCurrentActivity] = useState<Activity | null>(null);
   const [dailyEntry, setDailyEntry] = useState<DailyEntry | null>(null);
   const [activityPeriods, setActivityPeriods] = useState<
@@ -45,9 +47,35 @@ export default function PixelGrid({ userId }: PixelGridProps) {
 
   // Load activities and daily entry
   useEffect(() => {
-    loadActivities();
-    loadTodayEntry();
+    const loadData = async () => {
+      await loadGroups();
+      await loadActivities();
+      await loadTodayEntry();
+    };
+    loadData();
   }, [userId]);
+
+  // Reload periods when groups change
+  useEffect(() => {
+    if (dailyEntry && groups.length > 0) {
+      loadActivityPeriods(dailyEntry.id);
+    }
+  }, [groups]);
+
+  const loadGroups = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("activity_groups")
+        .select("*")
+        .eq("user_id", userId)
+        .order("name");
+
+      if (error) throw error;
+      setGroups(data || []);
+    } catch (error) {
+      console.error("Error loading groups:", error);
+    }
+  };
 
   const loadActivities = async () => {
     try {
@@ -109,7 +137,7 @@ export default function PixelGrid({ userId }: PixelGridProps) {
         .select(
           `
           *,
-          activities!inner(color)
+          activities!inner(group_id)
         `,
         )
         .eq("daily_entry_id", dailyEntryId)
@@ -117,10 +145,13 @@ export default function PixelGrid({ userId }: PixelGridProps) {
 
       if (error) throw error;
 
-      const periodsWithColor = (data || []).map((period: any) => ({
-        ...period,
-        color: period.activities.color,
-      }));
+      const periodsWithColor = (data || []).map((period: any) => {
+        const group = groups.find((g) => g.id === period.activities.group_id);
+        return {
+          ...period,
+          color: group?.color || "#cccccc",
+        };
+      });
 
       setActivityPeriods(periodsWithColor);
 
@@ -130,6 +161,11 @@ export default function PixelGrid({ userId }: PixelGridProps) {
     } catch (error) {
       console.error("Error loading activity periods:", error);
     }
+  };
+
+  const getGroupColor = (activity: Activity): string => {
+    const group = groups.find((g) => g.id === activity.group_id);
+    return group?.color || "#cccccc";
   };
 
   const handleWakeUp = async () => {
@@ -312,7 +348,7 @@ export default function PixelGrid({ userId }: PixelGridProps) {
       minute === now.getMinutes() &&
       currentActivity
     ) {
-      return currentActivity.color || "#cccccc";
+      return getGroupColor(currentActivity);
     }
 
     return "transparent";
@@ -368,7 +404,7 @@ export default function PixelGrid({ userId }: PixelGridProps) {
             <div className="flex items-center gap-3">
               <div
                 className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: currentActivity.color || "#cccccc" }}
+                style={{ backgroundColor: getGroupColor(currentActivity) }}
               />
               <div className="flex-1">
                 <p className="text-sm text-muted-foreground">
@@ -429,7 +465,7 @@ export default function PixelGrid({ userId }: PixelGridProps) {
                 >
                   <div
                     className="w-3 h-3 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: activity.color || "#cccccc" }}
+                    style={{ backgroundColor: getGroupColor(activity) }}
                   />
                   <span className="truncate">{activity.name}</span>
                 </Button>

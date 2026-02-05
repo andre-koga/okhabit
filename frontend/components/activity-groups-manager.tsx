@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tables, TablesInsert } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
 import { Pencil, Trash2, Plus } from "lucide-react";
+import { COLOR_PALETTE } from "@/lib/colors";
 
 type ActivityGroup = Tables<"activity_groups">;
 
@@ -26,7 +27,7 @@ export default function ActivityGroupsManager({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
-    color: "#3b82f6",
+    color: COLOR_PALETTE[0].value,
   });
 
   const supabase = createClient();
@@ -63,7 +64,7 @@ export default function ActivityGroupsManager({
         setIsAdding(false);
       }
 
-      setFormData({ name: "", color: "#3b82f6" });
+      setFormData({ name: "", color: COLOR_PALETTE[0].value });
       onGroupsChange();
     } catch (error) {
       console.error("Error saving group:", error);
@@ -74,7 +75,7 @@ export default function ActivityGroupsManager({
     setEditingId(group.id);
     setFormData({
       name: group.name || "",
-      color: group.color || "#3b82f6",
+      color: group.color || COLOR_PALETTE[0].value,
     });
     setIsAdding(true);
   };
@@ -104,7 +105,7 @@ export default function ActivityGroupsManager({
   const handleCancel = () => {
     setIsAdding(false);
     setEditingId(null);
-    setFormData({ name: "", color: "#3b82f6" });
+    setFormData({ name: "", color: COLOR_PALETTE[0].value });
   };
 
   return (
@@ -141,20 +142,24 @@ export default function ActivityGroupsManager({
               />
             </div>
             <div>
-              <Label htmlFor="color">Color</Label>
-              <div className="flex gap-2 items-center">
-                <Input
-                  id="color"
-                  type="color"
-                  value={formData.color}
-                  onChange={(e) =>
-                    setFormData({ ...formData, color: e.target.value })
-                  }
-                  className="w-20 h-10"
-                />
-                <span className="text-sm text-muted-foreground">
-                  {formData.color}
-                </span>
+              <Label>Color</Label>
+              <div className="grid grid-cols-5 gap-2 mt-2">
+                {COLOR_PALETTE.map((color) => (
+                  <button
+                    key={color.value}
+                    type="button"
+                    onClick={() =>
+                      setFormData({ ...formData, color: color.value })
+                    }
+                    className={`w-full h-10 rounded-md border-2 transition-all ${
+                      formData.color === color.value
+                        ? "border-primary ring-2 ring-primary ring-offset-2"
+                        : "border-transparent hover:border-muted-foreground"
+                    }`}
+                    style={{ backgroundColor: color.value }}
+                    title={color.name}
+                  />
+                ))}
               </div>
             </div>
             <div className="flex gap-2">
@@ -187,7 +192,9 @@ export default function ActivityGroupsManager({
               <div className="flex items-center gap-3">
                 <div
                   className="w-4 h-4 rounded-full"
-                  style={{ backgroundColor: group.color || "#3b82f6" }}
+                  style={{
+                    backgroundColor: group.color || COLOR_PALETTE[0].value,
+                  }}
                 />
                 <span className="font-medium">{group.name}</span>
               </div>
