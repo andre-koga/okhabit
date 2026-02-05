@@ -68,6 +68,12 @@ export default function ActivityGroupsManager({
       onGroupsChange();
     } catch (error) {
       console.error("Error saving group:", error);
+      if (error && typeof error === "object" && "message" in error) {
+        console.error("Error message:", (error as any).message);
+      }
+      if (error && typeof error === "object" && "details" in error) {
+        console.error("Error details:", (error as any).details);
+      }
     }
   };
 
@@ -143,7 +149,7 @@ export default function ActivityGroupsManager({
             </div>
             <div>
               <Label>Color</Label>
-              <div className="grid grid-cols-5 gap-2 mt-2">
+              <div className="grid grid-cols-3 gap-2 mt-2">
                 {COLOR_PALETTE.map((color) => (
                   <button
                     key={color.value}
@@ -151,10 +157,10 @@ export default function ActivityGroupsManager({
                     onClick={() =>
                       setFormData({ ...formData, color: color.value })
                     }
-                    className={`w-full h-10 rounded-md border-2 transition-all ${
+                    className={`h-8 rounded-full border-2 transition-all ${
                       formData.color === color.value
-                        ? "border-primary ring-2 ring-primary ring-offset-2"
-                        : "border-transparent hover:border-muted-foreground"
+                        ? "border-primary ring-2 ring-primary ring-offset-1"
+                        : "border-transparent hover:border-muted-foreground/50"
                     }`}
                     style={{ backgroundColor: color.value }}
                     title={color.name}
