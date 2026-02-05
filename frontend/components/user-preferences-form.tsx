@@ -37,6 +37,7 @@ export function UserPreferencesForm({
         return time.length === 5 ? `${time}:00` : time;
       };
 
+      // Simple update - user should already exist from settings page
       const { error } = await supabase
         .from("users")
         .update({
