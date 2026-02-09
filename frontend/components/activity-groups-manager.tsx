@@ -385,7 +385,9 @@ export default function ActivityGroupsManager({
 
       <AlertDialog
         open={systemDialog.open}
-        onOpenChange={(open) => setSystemDialog({ open, action: systemDialog.action })}
+        onOpenChange={(open) =>
+          setSystemDialog({ open, action: systemDialog.action })
+        }
       >
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -395,7 +397,9 @@ export default function ActivityGroupsManager({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setSystemDialog({ open: false, action: \"\" })}>
+            <AlertDialogAction
+              onClick={() => setSystemDialog({ open: false, action: "" })}
+            >
               OK
             </AlertDialogAction>
           </AlertDialogFooter>

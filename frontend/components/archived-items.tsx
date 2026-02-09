@@ -455,33 +455,32 @@ export default function ArchivedItems({ userId }: ArchivedItemsProps) {
 
       <AlertDialog
         open={deleteDialog.open}
-        onOpenChange={(open) =>
-          setDeleteDialog({ ...deleteDialog, open })
-        }
+        onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Permanently Delete {deleteDialog.type === \"group\" ? \"Group\" : \"Activity\"}?
+              Permanently Delete{" "}
+              {deleteDialog.type === "group" ? "Group" : "Activity"}?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the{\" \"}
-              {deleteDialog.type === \"group\" ? \"group and all activities in it\" : \"activity\"}.
+              This action cannot be undone. This will permanently delete the{" "}
+              {deleteDialog.type === "group"
+                ? "group and all activities in it"
+                : "activity"}
+              .
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction variant=\"destructive\" onClick={confirmDelete}>
+            <AlertDialogAction variant="destructive" onClick={confirmDelete}>
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog
-        open={systemDialog}
-        onOpenChange={setSystemDialog}
-      >
+      <AlertDialog open={systemDialog} onOpenChange={setSystemDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>System Items Protected</AlertDialogTitle>
