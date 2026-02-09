@@ -3,14 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import JournalList from "@/components/journal-list";
 import { Suspense } from "react";
 
-export default async function JournalPage() {
+async function JournalContent() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  const uid = user?.id;
+  const { data, error } = await supabase.auth.getClaims();
+  const uid = data?.claims?.sub;
 
   if (error || !uid) {
     redirect("/auth/login");
@@ -28,5 +25,19 @@ export default async function JournalPage() {
         <JournalList userId={uid} />
       </div>
     </div>
+  );
+}
+
+export default async function JournalPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-12">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      }
+    >
+      <JournalContent />
+    </Suspense>
   );
 }

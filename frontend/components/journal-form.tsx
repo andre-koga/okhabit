@@ -28,6 +28,8 @@ import {
   Upload,
   Pencil,
   ArrowLeft,
+  Check,
+  Trash2,
 } from "lucide-react";
 
 interface JournalFormProps {
@@ -80,6 +82,7 @@ export default function JournalForm({
   const supabase = createClient();
 
   const [mode, setMode] = useState<"view" | "edit">(initialMode);
+  const [title, setTitle] = useState(existingEntry?.title || "");
   const [textContent, setTextContent] = useState(
     existingEntry?.text_content || "",
   );
@@ -105,6 +108,8 @@ export default function JournalForm({
 
   const characterCount = textContent.length;
   const characterLimit = 300;
+  const titleCharacterCount = title.length;
+  const titleCharacterLimit = 30;
   const isViewMode = mode === "view";
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -169,6 +174,7 @@ export default function JournalForm({
       const payload = {
         user_id: userId,
         entry_date: date,
+        title: title,
         text_content: textContent || null,
         day_quality: dayQuality,
         is_bookmarked: isBookmarked,
@@ -272,6 +278,41 @@ export default function JournalForm({
             )}
           </div>
 
+          {/* Title */}
+          <div className="space-y-2 flex flex-col items-center">
+            <div className="flex items-center justify-between w-full max-w-2xl">
+              <Label htmlFor="title">Title</Label>
+              {!isViewMode && (
+                <span
+                  className={`text-sm ${
+                    titleCharacterCount > titleCharacterLimit
+                      ? "text-destructive"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {titleCharacterCount}/{titleCharacterLimit}
+                </span>
+              )}
+            </div>
+            {isViewMode ? (
+              <div className="p-3 border rounded-lg w-full max-w-2xl">
+                {title || (
+                  <span className="text-muted-foreground">No title</span>
+                )}
+              </div>
+            ) : (
+              <Input
+                id="title"
+                placeholder="Give your day a title..."
+                value={title}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setTitle(e.target.value.slice(0, 30))
+                }
+                className="w-full max-w-2xl"
+              />
+            )}
+          </div>
+
           {/* Text Content */}
           <div className="space-y-2 flex flex-col items-center">
             <div className="flex items-center justify-between w-full max-w-2xl">
@@ -325,23 +366,6 @@ export default function JournalForm({
               ))}
             </div>
           </div>
-
-          {/* Bookmark Toggle */}
-          {!isViewMode && (
-            <div className="flex items-center gap-2 justify-center">
-              <Button
-                type="button"
-                variant={isBookmarked ? "default" : "outline"}
-                onClick={() => setIsBookmarked(!isBookmarked)}
-                className="gap-2"
-              >
-                <BookmarkIcon
-                  className={`h-4 w-4 ${isBookmarked ? "fill-current" : ""}`}
-                />
-                {isBookmarked ? "Bookmarked" : "Bookmark this day"}
-              </Button>
-            </div>
-          )}
 
           {/* Divider */}
           <div className="border-t border-dashed border-border my-8"></div>
@@ -466,9 +490,24 @@ export default function JournalForm({
           {!isViewMode && (
             <div className="flex gap-2 pt-4 justify-center">
               <Button
+                type="button"
+                variant={isBookmarked ? "default" : "outline"}
+                onClick={() => setIsBookmarked(!isBookmarked)}
+                size="icon"
+                title={isBookmarked ? "Remove bookmark" : "Bookmark this day"}
+              >
+                <BookmarkIcon
+                  className={`h-4 w-4 ${isBookmarked ? "fill-current" : ""}`}
+                />
+              </Button>
+              <Button
                 onClick={handleSave}
                 disabled={
-                  saving || !dayQuality || !dayEmoji || !textContent.trim()
+                  saving ||
+                  !dayQuality ||
+                  !dayEmoji ||
+                  !title.trim() ||
+                  !textContent.trim()
                 }
                 className="flex-1 max-w-xs"
               >
@@ -476,17 +515,19 @@ export default function JournalForm({
                   "Saving..."
                 ) : (
                   <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Journal Entry
+                    <Check className="h-4 w-4 mr-2" />
+                    Done
                   </>
                 )}
               </Button>
               <Button
                 variant="outline"
+                size="icon"
                 onClick={() => router.push("/journal")}
                 disabled={saving}
+                title="Discard changes"
               >
-                Cancel
+                <Trash2 className="h-4 w-4" />
               </Button>
             </div>
           )}
@@ -503,7 +544,7 @@ export default function JournalForm({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => router.push("/")}>
+            <AlertDialogAction onClick={() => router.push("/journal")}>
               OK
             </AlertDialogAction>
           </AlertDialogFooter>

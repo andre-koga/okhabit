@@ -122,12 +122,12 @@ export default function JournalList({ userId }: JournalListProps) {
       {!loading &&
         entries.map((entry) => {
           const editable = canEdit(entry.entry_date!);
-          const quality = entry.quality || 3;
+          const quality = entry.day_quality || 3;
           const qualityEmoji = QUALITY_EMOJIS[quality - 1];
-          const textExcerpt = entry.text
-            ? entry.text.length > 150
-              ? entry.text.substring(0, 150) + "..."
-              : entry.text
+          const textExcerpt = entry.text_content
+            ? entry.text_content.length > 150
+              ? entry.text_content.substring(0, 150) + "..."
+              : entry.text_content
             : "No notes";
 
           return (
@@ -141,8 +141,8 @@ export default function JournalList({ userId }: JournalListProps) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-2xl">{qualityEmoji}</span>
-                      {entry.emoji && (
-                        <span className="text-xl">{entry.emoji}</span>
+                      {entry.day_emoji && (
+                        <span className="text-xl">{entry.day_emoji}</span>
                       )}
                       <div className="flex-1">
                         <div className="font-semibold text-lg">
@@ -160,15 +160,20 @@ export default function JournalList({ userId }: JournalListProps) {
                         </div>
                       </div>
                     </div>
+                    {entry.title && (
+                      <p className="font-medium text-base mb-1">
+                        {entry.title}
+                      </p>
+                    )}
                     <p className="text-sm text-muted-foreground line-clamp-2">
                       {textExcerpt}
                     </p>
-                    {(entry.photos_urls || entry.video_url) && (
+                    {(entry.photo_urls || entry.video_url) && (
                       <div className="flex gap-2 mt-2">
-                        {entry.photos_urls && (
+                        {entry.photo_urls && (
                           <span className="text-xs bg-secondary px-2 py-1 rounded">
-                            📷 {entry.photos_urls.length} photo
-                            {entry.photos_urls.length !== 1 ? "s" : ""}
+                            📷 {entry.photo_urls.length} photo
+                            {entry.photo_urls.length !== 1 ? "s" : ""}
                           </span>
                         )}
                         {entry.video_url && (
