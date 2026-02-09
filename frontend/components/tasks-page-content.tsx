@@ -28,8 +28,13 @@ export default function TasksPageContent({ userId }: TasksPageContentProps) {
           .from("activities")
           .select("*")
           .eq("user_id", userId)
+          .eq("is_archived", false)
           .order("created_at", { ascending: true }),
-        supabase.from("activity_groups").select("*").eq("user_id", userId),
+        supabase
+          .from("activity_groups")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("is_archived", false),
       ]);
 
       if (activitiesRes.error) throw activitiesRes.error;

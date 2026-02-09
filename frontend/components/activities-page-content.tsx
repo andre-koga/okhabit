@@ -31,11 +31,13 @@ export default function ActivitiesPageContent({
           .from("activity_groups")
           .select("*")
           .eq("user_id", userId)
+          .eq("is_archived", false)
           .order("created_at", { ascending: true }),
         supabase
           .from("activities")
           .select("*")
           .eq("user_id", userId)
+          .eq("is_archived", false)
           .order("created_at", { ascending: true }),
       ]);
 

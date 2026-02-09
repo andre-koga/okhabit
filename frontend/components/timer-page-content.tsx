@@ -25,6 +25,7 @@ export default function TimerPageContent({ userId }: TimerPageContentProps) {
         .from("activities")
         .select("*")
         .eq("user_id", userId)
+        .eq("is_archived", false)
         .order("created_at", { ascending: true });
 
       if (error) throw error;

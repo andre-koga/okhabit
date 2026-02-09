@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tables, TablesInsert } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
-import { Pencil, Trash2, Plus, Play, Square } from "lucide-react";
+import { Pencil, Archive, Plus, Play, Square } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PATTERN_OPTIONS } from "@/lib/colors";
 
@@ -146,18 +146,25 @@ export default function ActivitiesManager({
     setIsAdding(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this activity?")) {
+  const handleArchive = async (id: string) => {
+    if (
+      !confirm(
+        "Archive this activity? You can unarchive it later from Settings > Archived.",
+      )
+    ) {
       return;
     }
 
     try {
-      const { error } = await supabase.from("activities").delete().eq("id", id);
+      const { error } = await supabase
+        .from("activities")
+        .update({ is_archived: true })
+        .eq("id", id);
 
       if (error) throw error;
       onActivitiesChange();
     } catch (error) {
-      console.error("Error deleting activity:", error);
+      console.error("Error archiving activity:", error);
     }
   };
 
@@ -503,15 +510,15 @@ export default function ActivitiesManager({
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleDelete(activity.id)}
+                          onClick={() => handleArchive(activity.id)}
                           disabled={isSystemActivity(activity)}
                           title={
                             isSystemActivity(activity)
-                              ? "System activities cannot be deleted"
-                              : "Delete activity"
+                              ? "System activities cannot be archived"
+                              : "Archive activity"
                           }
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Archive className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>

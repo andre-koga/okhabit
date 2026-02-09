@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tables, TablesInsert } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Archive, Plus } from "lucide-react";
 import { COLOR_PALETTE } from "@/lib/colors";
 
 type ActivityGroup = Tables<"activity_groups">;
@@ -86,25 +86,41 @@ export default function ActivityGroupsManager({
     setIsAdding(true);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleArchive = async (id: string) => {
+    const group = groups.find((g) => g.id === id);
+    if (group?.name === "System") {
+      alert("System group cannot be archived.");
+      return;
+    }
+
     if (
       !confirm(
-        "Delete this group? All activities in this group will also be deleted.",
+        "Archive this group? All activities in this group will also be archived. You can unarchive them later from Settings > Archived.",
       )
     ) {
       return;
     }
 
     try {
-      const { error } = await supabase
+      // Archive the group
+      const { error: groupError } = await supabase
         .from("activity_groups")
-        .delete()
+        .update({ is_archived: true })
         .eq("id", id);
 
-      if (error) throw error;
+      if (groupError) throw groupError;
+
+      // Archive all activities in this group
+      const { error: activitiesError } = await supabase
+        .from("activities")
+        .update({ is_archived: true })
+        .eq("group_id", id);
+
+      if (activitiesError) throw activitiesError;
+
       onGroupsChange();
     } catch (error) {
-      console.error("Error deleting group:", error);
+      console.error("Error archiving group:", error);
     }
   };
 
@@ -215,9 +231,15 @@ export default function ActivityGroupsManager({
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => handleDelete(group.id)}
+                  onClick={() => handleArchive(group.id)}
+                  disabled={group.name === "System"}
+                  title={
+                    group.name === "System"
+                      ? "System group cannot be archived"
+                      : "Archive group"
+                  }
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Archive className="h-4 w-4" />
                 </Button>
               </div>
             </div>

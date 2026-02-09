@@ -2,10 +2,11 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Moon, Sun, User, Clock } from "lucide-react";
+import { LogOut, Moon, Sun, User, Clock, Archive } from "lucide-react";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { Button } from "@/components/ui/button";
 import { UserPreferencesForm } from "@/components/user-preferences-form";
+import Link from "next/link";
 
 async function SettingsContent() {
   const supabase = await createClient();
@@ -94,6 +95,29 @@ async function SettingsContent() {
             <span className="text-sm">Theme</span>
             <ThemeSwitcher />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Archive className="h-4 w-4" />
+            Archive
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-4">
+            View and manage your archived activity groups and activities.
+          </p>
+          <Link href="/settings/archived">
+            <Button
+              variant="outline"
+              className="w-full flex items-center gap-2"
+            >
+              <Archive className="h-4 w-4" />
+              View Archived Items
+            </Button>
+          </Link>
         </CardContent>
       </Card>
 

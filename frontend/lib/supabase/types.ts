@@ -39,6 +39,7 @@ export type Database = {
           created_at: string | null
           group_id: string
           id: string
+          is_archived: boolean | null
           is_completed: boolean | null
           name: string | null
           pattern: string | null
@@ -49,6 +50,7 @@ export type Database = {
           created_at?: string | null
           group_id: string
           id?: string
+          is_archived?: boolean | null
           is_completed?: boolean | null
           name?: string | null
           pattern?: string | null
@@ -59,6 +61,7 @@ export type Database = {
           created_at?: string | null
           group_id?: string
           id?: string
+          is_archived?: boolean | null
           is_completed?: boolean | null
           name?: string | null
           pattern?: string | null
