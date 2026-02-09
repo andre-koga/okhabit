@@ -1,12 +1,16 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import JournalList from "@/components/journal-list";
+import { Suspense } from "react";
 
 export default async function JournalPage() {
   const supabase = await createClient();
 
-  const { data, error } = await supabase.auth.getClaims();
-  const uid = data?.claims?.sub;
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser();
+  const uid = user?.id;
 
   if (error || !uid) {
     redirect("/auth/login");

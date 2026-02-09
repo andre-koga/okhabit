@@ -8,6 +8,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import emojiRegex from "emoji-regex";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   BookmarkIcon,
   Smile,
@@ -90,9 +100,11 @@ export default function JournalForm({
   );
   const [saving, setSaving] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
 
   const characterCount = textContent.length;
-  const characterLimit = 500;
+  const characterLimit = 300;
   const isViewMode = mode === "view";
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -172,20 +184,19 @@ export default function JournalForm({
 
       if (error) throw error;
 
-      // Redirect back to home or show success
-      alert("Journal entry saved successfully!");
-      router.push("/");
+      // Show success dialog
+      setShowSuccessDialog(true);
     } catch (error) {
       console.error("Error saving journal:", error);
-      alert("Failed to save journal entry. Please try again.");
+      setShowErrorDialog(true);
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="space-y-4">
-      {/* Header with back button and edit button */}
+    <div className="space-y-2">
+      {/* Header with back button, date, and edit button */}
       <div className="flex items-center justify-between mb-4">
         <Button
           variant="ghost"
@@ -208,15 +219,94 @@ export default function JournalForm({
         )}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>How was your day?</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      {/* Date Display */}
+      <div className="text-center pt-10">
+        <h1 className="text-4xl font-bold mb-1">
+          {new Date(date).toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+          })}
+        </h1>
+        <p className="text-lg text-muted-foreground">
+          {new Date(date).toLocaleDateString("en-US", {
+            weekday: "long",
+          })}
+        </p>
+      </div>
+
+      <Card className="border-0 shadow-none">
+        <CardContent className="space-y-6 px-2 pb-4">
+          {/* Day Emoji */}
+          <div className="space-y-2 flex flex-col items-center mt-8 mb-8">
+            {isViewMode ? (
+              <>
+                <div className="text-4xl">
+                  {dayEmoji || (
+                    <span className="text-muted-foreground text-base">
+                      No emoji selected
+                    </span>
+                  )}
+                </div>
+                <Label className="mt-6">Day Emoji</Label>
+              </>
+            ) : (
+              <>
+                <Input
+                  type="text"
+                  placeholder=""
+                  value={dayEmoji}
+                  onChange={(e) => {
+                    // Use emoji-regex to extract only valid emojis
+                    const regex = emojiRegex();
+                    const matches = e.target.value.match(regex);
+                    // Take only the first emoji if any valid emojis are found
+                    setDayEmoji(
+                      matches && matches.length > 0 ? matches[0] : "",
+                    );
+                  }}
+                  className="w-24 h-24 rounded-full text-3xl text-center"
+                  maxLength={10}
+                />
+                <Label className="mt-6">Day Emoji</Label>
+              </>
+            )}
+          </div>
+
+          {/* Text Content */}
+          <div className="space-y-2 flex flex-col items-center">
+            <div className="flex items-center justify-between w-full max-w-2xl">
+              <Label htmlFor="text-content">Your Thoughts</Label>
+              {!isViewMode && (
+                <span
+                  className={`text-sm ${characterCount > characterLimit ? "text-destructive" : "text-muted-foreground"}`}
+                >
+                  {characterCount}/{characterLimit}
+                </span>
+              )}
+            </div>
+            {isViewMode ? (
+              <div className="p-3 border rounded-lg min-h-[100px] whitespace-pre-wrap w-full max-w-2xl">
+                {textContent || (
+                  <span className="text-muted-foreground">No notes</span>
+                )}
+              </div>
+            ) : (
+              <Textarea
+                id="text-content"
+                placeholder="Write about your day... What did you accomplish? How did you feel?"
+                value={textContent}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                  setTextContent(e.target.value.slice(0, 300))
+                }
+                className="min-h-[150px] resize-none w-full max-w-2xl"
+              />
+            )}
+          </div>
+
           {/* Day Quality */}
-          <div className="space-y-2">
+          <div className="space-y-2 flex flex-col items-center">
             <Label>Day Quality</Label>
-            <div className="flex gap-2">
+            <div className="flex gap-2 justify-center max-w-2xl w-full">
               {QUALITY_OPTIONS.map((option) => (
                 <button
                   key={option.value}
@@ -236,94 +326,9 @@ export default function JournalForm({
             </div>
           </div>
 
-          {/* Text Content */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="text-content">Your Thoughts</Label>
-              {!isViewMode && (
-                <span
-                  className={`text-sm ${characterCount > characterLimit ? "text-destructive" : "text-muted-foreground"}`}
-                >
-                  {characterCount}/{characterLimit}
-                </span>
-              )}
-            </div>
-            {isViewMode ? (
-              <div className="p-3 border rounded-lg min-h-[100px] whitespace-pre-wrap">
-                {textContent || (
-                  <span className="text-muted-foreground">No notes</span>
-                )}
-              </div>
-            ) : (
-              <Textarea
-                id="text-content"
-                placeholder="Write about your day... What did you accomplish? How did you feel?"
-                value={textContent}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                  setTextContent(e.target.value.slice(0, 500))
-                }
-                className="min-h-[150px] resize-none"
-              />
-            )}
-          </div>
-
-          {/* Day Emoji */}
-          <div className="space-y-2">
-            <Label>Day Emoji</Label>
-            {isViewMode ? (
-              <div className="text-4xl">
-                {dayEmoji || (
-                  <span className="text-muted-foreground text-base">
-                    No emoji selected
-                  </span>
-                )}
-              </div>
-            ) : (
-              <>
-                <div className="flex gap-2 items-center">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                    className="w-16 h-16 text-3xl"
-                  >
-                    {dayEmoji || <Smile className="h-6 w-6" />}
-                  </Button>
-                  {dayEmoji && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDayEmoji("")}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-                {showEmojiPicker && (
-                  <div className="grid grid-cols-10 gap-2 p-4 border rounded-lg">
-                    {COMMON_EMOJIS.map((emoji) => (
-                      <button
-                        key={emoji}
-                        type="button"
-                        onClick={() => {
-                          setDayEmoji(emoji);
-                          setShowEmojiPicker(false);
-                        }}
-                        className="text-2xl hover:scale-125 transition-transform"
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-
           {/* Bookmark Toggle */}
           {!isViewMode && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 justify-center">
               <Button
                 type="button"
                 variant={isBookmarked ? "default" : "outline"}
@@ -338,8 +343,11 @@ export default function JournalForm({
             </div>
           )}
 
+          {/* Divider */}
+          <div className="border-t border-dashed border-border my-8"></div>
+
           {/* Photo Upload */}
-          <div className="space-y-2">
+          <div className="space-y-2 flex flex-col items-center">
             <Label>
               Photos{" "}
               {isViewMode && existingPhotoUrls.length === 0 ? "" : "(optional)"}
@@ -387,7 +395,7 @@ export default function JournalForm({
                 </div>
                 {!isViewMode &&
                   photoFiles.length + existingPhotoUrls.length < 10 && (
-                    <>
+                    <div className="w-full max-w-2xl space-y-2">
                       <Input
                         type="file"
                         accept="image/*"
@@ -395,17 +403,17 @@ export default function JournalForm({
                         onChange={handlePhotoSelect}
                         className="cursor-pointer"
                       />
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground text-center">
                         Upload up to 10 photos (max 5MB each)
                       </p>
-                    </>
+                    </div>
                   )}
               </>
             )}
           </div>
 
           {/* Video Upload */}
-          <div className="space-y-2">
+          <div className="space-y-2 flex flex-col items-center">
             <Label>
               Video{" "}
               {isViewMode && !existingVideoUrl && !videoFile
@@ -417,7 +425,7 @@ export default function JournalForm({
             ) : (
               <>
                 {(existingVideoUrl || videoFile) && (
-                  <div className="flex items-center gap-2 p-3 border rounded-lg">
+                  <div className="flex items-center gap-2 p-3 border rounded-lg w-full max-w-2xl">
                     <Video className="h-5 w-5" />
                     <span className="text-sm flex-1">
                       {videoFile?.name || "Existing video"}
@@ -438,17 +446,17 @@ export default function JournalForm({
                   </div>
                 )}
                 {!isViewMode && !existingVideoUrl && !videoFile && (
-                  <>
+                  <div className="w-full max-w-2xl space-y-2">
                     <Input
                       type="file"
                       accept="video/*"
                       onChange={handleVideoSelect}
                       className="cursor-pointer"
                     />
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground text-center">
                       Upload one video (max 50MB)
                     </p>
-                  </>
+                  </div>
                 )}
               </>
             )}
@@ -456,11 +464,13 @@ export default function JournalForm({
 
           {/* Save Button */}
           {!isViewMode && (
-            <div className="flex gap-2 pt-4">
+            <div className="flex gap-2 pt-4 justify-center">
               <Button
                 onClick={handleSave}
-                disabled={saving || !dayQuality}
-                className="flex-1"
+                disabled={
+                  saving || !dayQuality || !dayEmoji || !textContent.trim()
+                }
+                className="flex-1 max-w-xs"
               >
                 {saving ? (
                   "Saving..."
@@ -482,6 +492,38 @@ export default function JournalForm({
           )}
         </CardContent>
       </Card>
+
+      {/* Success Dialog */}
+      <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Success!</AlertDialogTitle>
+            <AlertDialogDescription>
+              Journal entry saved successfully.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => router.push("/")}>
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Error Dialog */}
+      <AlertDialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Error</AlertDialogTitle>
+            <AlertDialogDescription>
+              Failed to save journal entry. Please try again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction>OK</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

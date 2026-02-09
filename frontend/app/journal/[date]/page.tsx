@@ -52,19 +52,8 @@ export default async function JournalPage({
     edit === "true" || !journalEntry || canEdit ? "edit" : "view";
 
   return (
-    <div className="min-h-screen p-8 pb-24">
+    <div className="min-h-screen px-4 py-4 pb-24">
       <div className="max-w-2xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Daily Journal</h1>
-          <p className="text-muted-foreground">
-            {new Date(date).toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </p>
-        </div>
         <JournalForm
           userId={uid}
           date={date}
