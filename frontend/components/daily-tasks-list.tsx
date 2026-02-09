@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Play,
   Square,
+  X,
 } from "lucide-react";
 
 type Activity = Tables<"activities">;
@@ -329,10 +330,23 @@ export default function DailyTasksList({
     return group?.color || "#cccccc";
   };
 
-  const completionRate =
-    dailyActivities.length > 0
-      ? Math.round((completedTasks.length / dailyActivities.length) * 100)
-      : 0;
+  const completionRate = (() => {
+    const nonNeverTasks = dailyActivities.filter((a) => a.routine !== "never");
+    if (nonNeverTasks.length === 0) return 0;
+    const completedNonNeverTasks = completedTasks.filter((taskId) => {
+      const activity = dailyActivities.find((a) => a.id === taskId);
+      return activity && activity.routine !== "never";
+    }).length;
+    return Math.round((completedNonNeverTasks / nonNeverTasks.length) * 100);
+  })();
+
+  const nonNeverTasksCount = dailyActivities.filter(
+    (a) => a.routine !== "never",
+  ).length;
+  const completedNonNeverTasksCount = completedTasks.filter((taskId) => {
+    const activity = dailyActivities.find((a) => a.id === taskId);
+    return activity && activity.routine !== "never";
+  }).length;
 
   return (
     <Card>
@@ -369,7 +383,7 @@ export default function DailyTasksList({
           </p>
           {dailyActivities.length > 0 && (
             <p className="text-muted-foreground">
-              {completedTasks.length} / {dailyActivities.length} (
+              {completedNonNeverTasksCount} / {nonNeverTasksCount} (
               {completionRate}
               %)
             </p>
@@ -391,17 +405,40 @@ export default function DailyTasksList({
           dailyActivities.map((activity) => {
             const timeSpent = calculateActivityTime(activity.id);
             const isCurrentActivity = currentActivityId === activity.id;
+            const isNeverTask = activity.routine === "never";
+            const isCompleted = completedTasks.includes(activity.id);
 
             return (
               <div
                 key={activity.id}
                 className="flex items-center gap-3 p-3 border rounded-md hover:bg-accent"
               >
-                <Checkbox
-                  id={activity.id}
-                  checked={completedTasks.includes(activity.id)}
-                  onCheckedChange={() => toggleTask(activity.id)}
-                />
+                {isNeverTask ? (
+                  <div
+                    onClick={() => toggleTask(activity.id)}
+                    className={`flex items-center justify-center w-4 h-4 rounded border border-destructive cursor-pointer ${
+                      isCompleted ? "bg-destructive" : "bg-transparent"
+                    }`}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        toggleTask(activity.id);
+                      }
+                    }}
+                  >
+                    {isCompleted && (
+                      <X className="h-3 w-3 text-destructive-foreground" />
+                    )}
+                  </div>
+                ) : (
+                  <Checkbox
+                    id={activity.id}
+                    checked={completedTasks.includes(activity.id)}
+                    onCheckedChange={() => toggleTask(activity.id)}
+                  />
+                )}
                 <label
                   htmlFor={activity.id}
                   className="flex items-center gap-2 flex-1 cursor-pointer"
