@@ -120,6 +120,23 @@ export default function ArchivedItems({ userId }: ArchivedItemsProps) {
 
   const handleUnarchiveActivity = async (id: string) => {
     try {
+      // Get the activity to find its group
+      const activity = archivedActivities.find((a) => a.id === id);
+      if (!activity) return;
+
+      // Check if the group is archived
+      const group = allGroups.find((g) => g.id === activity.group_id);
+      if (group?.is_archived) {
+        // Unarchive the group first
+        const { error: groupError } = await supabase
+          .from("activity_groups")
+          .update({ is_archived: false })
+          .eq("id", group.id);
+
+        if (groupError) throw groupError;
+      }
+
+      // Unarchive the activity
       const { error } = await supabase
         .from("activities")
         .update({ is_archived: false })

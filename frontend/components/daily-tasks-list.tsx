@@ -6,7 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tables, TablesInsert } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
-import { CalendarDays, ChevronLeft, ChevronRight, Play } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Play,
+  Square,
+} from "lucide-react";
 
 type Activity = Tables<"activities">;
 type ActivityGroup = Tables<"activity_groups">;
@@ -34,6 +40,7 @@ export default function DailyTasksList({
   const [currentActivityId, setCurrentActivityId] = useState<string | null>(
     null,
   );
+  const [, setTick] = useState(0); // Force re-render every second
 
   const supabase = createClient();
 
@@ -43,6 +50,17 @@ export default function DailyTasksList({
     loadDailyEntry();
     loadActivityPeriods();
   }, [currentDate, userId]);
+
+  // Update time every second when there's an active activity
+  useEffect(() => {
+    if (!currentActivityId) return;
+
+    const interval = setInterval(() => {
+      setTick((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [currentActivityId]);
 
   const loadDailyEntry = async () => {
     try {
@@ -126,11 +144,12 @@ export default function DailyTasksList({
     const totalSeconds = Math.floor(milliseconds / 1000);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
 
     if (hours > 0) {
-      return `${hours}h ${minutes}m`;
+      return `${hours}h ${minutes}m ${seconds}s`;
     }
-    return `${minutes}m`;
+    return `${minutes}m ${seconds}s`;
   };
 
   const handleStartActivity = async (activityId: string) => {
@@ -402,7 +421,7 @@ export default function DailyTasksList({
                   </span>
                 </label>
                 {timeSpent > 0 && (
-                  <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full">
+                  <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full font-mono">
                     {formatTime(timeSpent)}
                   </span>
                 )}
@@ -410,14 +429,17 @@ export default function DailyTasksList({
                   size="sm"
                   variant={isCurrentActivity ? "default" : "ghost"}
                   onClick={() => handleStartActivity(activity.id)}
-                  disabled={isCurrentActivity}
                   title={
                     isCurrentActivity
-                      ? "Currently active"
+                      ? "Stop this activity"
                       : "Start this activity"
                   }
                 >
-                  <Play className="h-3 w-3" />
+                  {isCurrentActivity ? (
+                    <Square className="h-3 w-3" />
+                  ) : (
+                    <Play className="h-3 w-3" />
+                  )}
                 </Button>
               </div>
             );
