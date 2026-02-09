@@ -216,6 +216,11 @@ export default function ActivitiesManager({
     return group?.color || "#6b7280";
   };
 
+  const isSystemActivity = (activity: Activity) => {
+    const group = groups.find((g) => g.id === activity.group_id);
+    return group?.name === "System";
+  };
+
   const groupedActivities = groups.map((group) => ({
     group,
     activities: activities.filter((a) => a.group_id === group.id),
@@ -486,6 +491,12 @@ export default function ActivitiesManager({
                           size="sm"
                           variant="ghost"
                           onClick={() => handleEdit(activity)}
+                          disabled={isSystemActivity(activity)}
+                          title={
+                            isSystemActivity(activity)
+                              ? "System activities cannot be edited"
+                              : "Edit activity"
+                          }
                         >
                           <Pencil className="h-3 w-3" />
                         </Button>
@@ -493,6 +504,12 @@ export default function ActivitiesManager({
                           size="sm"
                           variant="ghost"
                           onClick={() => handleDelete(activity.id)}
+                          disabled={isSystemActivity(activity)}
+                          title={
+                            isSystemActivity(activity)
+                              ? "System activities cannot be deleted"
+                              : "Delete activity"
+                          }
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
