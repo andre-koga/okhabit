@@ -14,14 +14,14 @@ VALUES (
     ) ON CONFLICT (id) DO NOTHING;
 -- Create a default activity group for system activities
 INSERT INTO activity_groups (user_id, name, color, is_archived)
-VALUES (NEW.id, 'System', '#6B7280', B '0')
+VALUES (NEW.id, 'System', '#6B7280', FALSE)
 RETURNING id INTO default_group_id;
 -- Create Transition activity
 INSERT INTO activities (
         user_id,
         group_id,
         name,
-        color,
+        pattern,
         routine,
         is_completed
     )
@@ -29,9 +29,9 @@ VALUES (
         NEW.id,
         default_group_id,
         'Transition',
-        '#F59E0B',
+        'solid',
         'default',
-        B '0'
+        FALSE
     )
 RETURNING id INTO transition_activity_id;
 -- Create Downtime activity
@@ -39,7 +39,7 @@ INSERT INTO activities (
         user_id,
         group_id,
         name,
-        color,
+        pattern,
         routine,
         is_completed
     )
@@ -47,9 +47,9 @@ VALUES (
         NEW.id,
         default_group_id,
         'Downtime',
-        '#6B7280',
+        'dots',
         'default',
-        B '0'
+        FALSE
     );
 -- Create initial time entry for Transition activity (user is starting their day)
 INSERT INTO time_entries (user_id, activity_id, time_start)

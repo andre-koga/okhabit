@@ -266,6 +266,10 @@ export default function PixelGrid({ userId }: PixelGridProps) {
       setCurrentActivity(null);
       setCurrentPeriod(null);
       await loadActivityPeriods(dailyEntry.id);
+
+      // Open journal page in new tab
+      const today = new Date().toISOString().split("T")[0];
+      window.open(`/journal/${today}`, "_blank");
     } catch (error) {
       console.error("Error going to sleep:", error);
     }

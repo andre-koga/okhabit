@@ -217,6 +217,66 @@ export type Database = {
           },
         ]
       }
+      journal_entries: {
+        Row: {
+          created_at: string | null
+          daily_entry_id: string | null
+          day_emoji: string | null
+          day_quality: number | null
+          entry_date: string
+          id: string
+          is_bookmarked: boolean | null
+          photo_urls: string[] | null
+          text_content: string | null
+          updated_at: string | null
+          user_id: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          daily_entry_id?: string | null
+          day_emoji?: string | null
+          day_quality?: number | null
+          entry_date: string
+          id?: string
+          is_bookmarked?: boolean | null
+          photo_urls?: string[] | null
+          text_content?: string | null
+          updated_at?: string | null
+          user_id: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          daily_entry_id?: string | null
+          day_emoji?: string | null
+          day_quality?: number | null
+          entry_date?: string
+          id?: string
+          is_bookmarked?: boolean | null
+          photo_urls?: string[] | null
+          text_content?: string | null
+          updated_at?: string | null
+          user_id?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "journal_entries_daily_entry_id_fkey"
+            columns: ["daily_entry_id"]
+            isOneToOne: false
+            referencedRelation: "daily_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "journal_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       time_entries: {
         Row: {
           activity_id: string
