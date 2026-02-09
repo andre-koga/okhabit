@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tables, TablesInsert } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
@@ -10,6 +9,8 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Play,
   Square,
   X,
@@ -349,29 +350,8 @@ export default function DailyTasksList({
   }).length;
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5" />
-            Daily Tasks
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={() => changeDate(-1)}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              size="sm"
-              variant={isToday ? "default" : "outline"}
-              onClick={goToToday}
-            >
-              Today
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => changeDate(1)}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+    <div className="flex flex-col h-full">
+      <div>
         <div className="flex items-center justify-between text-sm">
           <p className="text-muted-foreground">
             {currentDate.toLocaleDateString("en-US", {
@@ -389,8 +369,8 @@ export default function DailyTasksList({
             </p>
           )}
         </div>
-      </CardHeader>
-      <CardContent className="space-y-2">
+      </div>
+      <div className="space-y-2 mt-4 flex-1">
         {loading && (
           <p className="text-sm text-muted-foreground text-center py-4">
             Loading...
@@ -481,7 +461,50 @@ export default function DailyTasksList({
               </div>
             );
           })}
-      </CardContent>
-    </Card>
+      </div>
+      <div className="flex items-center gap-2 w-full mt-4 pt-4 border-t">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => changeDate(-7)}
+          className="flex-1"
+        >
+          <ChevronsLeft className="h-4 w-4" />
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => changeDate(-1)}
+          className="flex-1"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <Button
+          size="sm"
+          variant={isToday ? "default" : "outline"}
+          onClick={goToToday}
+          style={{ flexGrow: 2 }}
+          className="flex-1"
+        >
+          Today
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => changeDate(1)}
+          className="flex-1"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => changeDate(7)}
+          className="flex-1"
+        >
+          <ChevronsRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
   );
 }

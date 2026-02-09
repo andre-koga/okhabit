@@ -66,18 +66,28 @@ export default function ActivitiesPageContent({
   }
 
   return (
-    <div className="space-y-4 p-4">
-      <ActivityGroupsManager
-        userId={userId}
-        groups={groups}
-        onGroupsChange={loadData}
-      />
-      <ActivitiesManager
-        userId={userId}
-        groups={groups}
-        activities={activities}
-        onActivitiesChange={loadData}
-      />
+    <div className="min-h-screen p-4 pb-20">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-2">Activities</h1>
+          <p className="text-muted-foreground">
+            Manage your activity groups and activities
+          </p>
+        </div>
+        <div className="space-y-4">
+          <ActivityGroupsManager
+            userId={userId}
+            groups={groups}
+            onGroupsChange={loadData}
+          />
+          <ActivitiesManager
+            userId={userId}
+            groups={groups}
+            activities={activities}
+            onActivitiesChange={loadData}
+          />
+        </div>
+      </div>
     </div>
   );
 }

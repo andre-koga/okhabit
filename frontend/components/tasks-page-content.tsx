@@ -62,13 +62,21 @@ export default function TasksPageContent({ userId }: TasksPageContentProps) {
   }
 
   return (
-    <div className="p-4">
-      <DailyTasksList
-        userId={userId}
-        activities={activities}
-        groups={groups}
-        onRefresh={loadData}
-      />
+    <div className="min-h-screen p-4 pb-20">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-2">Daily Tasks</h1>
+          <p className="text-muted-foreground">
+            Track your daily activities and habits
+          </p>
+        </div>
+        <DailyTasksList
+          userId={userId}
+          activities={activities}
+          groups={groups}
+          onRefresh={loadData}
+        />
+      </div>
     </div>
   );
 }
