@@ -6,11 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tables, TablesInsert } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
-import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Play } from "lucide-react";
 
 type Activity = Tables<"activities">;
 type ActivityGroup = Tables<"activity_groups">;
 type DailyEntry = Tables<"daily_entries">;
+type ActivityPeriod = Tables<"activity_periods">;
 
 interface DailyTasksListProps {
   userId: string;
@@ -29,6 +30,10 @@ export default function DailyTasksList({
   const [dailyEntry, setDailyEntry] = useState<DailyEntry | null>(null);
   const [completedTasks, setCompletedTasks] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [activityPeriods, setActivityPeriods] = useState<ActivityPeriod[]>([]);
+  const [currentActivityId, setCurrentActivityId] = useState<string | null>(
+    null,
+  );
 
   const supabase = createClient();
 
@@ -36,6 +41,7 @@ export default function DailyTasksList({
 
   useEffect(() => {
     loadDailyEntry();
+    loadActivityPeriods();
   }, [currentDate, userId]);
 
   const loadDailyEntry = async () => {
@@ -61,10 +67,121 @@ export default function DailyTasksList({
 
       setDailyEntry(data);
       setCompletedTasks(data?.completed_tasks || []);
+      setCurrentActivityId(data?.current_activity_id || null);
     } catch (error) {
       console.error("Error loading daily entry:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadActivityPeriods = async () => {
+    try {
+      const startOfDay = new Date(currentDate);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(currentDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      // First get the daily entry for this date
+      const { data: dayEntry } = await supabase
+        .from("daily_entries")
+        .select("id")
+        .eq("user_id", userId)
+        .gte("date", startOfDay.toISOString())
+        .lte("date", endOfDay.toISOString())
+        .maybeSingle();
+
+      if (!dayEntry) {
+        setActivityPeriods([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("activity_periods")
+        .select("*")
+        .eq("daily_entry_id", dayEntry.id)
+        .order("start_time");
+
+      if (error) throw error;
+      setActivityPeriods(data || []);
+    } catch (error) {
+      console.error("Error loading activity periods:", error);
+    }
+  };
+
+  const calculateActivityTime = (activityId: string): number => {
+    const periods = activityPeriods.filter((p) => p.activity_id === activityId);
+
+    return periods.reduce((total, period) => {
+      const start = new Date(period.start_time).getTime();
+      const end = period.end_time
+        ? new Date(period.end_time).getTime()
+        : Date.now();
+      return total + (end - start);
+    }, 0);
+  };
+
+  const formatTime = (milliseconds: number): string => {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  };
+
+  const handleStartActivity = async (activityId: string) => {
+    if (!dailyEntry) {
+      alert("Please wake up first from the home page.");
+      return;
+    }
+
+    if (currentActivityId === activityId) {
+      return; // Already on this activity
+    }
+
+    try {
+      const now = new Date();
+
+      // Find and close the current activity period
+      if (currentActivityId) {
+        const { data: currentPeriod } = await supabase
+          .from("activity_periods")
+          .select("*")
+          .eq("daily_entry_id", dailyEntry.id)
+          .is("end_time", null)
+          .maybeSingle();
+
+        if (currentPeriod) {
+          await supabase
+            .from("activity_periods")
+            .update({ end_time: now.toISOString() })
+            .eq("id", currentPeriod.id);
+        }
+      }
+
+      // Create new activity period
+      await supabase.from("activity_periods").insert({
+        user_id: userId,
+        daily_entry_id: dailyEntry.id,
+        activity_id: activityId,
+        start_time: now.toISOString(),
+        end_time: null,
+      });
+
+      // Update daily entry with new current activity
+      await supabase
+        .from("daily_entries")
+        .update({ current_activity_id: activityId })
+        .eq("id", dailyEntry.id);
+
+      setCurrentActivityId(activityId);
+      loadActivityPeriods();
+    } catch (error) {
+      console.error("Error switching activity:", error);
     }
   };
 
@@ -252,36 +369,59 @@ export default function DailyTasksList({
           </p>
         )}
         {!loading &&
-          dailyActivities.map((activity) => (
-            <div
-              key={activity.id}
-              className="flex items-center gap-3 p-3 border rounded-md hover:bg-accent"
-            >
-              <Checkbox
-                id={activity.id}
-                checked={completedTasks.includes(activity.id)}
-                onCheckedChange={() => toggleTask(activity.id)}
-              />
-              <label
-                htmlFor={activity.id}
-                className="flex items-center gap-2 flex-1 cursor-pointer"
+          dailyActivities.map((activity) => {
+            const timeSpent = calculateActivityTime(activity.id);
+            const isCurrentActivity = currentActivityId === activity.id;
+
+            return (
+              <div
+                key={activity.id}
+                className="flex items-center gap-3 p-3 border rounded-md hover:bg-accent"
               >
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: getGroupColor(activity) }}
+                <Checkbox
+                  id={activity.id}
+                  checked={completedTasks.includes(activity.id)}
+                  onCheckedChange={() => toggleTask(activity.id)}
                 />
-                <span
-                  className={
-                    completedTasks.includes(activity.id)
-                      ? "line-through text-muted-foreground"
-                      : ""
+                <label
+                  htmlFor={activity.id}
+                  className="flex items-center gap-2 flex-1 cursor-pointer"
+                >
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: getGroupColor(activity) }}
+                  />
+                  <span
+                    className={
+                      completedTasks.includes(activity.id)
+                        ? "line-through text-muted-foreground"
+                        : ""
+                    }
+                  >
+                    {activity.name}
+                  </span>
+                </label>
+                {timeSpent > 0 && (
+                  <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full">
+                    {formatTime(timeSpent)}
+                  </span>
+                )}
+                <Button
+                  size="sm"
+                  variant={isCurrentActivity ? "default" : "ghost"}
+                  onClick={() => handleStartActivity(activity.id)}
+                  disabled={isCurrentActivity}
+                  title={
+                    isCurrentActivity
+                      ? "Currently active"
+                      : "Start this activity"
                   }
                 >
-                  {activity.name}
-                </span>
-              </label>
-            </div>
-          ))}
+                  <Play className="h-3 w-3" />
+                </Button>
+              </div>
+            );
+          })}
       </CardContent>
     </Card>
   );

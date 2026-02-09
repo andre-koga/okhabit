@@ -196,6 +196,18 @@ export default function PixelGrid({ userId }: PixelGridProps) {
     try {
       const now = new Date();
 
+      // Find the Downtime activity from the System group
+      const systemGroup = groups.find((g) => g.name === "System");
+      const downtimeActivity = activities.find(
+        (a) => a.name === "Downtime" && a.group_id === systemGroup?.id,
+      );
+      const startActivity = downtimeActivity || activities[0];
+
+      if (!startActivity) {
+        alert("No activities available. Please create an activity first.");
+        return;
+      }
+
       // Create today's entry
       const { data: newEntry, error: entryError } = await supabase
         .from("daily_entries")
@@ -204,7 +216,7 @@ export default function PixelGrid({ userId }: PixelGridProps) {
           date: now.toISOString(),
           wake_time: now.toISOString(),
           is_awake: true,
-          current_activity_id: activities[0]?.id || null,
+          current_activity_id: startActivity.id,
         })
         .select()
         .single();
@@ -217,7 +229,7 @@ export default function PixelGrid({ userId }: PixelGridProps) {
         .insert({
           user_id: userId,
           daily_entry_id: newEntry.id,
-          activity_id: activities[0].id,
+          activity_id: startActivity.id,
           start_time: now.toISOString(),
           end_time: null,
         })
@@ -228,7 +240,7 @@ export default function PixelGrid({ userId }: PixelGridProps) {
 
       setDailyEntry(newEntry);
       setIsAwake(true);
-      setCurrentActivity(activities[0] || null);
+      setCurrentActivity(startActivity);
       setCurrentPeriod(newPeriod);
       await loadActivityPeriods(newEntry.id);
     } catch (error) {

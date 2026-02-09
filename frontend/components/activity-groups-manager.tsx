@@ -78,6 +78,10 @@ export default function ActivityGroupsManager({
   };
 
   const handleEdit = (group: ActivityGroup) => {
+    if (group.name === "System") {
+      alert("System group cannot be edited.");
+      return;
+    }
     setEditingId(group.id);
     setFormData({
       name: group.name || "",
@@ -225,6 +229,12 @@ export default function ActivityGroupsManager({
                   size="sm"
                   variant="ghost"
                   onClick={() => handleEdit(group)}
+                  disabled={group.name === "System"}
+                  title={
+                    group.name === "System"
+                      ? "System group cannot be edited"
+                      : "Edit group"
+                  }
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
