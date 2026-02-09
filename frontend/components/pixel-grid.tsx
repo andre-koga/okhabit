@@ -110,6 +110,7 @@ export default function PixelGrid({ userId }: PixelGridProps) {
         .from("activities")
         .select("*")
         .eq("user_id", userId)
+        .eq("is_archived", false)
         .order("name");
 
       if (error) throw error;
@@ -145,8 +146,15 @@ export default function PixelGrid({ userId }: PixelGridProps) {
             .from("activities")
             .select("*")
             .eq("id", data.current_activity_id)
-            .single();
-          setCurrentActivity(activity);
+            .eq("is_archived", false)
+            .maybeSingle();
+
+          if (activity) {
+            setCurrentActivity(activity);
+          } else {
+            // Current activity is archived, switch to Transition
+            await switchToTransitionActivity(data.id);
+          }
         }
       }
     } catch (error) {
@@ -190,6 +198,65 @@ export default function PixelGrid({ userId }: PixelGridProps) {
   const getGroupColor = (activity: Activity): string => {
     const group = groups.find((g) => g.id === activity.group_id);
     return group?.color || "#cccccc";
+  };
+
+  const switchToTransitionActivity = async (dailyEntryId: string) => {
+    try {
+      // Find Transition activity from System group
+      const systemGroup = groups.find((g) => g.name === "System");
+      const transitionActivity = activities.find(
+        (a) => a.name === "Transition" && a.group_id === systemGroup?.id,
+      );
+
+      if (!transitionActivity) {
+        console.error("Transition activity not found");
+        return;
+      }
+
+      const now = new Date();
+
+      // Close any current activity period
+      const { data: currentPeriod } = await supabase
+        .from("activity_periods")
+        .select("*")
+        .eq("daily_entry_id", dailyEntryId)
+        .is("end_time", null)
+        .maybeSingle();
+
+      if (currentPeriod) {
+        await supabase
+          .from("activity_periods")
+          .update({ end_time: now.toISOString() })
+          .eq("id", currentPeriod.id);
+      }
+
+      // Create new period for Transition
+      const { data: newPeriod } = await supabase
+        .from("activity_periods")
+        .insert({
+          user_id: userId,
+          daily_entry_id: dailyEntryId,
+          activity_id: transitionActivity.id,
+          start_time: now.toISOString(),
+          end_time: null,
+        })
+        .select()
+        .single();
+
+      // Update daily entry
+      await supabase
+        .from("daily_entries")
+        .update({ current_activity_id: transitionActivity.id })
+        .eq("id", dailyEntryId);
+
+      setCurrentActivity(transitionActivity);
+      if (newPeriod) {
+        setCurrentPeriod(newPeriod);
+      }
+      await loadActivityPeriods(dailyEntryId);
+    } catch (error) {
+      console.error("Error switching to Transition:", error);
+    }
   };
 
   const handleWakeUp = async () => {

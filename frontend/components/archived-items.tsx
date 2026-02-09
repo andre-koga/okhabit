@@ -8,6 +8,16 @@ import { createClient } from "@/lib/supabase/client";
 import { ArchiveRestore, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PATTERN_OPTIONS } from "@/lib/colors";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Activity = Tables<"activities">;
 type ActivityGroup = Tables<"activity_groups">;
@@ -21,6 +31,12 @@ export default function ArchivedItems({ userId }: ArchivedItemsProps) {
   const [archivedActivities, setArchivedActivities] = useState<Activity[]>([]);
   const [allGroups, setAllGroups] = useState<ActivityGroup[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean;
+    type: "activity" | "group" | null;
+    id: string | null;
+  }>({ open: false, type: null, id: null });
+  const [systemDialog, setSystemDialog] = useState(false);
 
   const supabase = createClient();
 
@@ -93,28 +109,43 @@ export default function ArchivedItems({ userId }: ArchivedItemsProps) {
   const handleDeleteGroup = async (id: string) => {
     const group = archivedGroups.find((g) => g.id === id);
     if (group?.name === "System") {
-      alert("System group cannot be deleted.");
+      setSystemDialog(true);
       return;
     }
 
-    if (
-      !confirm(
-        "Permanently delete this group? This action cannot be undone. All activities in this group will also be deleted.",
-      )
-    ) {
-      return;
-    }
+    setDeleteDialog({ open: true, type: "group", id });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteDialog.id || !deleteDialog.type) return;
 
     try {
-      const { error } = await supabase
-        .from("activity_groups")
-        .delete()
-        .eq("id", id);
+      if (deleteDialog.type === "group") {
+        // Switch to Transition if any activity in this group is currently active
+        await switchToTransition(undefined, deleteDialog.id);
 
-      if (error) throw error;
+        const { error } = await supabase
+          .from("activity_groups")
+          .delete()
+          .eq("id", deleteDialog.id);
+
+        if (error) throw error;
+      } else if (deleteDialog.type === "activity") {
+        // Switch to Transition if this activity is currently active
+        await switchToTransition(deleteDialog.id, undefined);
+
+        const { error } = await supabase
+          .from("activities")
+          .delete()
+          .eq("id", deleteDialog.id);
+
+        if (error) throw error;
+      }
+
+      setDeleteDialog({ open: false, type: null, id: null });
       loadArchivedItems();
     } catch (error) {
-      console.error("Error deleting group:", error);
+      console.error("Error deleting:", error);
     }
   };
 
@@ -149,31 +180,97 @@ export default function ArchivedItems({ userId }: ArchivedItemsProps) {
     }
   };
 
+  const switchToTransition = async (activityId?: string, groupId?: string) => {
+    try {
+      // Get today's daily entry
+      const today = new Date().toISOString().split("T")[0];
+      const { data: dailyEntry } = await supabase
+        .from("daily_entries")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("date", today)
+        .maybeSingle();
+
+      if (!dailyEntry || !dailyEntry.current_activity_id) return;
+
+      let shouldSwitch = false;
+
+      if (activityId) {
+        // Check if the specific activity is currently active
+        shouldSwitch = dailyEntry.current_activity_id === activityId;
+      } else if (groupId) {
+        // Check if current activity belongs to the group being deleted
+        const { data: currentActivity } = await supabase
+          .from("activities")
+          .select("*")
+          .eq("id", dailyEntry.current_activity_id)
+          .maybeSingle();
+
+        shouldSwitch = currentActivity?.group_id === groupId;
+      }
+
+      if (!shouldSwitch) return;
+
+      // Find Transition activity from System group
+      const systemGroup = allGroups.find((g) => g.name === "System");
+      if (!systemGroup) return;
+
+      const { data: transitionActivity } = await supabase
+        .from("activities")
+        .select("*")
+        .eq("group_id", systemGroup.id)
+        .eq("name", "Transition")
+        .eq("is_archived", false)
+        .maybeSingle();
+
+      if (!transitionActivity) return;
+
+      const now = new Date();
+
+      // Close current activity period
+      const { data: currentPeriod } = await supabase
+        .from("activity_periods")
+        .select("*")
+        .eq("daily_entry_id", dailyEntry.id)
+        .is("end_time", null)
+        .maybeSingle();
+
+      if (currentPeriod) {
+        await supabase
+          .from("activity_periods")
+          .update({ end_time: now.toISOString() })
+          .eq("id", currentPeriod.id);
+      }
+
+      // Create new period for Transition
+      await supabase.from("activity_periods").insert({
+        user_id: userId,
+        daily_entry_id: dailyEntry.id,
+        activity_id: transitionActivity.id,
+        start_time: now.toISOString(),
+        end_time: null,
+      });
+
+      // Update daily entry
+      await supabase
+        .from("daily_entries")
+        .update({ current_activity_id: transitionActivity.id })
+        .eq("id", dailyEntry.id);
+    } catch (error) {
+      console.error("Error switching to Transition:", error);
+    }
+  };
+
   const handleDeleteActivity = async (id: string) => {
     const activity = archivedActivities.find((a) => a.id === id);
     const group = allGroups.find((g) => g.id === activity?.group_id);
 
     if (group?.name === "System") {
-      alert("System activities cannot be deleted.");
+      setSystemDialog(true);
       return;
     }
 
-    if (
-      !confirm(
-        "Permanently delete this activity? This action cannot be undone.",
-      )
-    ) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase.from("activities").delete().eq("id", id);
-
-      if (error) throw error;
-      loadArchivedItems();
-    } catch (error) {
-      console.error("Error deleting activity:", error);
-    }
+    setDeleteDialog({ open: true, type: "activity", id });
   };
 
   const getGroupName = (groupId: string) => {
@@ -355,6 +452,50 @@ export default function ArchivedItems({ userId }: ArchivedItemsProps) {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) =>
+          setDeleteDialog({ ...deleteDialog, open })
+        }
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Permanently Delete {deleteDialog.type === \"group\" ? \"Group\" : \"Activity\"}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the{\" \"}
+              {deleteDialog.type === \"group\" ? \"group and all activities in it\" : \"activity\"}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant=\"destructive\" onClick={confirmDelete}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={systemDialog}
+        onOpenChange={setSystemDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>System Items Protected</AlertDialogTitle>
+            <AlertDialogDescription>
+              System activities and groups cannot be deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setSystemDialog(false)}>
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

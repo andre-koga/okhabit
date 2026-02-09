@@ -10,6 +10,16 @@ import { createClient } from "@/lib/supabase/client";
 import { Pencil, Archive, Plus, Play, Square } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PATTERN_OPTIONS } from "@/lib/colors";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Activity = Tables<"activities">;
 type ActivityGroup = Tables<"activity_groups">;
@@ -33,6 +43,10 @@ export default function ActivitiesManager({
 }: ActivitiesManagerProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [archiveDialog, setArchiveDialog] = useState<{
+    open: boolean;
+    activityId: string | null;
+  }>({ open: false, activityId: null });
   const [formData, setFormData] = useState({
     name: "",
     pattern: "solid",
@@ -146,22 +160,97 @@ export default function ActivitiesManager({
     setIsAdding(true);
   };
 
-  const handleArchive = async (id: string) => {
-    if (
-      !confirm(
-        "Archive this activity? You can unarchive it later from Settings > Archived.",
-      )
-    ) {
-      return;
+  const switchToTransition = async (activityId: string) => {
+    try {
+      // Get today's daily entry
+      const today = new Date().toISOString().split("T")[0];
+      const { data: dailyEntry } = await supabase
+        .from("daily_entries")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("date", today)
+        .maybeSingle();
+
+      if (!dailyEntry || dailyEntry.current_activity_id !== activityId) {
+        return; // Not currently active
+      }
+
+      // Find Transition activity from System group (query fresh from DB)
+      const { data: systemGroup } = await supabase
+        .from("activity_groups")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("name", "System")
+        .eq("is_archived", false)
+        .maybeSingle();
+
+      if (!systemGroup) return;
+
+      const { data: transitionActivity } = await supabase
+        .from("activities")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("group_id", systemGroup.id)
+        .eq("name", "Transition")
+        .eq("is_archived", false)
+        .maybeSingle();
+
+      if (!transitionActivity) return;
+
+      const now = new Date();
+
+      // Close current activity period
+      const { data: currentPeriod } = await supabase
+        .from("activity_periods")
+        .select("*")
+        .eq("daily_entry_id", dailyEntry.id)
+        .is("end_time", null)
+        .maybeSingle();
+
+      if (currentPeriod) {
+        await supabase
+          .from("activity_periods")
+          .update({ end_time: now.toISOString() })
+          .eq("id", currentPeriod.id);
+      }
+
+      // Create new period for Transition
+      await supabase.from("activity_periods").insert({
+        user_id: userId,
+        daily_entry_id: dailyEntry.id,
+        activity_id: transitionActivity.id,
+        start_time: now.toISOString(),
+        end_time: null,
+      });
+
+      // Update daily entry
+      await supabase
+        .from("daily_entries")
+        .update({ current_activity_id: transitionActivity.id })
+        .eq("id", dailyEntry.id);
+    } catch (error) {
+      console.error("Error switching to Transition:", error);
     }
+  };
+
+  const handleArchive = async (id: string) => {
+    setArchiveDialog({ open: true, activityId: id });
+  };
+
+  const confirmArchive = async () => {
+    if (!archiveDialog.activityId) return;
 
     try {
+      // Switch to Transition if this activity is currently active
+      await switchToTransition(archiveDialog.activityId);
+
       const { error } = await supabase
         .from("activities")
         .update({ is_archived: true })
-        .eq("id", id);
+        .eq("id", archiveDialog.activityId);
 
       if (error) throw error;
+      setArchiveDialog({ open: false, activityId: null });
       onActivitiesChange();
     } catch (error) {
       console.error("Error archiving activity:", error);
@@ -529,6 +618,29 @@ export default function ActivitiesManager({
           ))}
         </div>
       </CardContent>
+
+      <AlertDialog
+        open={archiveDialog.open}
+        onOpenChange={(open) =>
+          setArchiveDialog({ open, activityId: archiveDialog.activityId })
+        }
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archive Activity</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to archive this activity? You can unarchive
+              it later from Settings &gt; Archived.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmArchive}>
+              Archive
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
