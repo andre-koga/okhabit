@@ -116,6 +116,7 @@ export default function HabitTrackerDashboard({
           <DailyTasksList
             userId={userId}
             activities={activities}
+            groups={groups}
             onRefresh={loadData}
           />
         </div>
