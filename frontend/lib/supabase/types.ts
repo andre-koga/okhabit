@@ -231,6 +231,7 @@ export type Database = {
           is_bookmarked: boolean | null
           photo_urls: string[] | null
           text_content: string | null
+          title: string
           updated_at: string | null
           user_id: string
           video_url: string | null
@@ -245,6 +246,7 @@ export type Database = {
           is_bookmarked?: boolean | null
           photo_urls?: string[] | null
           text_content?: string | null
+          title: string
           updated_at?: string | null
           user_id: string
           video_url?: string | null
@@ -259,6 +261,7 @@ export type Database = {
           is_bookmarked?: boolean | null
           photo_urls?: string[] | null
           text_content?: string | null
+          title?: string
           updated_at?: string | null
           user_id?: string
           video_url?: string | null

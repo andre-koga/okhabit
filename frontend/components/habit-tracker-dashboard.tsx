@@ -20,6 +20,8 @@ export default function HabitTrackerDashboard({
 }: HabitTrackerDashboardProps) {
   const [groups, setGroups] = useState<ActivityGroup[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
+  // Map of groupId to group for quick lookup
+  const groupMap = Object.fromEntries(groups.map((g) => [g.id, g]));
   const [activeTimerId, setActiveTimerId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -108,7 +110,10 @@ export default function HabitTrackerDashboard({
         <div className="space-y-6">
           <TimeTracker
             userId={userId}
-            activities={activities}
+            activities={activities.map((a) => ({
+              ...a,
+              color: groupMap[a.group_id]?.color || undefined,
+            }))}
             activeTimerId={activeTimerId}
             onTimerStart={handleTimerStart}
             onTimerStop={handleTimerStop}

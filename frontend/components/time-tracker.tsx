@@ -7,7 +7,7 @@ import { Tables, TablesInsert } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
 import { Play, Square, Clock } from "lucide-react";
 
-type Activity = Tables<"activities">;
+type Activity = Tables<"activities"> & { color?: string | null };
 type TimeEntry = Tables<"time_entries">;
 
 interface TimeTrackerProps {
