@@ -499,7 +499,12 @@ export default function PixelGrid({ userId }: PixelGridProps) {
         </div>
 
         {!isAwake ? (
-          <Button size="lg" onClick={handleWakeUp} className="gap-2">
+          <Button
+            size="lg"
+            onClick={handleWakeUp}
+            className="gap-2"
+            disabled={activities.length === 0}
+          >
             <Sun className="h-5 w-5" />
             Wake Up
           </Button>
@@ -585,7 +590,7 @@ export default function PixelGrid({ userId }: PixelGridProps) {
       </Card>
 
       {/* Activity Switcher */}
-      {isAwake && (
+      {isAwake && activities.length > 0 && (
         <Card>
           <CardContent className="p-4">
             <h3 className="font-semibold mb-3">Switch Activity</h3>

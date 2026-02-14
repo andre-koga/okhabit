@@ -292,12 +292,11 @@ export default function ActivitiesManager({
         <CardTitle>Activities & Habits</CardTitle>
         {!isAdding && groups.length > 0 && (
           <Button
-            size="sm"
+            size="icon"
             onClick={() => setIsAdding(true)}
             className="flex items-center gap-2"
           >
-            <Plus className="h-4 w-4" />
-            New Activity
+            <Plus />
           </Button>
         )}
       </CardHeader>
@@ -366,7 +365,7 @@ export default function ActivitiesManager({
               {formData.routine === "weekly" && (
                 <div className="mt-3 space-y-2">
                   <Label className="text-sm">Select days:</Label>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex gap-2">
                     {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
                       (day, index) => (
                         <Button
