@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
+import { Suspense } from "react";
 import { PwaInit } from "@/components/pwa-init";
 import { BottomNav } from "@/components/bottom-nav";
 import "./globals.css";
@@ -45,7 +46,9 @@ export default function RootLayout({
           <div className="min-h-screen flex flex-col pb-16">
             <PwaInit />
             {children}
-            <BottomNav />
+            <Suspense fallback={null}>
+              <BottomNav />
+            </Suspense>
           </div>
         </ThemeProvider>
       </body>
