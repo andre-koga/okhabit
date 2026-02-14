@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { Suspense } from "react";
 import JournalForm from "@/components/journal-form";
 
 interface JournalPageProps {
@@ -11,10 +12,13 @@ interface JournalPageProps {
   }>;
 }
 
-export default async function JournalPage({
+async function JournalContent({
   params,
   searchParams,
-}: JournalPageProps) {
+}: {
+  params: Promise<{ date: string }>;
+  searchParams: Promise<{ edit?: string }>;
+}) {
   const { date } = await params;
   const { edit } = await searchParams;
   const supabase = await createClient();
@@ -63,5 +67,22 @@ export default async function JournalPage({
         />
       </div>
     </div>
+  );
+}
+
+export default async function JournalPage({
+  params,
+  searchParams,
+}: JournalPageProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-12">
+          <p className="text-muted-foreground">Loading journal entry...</p>
+        </div>
+      }
+    >
+      <JournalContent params={params} searchParams={searchParams} />
+    </Suspense>
   );
 }

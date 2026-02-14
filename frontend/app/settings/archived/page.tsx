@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { Suspense } from "react";
 import ArchivedItems from "@/components/archived-items";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
-export default async function ArchivedPage() {
+async function ArchivedContent() {
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.getClaims();
@@ -36,5 +37,19 @@ export default async function ArchivedPage() {
         <ArchivedItems userId={uid} />
       </div>
     </div>
+  );
+}
+
+export default async function ArchivedPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-12">
+          <p className="text-muted-foreground">Loading archived items...</p>
+        </div>
+      }
+    >
+      <ArchivedContent />
+    </Suspense>
   );
 }
