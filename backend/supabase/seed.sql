@@ -60,3 +60,10 @@ INSERT INTO auth.identities (
             current_timestamp
         FROM auth.users
     );
+-- Ensure all auth users have corresponding public.users records
+INSERT INTO public.users (id, email, created_at, updated_at)
+SELECT id,
+    email,
+    created_at,
+    updated_at
+FROM auth.users ON CONFLICT (id) DO NOTHING;

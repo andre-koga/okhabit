@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import DailyTasksList from "@/components/daily-tasks-list";
 
 type Activity = Tables<"activities">;
+type ActivityGroup = Tables<"activity_groups">;
 
 interface TasksPageContentProps {
   userId: string;
@@ -13,31 +14,44 @@ interface TasksPageContentProps {
 
 export default function TasksPageContent({ userId }: TasksPageContentProps) {
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [groups, setGroups] = useState<ActivityGroup[]>([]);
   const [loading, setLoading] = useState(true);
 
   const supabase = createClient();
 
-  const loadActivities = useCallback(async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from("activities")
-        .select("*")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: true });
 
-      if (error) throw error;
-      setActivities(data || []);
+      const [activitiesRes, groupsRes] = await Promise.all([
+        supabase
+          .from("activities")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("is_archived", false)
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("activity_groups")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("is_archived", false),
+      ]);
+
+      if (activitiesRes.error) throw activitiesRes.error;
+      if (groupsRes.error) throw groupsRes.error;
+
+      setActivities(activitiesRes.data || []);
+      setGroups(groupsRes.data || []);
     } catch (error) {
-      console.error("Error loading activities:", error);
+      console.error("Error loading data:", error);
     } finally {
       setLoading(false);
     }
   }, [userId, supabase]);
 
   useEffect(() => {
-    loadActivities();
-  }, [loadActivities]);
+    loadData();
+  }, [loadData]);
 
   if (loading) {
     return (
@@ -48,12 +62,21 @@ export default function TasksPageContent({ userId }: TasksPageContentProps) {
   }
 
   return (
-    <div className="p-4">
-      <DailyTasksList
-        userId={userId}
-        activities={activities}
-        onRefresh={loadActivities}
-      />
+    <div className="min-h-screen p-4 pb-20">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-2">Daily Tasks</h1>
+          <p className="text-muted-foreground">
+            Track your daily activities and habits
+          </p>
+        </div>
+        <DailyTasksList
+          userId={userId}
+          activities={activities}
+          groups={groups}
+          onRefresh={loadData}
+        />
+      </div>
     </div>
   );
 }

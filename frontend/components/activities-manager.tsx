@@ -7,8 +7,19 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tables, TablesInsert } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
-import { Pencil, Trash2, Plus, Play, Square } from "lucide-react";
+import { Pencil, Archive, Plus, Play, Square } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { PATTERN_OPTIONS } from "@/lib/colors";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Activity = Tables<"activities">;
 type ActivityGroup = Tables<"activity_groups">;
@@ -32,9 +43,13 @@ export default function ActivitiesManager({
 }: ActivitiesManagerProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [archiveDialog, setArchiveDialog] = useState<{
+    open: boolean;
+    activityId: string | null;
+  }>({ open: false, activityId: null });
   const [formData, setFormData] = useState({
     name: "",
-    color: "#10b981",
+    pattern: "solid",
     group_id: "",
     routine: "daily",
     weeklyDays: [] as number[], // 0 = Sunday, 1 = Monday, etc.
@@ -64,7 +79,7 @@ export default function ActivitiesManager({
           .from("activities")
           .update({
             name: formData.name,
-            color: formData.color,
+            pattern: formData.pattern,
             group_id: formData.group_id,
             routine: routineConfig,
           })
@@ -77,7 +92,7 @@ export default function ActivitiesManager({
         const insertPayload: TablesInsert<"activities"> = {
           user_id: userId,
           name: formData.name,
-          color: formData.color,
+          pattern: formData.pattern,
           group_id: formData.group_id,
           routine: routineConfig,
           is_completed: false,
@@ -93,7 +108,7 @@ export default function ActivitiesManager({
 
       setFormData({
         name: "",
-        color: "#10b981",
+        pattern: "solid",
         group_id: "",
         routine: "daily",
         weeklyDays: [],
@@ -134,7 +149,7 @@ export default function ActivitiesManager({
 
     setFormData({
       name: activity.name || "",
-      color: activity.color || "#10b981",
+      pattern: activity.pattern || "solid",
       group_id: activity.group_id,
       routine: baseRoutine,
       weeklyDays,
@@ -145,18 +160,100 @@ export default function ActivitiesManager({
     setIsAdding(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this activity?")) {
-      return;
+  const switchToTransition = async (activityId: string) => {
+    try {
+      // Get today's daily entry
+      const today = new Date().toISOString().split("T")[0];
+      const { data: dailyEntry } = await supabase
+        .from("daily_entries")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("date", today)
+        .maybeSingle();
+
+      if (!dailyEntry || dailyEntry.current_activity_id !== activityId) {
+        return; // Not currently active
+      }
+
+      // Find Transition activity from System group (query fresh from DB)
+      const { data: systemGroup } = await supabase
+        .from("activity_groups")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("name", "System")
+        .eq("is_archived", false)
+        .maybeSingle();
+
+      if (!systemGroup) return;
+
+      const { data: transitionActivity } = await supabase
+        .from("activities")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("group_id", systemGroup.id)
+        .eq("name", "Transition")
+        .eq("is_archived", false)
+        .maybeSingle();
+
+      if (!transitionActivity) return;
+
+      const now = new Date();
+
+      // Close current activity period
+      const { data: currentPeriod } = await supabase
+        .from("activity_periods")
+        .select("*")
+        .eq("daily_entry_id", dailyEntry.id)
+        .is("end_time", null)
+        .maybeSingle();
+
+      if (currentPeriod) {
+        await supabase
+          .from("activity_periods")
+          .update({ end_time: now.toISOString() })
+          .eq("id", currentPeriod.id);
+      }
+
+      // Create new period for Transition
+      await supabase.from("activity_periods").insert({
+        user_id: userId,
+        daily_entry_id: dailyEntry.id,
+        activity_id: transitionActivity.id,
+        start_time: now.toISOString(),
+        end_time: null,
+      });
+
+      // Update daily entry
+      await supabase
+        .from("daily_entries")
+        .update({ current_activity_id: transitionActivity.id })
+        .eq("id", dailyEntry.id);
+    } catch (error) {
+      console.error("Error switching to Transition:", error);
     }
+  };
+
+  const handleArchive = async (id: string) => {
+    setArchiveDialog({ open: true, activityId: id });
+  };
+
+  const confirmArchive = async () => {
+    if (!archiveDialog.activityId) return;
 
     try {
-      const { error } = await supabase.from("activities").delete().eq("id", id);
+      // Switch to Transition if this activity is currently active
+      await switchToTransition(archiveDialog.activityId);
+
+      const { error } = await supabase
+        .from("activities")
+        .update({ is_archived: true })
+        .eq("id", archiveDialog.activityId);
 
       if (error) throw error;
+      setArchiveDialog({ open: false, activityId: null });
       onActivitiesChange();
     } catch (error) {
-      console.error("Error deleting activity:", error);
+      console.error("Error archiving activity:", error);
     }
   };
 
@@ -165,7 +262,7 @@ export default function ActivitiesManager({
     setEditingId(null);
     setFormData({
       name: "",
-      color: "#10b981",
+      pattern: "solid",
       group_id: "",
       routine: "daily",
       weeklyDays: [],
@@ -187,16 +284,19 @@ export default function ActivitiesManager({
   const formatRoutineDisplay = (routine: string | null) => {
     if (!routine) return "daily";
 
+    if (routine === "anytime") return "anytime";
+    if (routine === "never") return "never";
+
     if (routine.startsWith("weekly:")) {
       const days = routine.split(":")[1].split(",").map(Number);
-      const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      return `Weekly: ${days.map((d) => dayNames[d]).join(", ")}`;
+      const dayNames = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+      return `weekly: ${days.map((d) => dayNames[d]).join(", ")}`;
     } else if (routine.startsWith("monthly:")) {
       const day = routine.split(":")[1];
-      return `Monthly: Day ${day}`;
+      return `monthly: day ${day}`;
     } else if (routine.startsWith("custom:")) {
       const parts = routine.split(":");
-      return `Every ${parts[1]} ${parts[2]}`;
+      return `every ${parts[1]} ${parts[2]}`;
     }
 
     return routine;
@@ -210,6 +310,11 @@ export default function ActivitiesManager({
   const getGroupColor = (groupId: string) => {
     const group = groups.find((g) => g.id === groupId);
     return group?.color || "#6b7280";
+  };
+
+  const isSystemActivity = (activity: Activity) => {
+    const group = groups.find((g) => g.id === activity.group_id);
+    return group?.name === "System";
   };
 
   const groupedActivities = groups.map((group) => ({
@@ -285,10 +390,12 @@ export default function ActivitiesManager({
                 }
                 className="w-full px-3 py-2 border rounded-md"
               >
+                <option value="anytime">Anytime (no schedule)</option>
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
                 <option value="monthly">Monthly</option>
                 <option value="custom">Custom</option>
+                <option value="never">Never (avoid this)</option>
               </select>
 
               {/* Weekly days selection */}
@@ -380,20 +487,24 @@ export default function ActivitiesManager({
               )}
             </div>
             <div>
-              <Label htmlFor="activity-color">Color</Label>
-              <div className="flex gap-2 items-center">
-                <Input
-                  id="activity-color"
-                  type="color"
-                  value={formData.color}
-                  onChange={(e) =>
-                    setFormData({ ...formData, color: e.target.value })
-                  }
-                  className="w-20 h-10"
-                />
-                <span className="text-sm text-muted-foreground">
-                  {formData.color}
-                </span>
+              <Label>Pattern</Label>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {PATTERN_OPTIONS.map((pattern) => (
+                  <button
+                    key={pattern.value}
+                    type="button"
+                    onClick={() =>
+                      setFormData({ ...formData, pattern: pattern.value })
+                    }
+                    className={`px-3 py-2 rounded-md border-2 transition-all text-sm ${
+                      formData.pattern === pattern.value
+                        ? "border-primary bg-primary/10 font-semibold"
+                        : "border-muted hover:border-muted-foreground"
+                    }`}
+                  >
+                    {pattern.name}
+                  </button>
+                ))}
               </div>
             </div>
             <div className="flex gap-2">
@@ -438,10 +549,11 @@ export default function ActivitiesManager({
                     >
                       <div className="flex items-center gap-2 flex-1">
                         <div
-                          className="w-3 h-3 rounded-full"
+                          className="w-3 h-3 rounded"
                           style={{
-                            backgroundColor: activity.color || "#10b981",
+                            backgroundColor: group.color || "#3b82f6",
                           }}
+                          title={`Pattern: ${activity.pattern || "solid"}`}
                         />
                         <span className="text-sm">{activity.name}</span>
                         <Badge variant="secondary" className="text-xs">
@@ -475,15 +587,27 @@ export default function ActivitiesManager({
                           size="sm"
                           variant="ghost"
                           onClick={() => handleEdit(activity)}
+                          disabled={isSystemActivity(activity)}
+                          title={
+                            isSystemActivity(activity)
+                              ? "System activities cannot be edited"
+                              : "Edit activity"
+                          }
                         >
                           <Pencil className="h-3 w-3" />
                         </Button>
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleDelete(activity.id)}
+                          onClick={() => handleArchive(activity.id)}
+                          disabled={isSystemActivity(activity)}
+                          title={
+                            isSystemActivity(activity)
+                              ? "System activities cannot be archived"
+                              : "Archive activity"
+                          }
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Archive className="h-3 w-3" />
                         </Button>
                       </div>
                     </div>
@@ -494,6 +618,29 @@ export default function ActivitiesManager({
           ))}
         </div>
       </CardContent>
+
+      <AlertDialog
+        open={archiveDialog.open}
+        onOpenChange={(open) =>
+          setArchiveDialog({ open, activityId: archiveDialog.activityId })
+        }
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archive Activity</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to archive this activity? You can unarchive
+              it later from Settings &gt; Archived.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmArchive}>
+              Archive
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

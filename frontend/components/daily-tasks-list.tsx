@@ -2,30 +2,47 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tables, TablesInsert } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
-import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Play,
+  Square,
+  X,
+} from "lucide-react";
 
 type Activity = Tables<"activities">;
+type ActivityGroup = Tables<"activity_groups">;
 type DailyEntry = Tables<"daily_entries">;
+type ActivityPeriod = Tables<"activity_periods">;
 
 interface DailyTasksListProps {
   userId: string;
   activities: Activity[];
+  groups: ActivityGroup[];
   onRefresh: () => void;
 }
 
 export default function DailyTasksList({
   userId,
   activities,
+  groups,
   onRefresh,
 }: DailyTasksListProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [dailyEntry, setDailyEntry] = useState<DailyEntry | null>(null);
   const [completedTasks, setCompletedTasks] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [activityPeriods, setActivityPeriods] = useState<ActivityPeriod[]>([]);
+  const [currentActivityId, setCurrentActivityId] = useState<string | null>(
+    null,
+  );
+  const [, setTick] = useState(0); // Force re-render every second
 
   const supabase = createClient();
 
@@ -33,7 +50,19 @@ export default function DailyTasksList({
 
   useEffect(() => {
     loadDailyEntry();
+    loadActivityPeriods();
   }, [currentDate, userId]);
+
+  // Update time every second when there's an active activity
+  useEffect(() => {
+    if (!currentActivityId) return;
+
+    const interval = setInterval(() => {
+      setTick((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [currentActivityId]);
 
   const loadDailyEntry = async () => {
     try {
@@ -50,18 +79,130 @@ export default function DailyTasksList({
         .eq("user_id", userId)
         .gte("date", startOfDay.toISOString())
         .lte("date", endOfDay.toISOString())
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== "PGRST116") {
+      if (error) {
         throw error;
       }
 
       setDailyEntry(data);
       setCompletedTasks(data?.completed_tasks || []);
+      setCurrentActivityId(data?.current_activity_id || null);
     } catch (error) {
       console.error("Error loading daily entry:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadActivityPeriods = async () => {
+    try {
+      const startOfDay = new Date(currentDate);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(currentDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      // First get the daily entry for this date
+      const { data: dayEntry } = await supabase
+        .from("daily_entries")
+        .select("id")
+        .eq("user_id", userId)
+        .gte("date", startOfDay.toISOString())
+        .lte("date", endOfDay.toISOString())
+        .maybeSingle();
+
+      if (!dayEntry) {
+        setActivityPeriods([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("activity_periods")
+        .select("*")
+        .eq("daily_entry_id", dayEntry.id)
+        .order("start_time");
+
+      if (error) throw error;
+      setActivityPeriods(data || []);
+    } catch (error) {
+      console.error("Error loading activity periods:", error);
+    }
+  };
+
+  const calculateActivityTime = (activityId: string): number => {
+    const periods = activityPeriods.filter((p) => p.activity_id === activityId);
+
+    return periods.reduce((total, period) => {
+      const start = new Date(period.start_time).getTime();
+      const end = period.end_time
+        ? new Date(period.end_time).getTime()
+        : Date.now();
+      return total + (end - start);
+    }, 0);
+  };
+
+  const formatTime = (milliseconds: number): string => {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m ${seconds}s`;
+    }
+    return `${minutes}m ${seconds}s`;
+  };
+
+  const handleStartActivity = async (activityId: string) => {
+    if (!dailyEntry) {
+      alert("Please wake up first from the home page.");
+      return;
+    }
+
+    if (currentActivityId === activityId) {
+      return; // Already on this activity
+    }
+
+    try {
+      const now = new Date();
+
+      // Find and close the current activity period
+      if (currentActivityId) {
+        const { data: currentPeriod } = await supabase
+          .from("activity_periods")
+          .select("*")
+          .eq("daily_entry_id", dailyEntry.id)
+          .is("end_time", null)
+          .maybeSingle();
+
+        if (currentPeriod) {
+          await supabase
+            .from("activity_periods")
+            .update({ end_time: now.toISOString() })
+            .eq("id", currentPeriod.id);
+        }
+      }
+
+      // Create new activity period
+      await supabase.from("activity_periods").insert({
+        user_id: userId,
+        daily_entry_id: dailyEntry.id,
+        activity_id: activityId,
+        start_time: now.toISOString(),
+        end_time: null,
+      });
+
+      // Update daily entry with new current activity
+      await supabase
+        .from("daily_entries")
+        .update({ current_activity_id: activityId })
+        .eq("id", dailyEntry.id);
+
+      setCurrentActivityId(activityId);
+      loadActivityPeriods();
+    } catch (error) {
+      console.error("Error switching activity:", error);
     }
   };
 
@@ -121,6 +262,8 @@ export default function DailyTasksList({
   const shouldShowActivity = (activity: Activity) => {
     const routine = activity.routine || "daily";
 
+    if (routine === "anytime") return true;
+    if (routine === "never") return true;
     if (routine === "daily") return true;
 
     if (routine.startsWith("weekly:")) {
@@ -139,10 +282,43 @@ export default function DailyTasksList({
       const interval = parseInt(parts[1]);
       const unit = parts[2];
 
-      // For custom routines, we'd need a reference date (e.g., activity creation date)
-      // For now, we'll show them daily as a fallback
-      // TODO: Implement proper custom interval logic with reference dates
-      return true;
+      if (!activity.created_at) return false;
+
+      const creationDate = new Date(activity.created_at);
+      creationDate.setHours(0, 0, 0, 0);
+
+      const checkDate = new Date(currentDate);
+      checkDate.setHours(0, 0, 0, 0);
+
+      // Calculate difference based on unit
+      if (unit === "days") {
+        const daysDiff = Math.floor(
+          (checkDate.getTime() - creationDate.getTime()) /
+            (1000 * 60 * 60 * 24),
+        );
+        return daysDiff >= 0 && daysDiff % interval === 0;
+      } else if (unit === "weeks") {
+        const daysDiff = Math.floor(
+          (checkDate.getTime() - creationDate.getTime()) /
+            (1000 * 60 * 60 * 24),
+        );
+        const weeksDiff = Math.floor(daysDiff / 7);
+        return (
+          daysDiff >= 0 && weeksDiff % interval === 0 && daysDiff % 7 === 0
+        );
+      } else if (unit === "months") {
+        // For months, check if it's the same day of month and the right month interval
+        const monthsDiff =
+          (checkDate.getFullYear() - creationDate.getFullYear()) * 12 +
+          (checkDate.getMonth() - creationDate.getMonth());
+        return (
+          monthsDiff >= 0 &&
+          monthsDiff % interval === 0 &&
+          checkDate.getDate() === creationDate.getDate()
+        );
+      }
+
+      return false;
     }
 
     return routine === "daily" || !routine;
@@ -150,35 +326,32 @@ export default function DailyTasksList({
 
   const dailyActivities = activities.filter(shouldShowActivity);
 
-  const completionRate =
-    dailyActivities.length > 0
-      ? Math.round((completedTasks.length / dailyActivities.length) * 100)
-      : 0;
+  const getGroupColor = (activity: Activity): string => {
+    const group = groups.find((g) => g.id === activity.group_id);
+    return group?.color || "#cccccc";
+  };
+
+  const completionRate = (() => {
+    const nonNeverTasks = dailyActivities.filter((a) => a.routine !== "never");
+    if (nonNeverTasks.length === 0) return 0;
+    const completedNonNeverTasks = completedTasks.filter((taskId) => {
+      const activity = dailyActivities.find((a) => a.id === taskId);
+      return activity && activity.routine !== "never";
+    }).length;
+    return Math.round((completedNonNeverTasks / nonNeverTasks.length) * 100);
+  })();
+
+  const nonNeverTasksCount = dailyActivities.filter(
+    (a) => a.routine !== "never",
+  ).length;
+  const completedNonNeverTasksCount = completedTasks.filter((taskId) => {
+    const activity = dailyActivities.find((a) => a.id === taskId);
+    return activity && activity.routine !== "never";
+  }).length;
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5" />
-            Daily Tasks
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="outline" onClick={() => changeDate(-1)}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              size="sm"
-              variant={isToday ? "default" : "outline"}
-              onClick={goToToday}
-            >
-              Today
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => changeDate(1)}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+    <div className="flex flex-col h-full">
+      <div>
         <div className="flex items-center justify-between text-sm">
           <p className="text-muted-foreground">
             {currentDate.toLocaleDateString("en-US", {
@@ -190,14 +363,14 @@ export default function DailyTasksList({
           </p>
           {dailyActivities.length > 0 && (
             <p className="text-muted-foreground">
-              {completedTasks.length} / {dailyActivities.length} (
+              {completedNonNeverTasksCount} / {nonNeverTasksCount} (
               {completionRate}
               %)
             </p>
           )}
         </div>
-      </CardHeader>
-      <CardContent className="space-y-2">
+      </div>
+      <div className="space-y-2 mt-4 flex-1">
         {loading && (
           <p className="text-sm text-muted-foreground text-center py-4">
             Loading...
@@ -209,37 +382,129 @@ export default function DailyTasksList({
           </p>
         )}
         {!loading &&
-          dailyActivities.map((activity) => (
-            <div
-              key={activity.id}
-              className="flex items-center gap-3 p-3 border rounded-md hover:bg-accent"
-            >
-              <Checkbox
-                id={activity.id}
-                checked={completedTasks.includes(activity.id)}
-                onCheckedChange={() => toggleTask(activity.id)}
-              />
-              <label
-                htmlFor={activity.id}
-                className="flex items-center gap-2 flex-1 cursor-pointer"
+          dailyActivities.map((activity) => {
+            const timeSpent = calculateActivityTime(activity.id);
+            const isCurrentActivity = currentActivityId === activity.id;
+            const isNeverTask = activity.routine === "never";
+            const isCompleted = completedTasks.includes(activity.id);
+
+            return (
+              <div
+                key={activity.id}
+                className="flex items-center gap-3 p-3 border rounded-md hover:bg-accent"
               >
-                <div
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: activity.color || "#10b981" }}
-                />
-                <span
-                  className={
-                    completedTasks.includes(activity.id)
-                      ? "line-through text-muted-foreground"
-                      : ""
+                {isNeverTask ? (
+                  <div
+                    onClick={() => toggleTask(activity.id)}
+                    className={`flex items-center justify-center w-4 h-4 rounded border border-destructive cursor-pointer ${
+                      isCompleted ? "bg-destructive" : "bg-transparent"
+                    }`}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        toggleTask(activity.id);
+                      }
+                    }}
+                  >
+                    {isCompleted && (
+                      <X className="h-3 w-3 text-destructive-foreground" />
+                    )}
+                  </div>
+                ) : (
+                  <Checkbox
+                    id={activity.id}
+                    checked={completedTasks.includes(activity.id)}
+                    onCheckedChange={() => toggleTask(activity.id)}
+                  />
+                )}
+                <label
+                  htmlFor={activity.id}
+                  className="flex items-center gap-2 flex-1 cursor-pointer"
+                >
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: getGroupColor(activity) }}
+                  />
+                  <span
+                    className={
+                      completedTasks.includes(activity.id)
+                        ? "line-through text-muted-foreground"
+                        : ""
+                    }
+                  >
+                    {activity.name}
+                  </span>
+                </label>
+                {timeSpent > 0 && (
+                  <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full font-mono">
+                    {formatTime(timeSpent)}
+                  </span>
+                )}
+                <Button
+                  size="sm"
+                  variant={isCurrentActivity ? "default" : "ghost"}
+                  onClick={() => handleStartActivity(activity.id)}
+                  title={
+                    isCurrentActivity
+                      ? "Stop this activity"
+                      : "Start this activity"
                   }
                 >
-                  {activity.name}
-                </span>
-              </label>
-            </div>
-          ))}
-      </CardContent>
-    </Card>
+                  {isCurrentActivity ? (
+                    <Square className="h-3 w-3" />
+                  ) : (
+                    <Play className="h-3 w-3" />
+                  )}
+                </Button>
+              </div>
+            );
+          })}
+      </div>
+      <div className="flex items-center gap-2 w-full mt-4 pt-4 border-t">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => changeDate(-7)}
+          className="flex-1"
+        >
+          <ChevronsLeft className="h-4 w-4" />
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => changeDate(-1)}
+          className="flex-1"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <Button
+          size="sm"
+          variant={isToday ? "default" : "outline"}
+          onClick={goToToday}
+          style={{ flexGrow: 2 }}
+          className="flex-1"
+        >
+          Today
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => changeDate(1)}
+          className="flex-1"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => changeDate(7)}
+          className="flex-1"
+        >
+          <ChevronsRight className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
   );
 }
