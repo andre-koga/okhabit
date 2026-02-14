@@ -36,7 +36,6 @@ export default function ArchivedItems({ userId }: ArchivedItemsProps) {
     type: "activity" | "group" | null;
     id: string | null;
   }>({ open: false, type: null, id: null });
-  const [systemDialog, setSystemDialog] = useState(false);
 
   const supabase = createClient();
 
@@ -107,12 +106,6 @@ export default function ArchivedItems({ userId }: ArchivedItemsProps) {
   };
 
   const handleDeleteGroup = async (id: string) => {
-    const group = archivedGroups.find((g) => g.id === id);
-    if (group?.name === "System") {
-      setSystemDialog(true);
-      return;
-    }
-
     setDeleteDialog({ open: true, type: "group", id });
   };
 
@@ -121,8 +114,8 @@ export default function ArchivedItems({ userId }: ArchivedItemsProps) {
 
     try {
       if (deleteDialog.type === "group") {
-        // Switch to Transition if any activity in this group is currently active
-        await switchToTransition(undefined, deleteDialog.id);
+        // Stop current activity if it belongs to this group
+        await stopCurrentActivity(undefined, deleteDialog.id);
 
         const { error } = await supabase
           .from("activity_groups")
@@ -131,8 +124,8 @@ export default function ArchivedItems({ userId }: ArchivedItemsProps) {
 
         if (error) throw error;
       } else if (deleteDialog.type === "activity") {
-        // Switch to Transition if this activity is currently active
-        await switchToTransition(deleteDialog.id, undefined);
+        // Stop current activity if it's the one being deleted
+        await stopCurrentActivity(deleteDialog.id, undefined);
 
         const { error } = await supabase
           .from("activities")
@@ -180,7 +173,7 @@ export default function ArchivedItems({ userId }: ArchivedItemsProps) {
     }
   };
 
-  const switchToTransition = async (activityId?: string, groupId?: string) => {
+  const stopCurrentActivity = async (activityId?: string, groupId?: string) => {
     try {
       // Get today's daily entry
       const today = new Date().toISOString().split("T")[0];
@@ -193,11 +186,11 @@ export default function ArchivedItems({ userId }: ArchivedItemsProps) {
 
       if (!dailyEntry || !dailyEntry.current_activity_id) return;
 
-      let shouldSwitch = false;
+      let shouldStop = false;
 
       if (activityId) {
         // Check if the specific activity is currently active
-        shouldSwitch = dailyEntry.current_activity_id === activityId;
+        shouldStop = dailyEntry.current_activity_id === activityId;
       } else if (groupId) {
         // Check if current activity belongs to the group being deleted
         const { data: currentActivity } = await supabase
@@ -206,24 +199,10 @@ export default function ArchivedItems({ userId }: ArchivedItemsProps) {
           .eq("id", dailyEntry.current_activity_id)
           .maybeSingle();
 
-        shouldSwitch = currentActivity?.group_id === groupId;
+        shouldStop = currentActivity?.group_id === groupId;
       }
 
-      if (!shouldSwitch) return;
-
-      // Find Transition activity from System group
-      const systemGroup = allGroups.find((g) => g.name === "System");
-      if (!systemGroup) return;
-
-      const { data: transitionActivity } = await supabase
-        .from("activities")
-        .select("*")
-        .eq("group_id", systemGroup.id)
-        .eq("name", "Transition")
-        .eq("is_archived", false)
-        .maybeSingle();
-
-      if (!transitionActivity) return;
+      if (!shouldStop) return;
 
       const now = new Date();
 
@@ -242,34 +221,17 @@ export default function ArchivedItems({ userId }: ArchivedItemsProps) {
           .eq("id", currentPeriod.id);
       }
 
-      // Create new period for Transition
-      await supabase.from("activity_periods").insert({
-        user_id: userId,
-        daily_entry_id: dailyEntry.id,
-        activity_id: transitionActivity.id,
-        start_time: now.toISOString(),
-        end_time: null,
-      });
-
-      // Update daily entry
+      // Clear current activity
       await supabase
         .from("daily_entries")
-        .update({ current_activity_id: transitionActivity.id })
+        .update({ current_activity_id: null })
         .eq("id", dailyEntry.id);
     } catch (error) {
-      console.error("Error switching to Transition:", error);
+      console.error("Error stopping current activity:", error);
     }
   };
 
   const handleDeleteActivity = async (id: string) => {
-    const activity = archivedActivities.find((a) => a.id === id);
-    const group = allGroups.find((g) => g.id === activity?.group_id);
-
-    if (group?.name === "System") {
-      setSystemDialog(true);
-      return;
-    }
-
     setDeleteDialog({ open: true, type: "activity", id });
   };
 
@@ -342,11 +304,6 @@ export default function ArchivedItems({ userId }: ArchivedItemsProps) {
                       style={{ backgroundColor: group.color || "#6b7280" }}
                     />
                     <span className="font-medium">{group.name}</span>
-                    {group.name === "System" && (
-                      <Badge variant="secondary" className="text-xs">
-                        System
-                      </Badge>
-                    )}
                   </div>
                   <div className="flex gap-2">
                     <Button
@@ -361,12 +318,7 @@ export default function ArchivedItems({ userId }: ArchivedItemsProps) {
                       size="sm"
                       variant="destructive"
                       onClick={() => handleDeleteGroup(group.id)}
-                      disabled={group.name === "System"}
-                      title={
-                        group.name === "System"
-                          ? "System group cannot be deleted"
-                          : "Permanently delete group"
-                      }
+                      title="Permanently delete group"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -392,7 +344,6 @@ export default function ArchivedItems({ userId }: ArchivedItemsProps) {
             <div className="space-y-2">
               {archivedActivities.map((activity) => {
                 const groupName = getGroupName(activity.group_id);
-                const isSystem = groupName === "System";
 
                 return (
                   <div
@@ -402,11 +353,6 @@ export default function ArchivedItems({ userId }: ArchivedItemsProps) {
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{activity.name}</span>
-                        {isSystem && (
-                          <Badge variant="secondary" className="text-xs">
-                            System
-                          </Badge>
-                        )}
                         <Badge
                           variant="outline"
                           className="text-xs"
@@ -435,12 +381,7 @@ export default function ArchivedItems({ userId }: ArchivedItemsProps) {
                         size="sm"
                         variant="destructive"
                         onClick={() => handleDeleteActivity(activity.id)}
-                        disabled={isSystem}
-                        title={
-                          isSystem
-                            ? "System activities cannot be deleted"
-                            : "Permanently delete activity"
-                        }
+                        title="Permanently delete activity"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -475,22 +416,6 @@ export default function ArchivedItems({ userId }: ArchivedItemsProps) {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction variant="destructive" onClick={confirmDelete}>
               Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={systemDialog} onOpenChange={setSystemDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>System Items Protected</AlertDialogTitle>
-            <AlertDialogDescription>
-              System activities and groups cannot be deleted.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setSystemDialog(false)}>
-              OK
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

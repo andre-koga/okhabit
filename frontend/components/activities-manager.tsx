@@ -160,7 +160,7 @@ export default function ActivitiesManager({
     setIsAdding(true);
   };
 
-  const switchToTransition = async (activityId: string) => {
+  const stopCurrentActivity = async (activityId: string) => {
     try {
       // Get today's daily entry
       const today = new Date().toISOString().split("T")[0];
@@ -174,28 +174,6 @@ export default function ActivitiesManager({
       if (!dailyEntry || dailyEntry.current_activity_id !== activityId) {
         return; // Not currently active
       }
-
-      // Find Transition activity from System group (query fresh from DB)
-      const { data: systemGroup } = await supabase
-        .from("activity_groups")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("name", "System")
-        .eq("is_archived", false)
-        .maybeSingle();
-
-      if (!systemGroup) return;
-
-      const { data: transitionActivity } = await supabase
-        .from("activities")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("group_id", systemGroup.id)
-        .eq("name", "Transition")
-        .eq("is_archived", false)
-        .maybeSingle();
-
-      if (!transitionActivity) return;
 
       const now = new Date();
 
@@ -214,22 +192,13 @@ export default function ActivitiesManager({
           .eq("id", currentPeriod.id);
       }
 
-      // Create new period for Transition
-      await supabase.from("activity_periods").insert({
-        user_id: userId,
-        daily_entry_id: dailyEntry.id,
-        activity_id: transitionActivity.id,
-        start_time: now.toISOString(),
-        end_time: null,
-      });
-
-      // Update daily entry
+      // Clear current activity
       await supabase
         .from("daily_entries")
-        .update({ current_activity_id: transitionActivity.id })
+        .update({ current_activity_id: null })
         .eq("id", dailyEntry.id);
     } catch (error) {
-      console.error("Error switching to Transition:", error);
+      console.error("Error stopping current activity:", error);
     }
   };
 
@@ -241,8 +210,8 @@ export default function ActivitiesManager({
     if (!archiveDialog.activityId) return;
 
     try {
-      // Switch to Transition if this activity is currently active
-      await switchToTransition(archiveDialog.activityId);
+      // Stop current activity if this one is active
+      await stopCurrentActivity(archiveDialog.activityId);
 
       const { error } = await supabase
         .from("activities")
@@ -310,11 +279,6 @@ export default function ActivitiesManager({
   const getGroupColor = (groupId: string) => {
     const group = groups.find((g) => g.id === groupId);
     return group?.color || "#6b7280";
-  };
-
-  const isSystemActivity = (activity: Activity) => {
-    const group = groups.find((g) => g.id === activity.group_id);
-    return group?.name === "System";
   };
 
   const groupedActivities = groups.map((group) => ({
@@ -587,12 +551,6 @@ export default function ActivitiesManager({
                           size="sm"
                           variant="ghost"
                           onClick={() => handleEdit(activity)}
-                          disabled={isSystemActivity(activity)}
-                          title={
-                            isSystemActivity(activity)
-                              ? "System activities cannot be edited"
-                              : "Edit activity"
-                          }
                         >
                           <Pencil className="h-3 w-3" />
                         </Button>
@@ -600,12 +558,6 @@ export default function ActivitiesManager({
                           size="sm"
                           variant="ghost"
                           onClick={() => handleArchive(activity.id)}
-                          disabled={isSystemActivity(activity)}
-                          title={
-                            isSystemActivity(activity)
-                              ? "System activities cannot be archived"
-                              : "Archive activity"
-                          }
                         >
                           <Archive className="h-3 w-3" />
                         </Button>

@@ -39,10 +39,6 @@ export default function ActivityGroupsManager({
     open: boolean;
     groupId: string | null;
   }>({ open: false, groupId: null });
-  const [systemDialog, setSystemDialog] = useState<{
-    open: boolean;
-    action: string;
-  }>({ open: false, action: "" });
   const [formData, setFormData] = useState({
     name: "",
     color: COLOR_PALETTE[0].value,
@@ -96,10 +92,6 @@ export default function ActivityGroupsManager({
   };
 
   const handleEdit = (group: ActivityGroup) => {
-    if (group.name === "System") {
-      setSystemDialog({ open: true, action: "edited" });
-      return;
-    }
     setEditingId(group.id);
     setFormData({
       name: group.name || "",
@@ -108,7 +100,7 @@ export default function ActivityGroupsManager({
     setIsAdding(true);
   };
 
-  const switchToTransition = async (groupId: string) => {
+  const stopCurrentActivityInGroup = async (groupId: string) => {
     try {
       // Get today's daily entry
       const today = new Date().toISOString().split("T")[0];
@@ -132,28 +124,6 @@ export default function ActivityGroupsManager({
         return; // Current activity not in this group
       }
 
-      // Find Transition activity from System group (query fresh from DB)
-      const { data: systemGroup } = await supabase
-        .from("activity_groups")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("name", "System")
-        .eq("is_archived", false)
-        .maybeSingle();
-
-      if (!systemGroup) return;
-
-      const { data: transitionActivity } = await supabase
-        .from("activities")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("group_id", systemGroup.id)
-        .eq("name", "Transition")
-        .eq("is_archived", false)
-        .maybeSingle();
-
-      if (!transitionActivity) return;
-
       const now = new Date();
 
       // Close current activity period
@@ -171,32 +141,17 @@ export default function ActivityGroupsManager({
           .eq("id", currentPeriod.id);
       }
 
-      // Create new period for Transition
-      await supabase.from("activity_periods").insert({
-        user_id: userId,
-        daily_entry_id: dailyEntry.id,
-        activity_id: transitionActivity.id,
-        start_time: now.toISOString(),
-        end_time: null,
-      });
-
-      // Update daily entry
+      // Clear current activity
       await supabase
         .from("daily_entries")
-        .update({ current_activity_id: transitionActivity.id })
+        .update({ current_activity_id: null })
         .eq("id", dailyEntry.id);
     } catch (error) {
-      console.error("Error switching to Transition:", error);
+      console.error("Error stopping current activity:", error);
     }
   };
 
   const handleArchive = async (id: string) => {
-    const group = groups.find((g) => g.id === id);
-    if (group?.name === "System") {
-      setSystemDialog({ open: true, action: "archived" });
-      return;
-    }
-
     setArchiveDialog({ open: true, groupId: id });
   };
 
@@ -204,8 +159,8 @@ export default function ActivityGroupsManager({
     if (!archiveDialog.groupId) return;
 
     try {
-      // Switch to Transition if any activity in this group is currently active
-      await switchToTransition(archiveDialog.groupId);
+      // Stop current activity if it belongs to this group
+      await stopCurrentActivityInGroup(archiveDialog.groupId);
 
       // Archive the group
       const { error: groupError } = await supabase
@@ -331,12 +286,6 @@ export default function ActivityGroupsManager({
                   size="sm"
                   variant="ghost"
                   onClick={() => handleEdit(group)}
-                  disabled={group.name === "System"}
-                  title={
-                    group.name === "System"
-                      ? "System group cannot be edited"
-                      : "Edit group"
-                  }
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
@@ -344,12 +293,6 @@ export default function ActivityGroupsManager({
                   size="sm"
                   variant="ghost"
                   onClick={() => handleArchive(group.id)}
-                  disabled={group.name === "System"}
-                  title={
-                    group.name === "System"
-                      ? "System group cannot be archived"
-                      : "Archive group"
-                  }
                 >
                   <Archive className="h-4 w-4" />
                 </Button>
@@ -378,29 +321,6 @@ export default function ActivityGroupsManager({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmArchive}>
               Archive
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog
-        open={systemDialog.open}
-        onOpenChange={(open) =>
-          setSystemDialog({ open, action: systemDialog.action })
-        }
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>System Group Protected</AlertDialogTitle>
-            <AlertDialogDescription>
-              System group cannot be {systemDialog.action}.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction
-              onClick={() => setSystemDialog({ open: false, action: "" })}
-            >
-              OK
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
