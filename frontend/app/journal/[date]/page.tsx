@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Suspense } from "react";
 import JournalForm from "@/components/journal-form";
+import JournalView from "@/components/journal-view";
 
 interface JournalPageProps {
   params: Promise<{
@@ -51,20 +52,23 @@ async function JournalContent({
     .eq("entry_date", date)
     .single();
 
-  // Determine initial mode: edit if ?edit=true, view if entry exists and can't edit, otherwise edit
-  const initialMode =
-    edit === "true" || !journalEntry || canEdit ? "edit" : "view";
+  // Determine initial mode: edit only if ?edit=true or there's no entry yet, otherwise view
+  const initialMode = edit === "true" || !journalEntry ? "edit" : "view";
 
   return (
     <div className="min-h-screen px-4 py-4 pb-24">
       <div className="max-w-2xl mx-auto">
-        <JournalForm
-          userId={uid}
-          date={date}
-          existingEntry={journalEntry}
-          canEdit={canEdit}
-          initialMode={initialMode}
-        />
+        {initialMode === "view" ? (
+          <JournalView entry={journalEntry} canEdit={canEdit} />
+        ) : (
+          <JournalForm
+            userId={uid}
+            date={date}
+            existingEntry={journalEntry}
+            canEdit={canEdit}
+            initialMode={initialMode}
+          />
+        )}
       </div>
     </div>
   );
