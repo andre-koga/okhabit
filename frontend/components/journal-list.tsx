@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, Plus } from "lucide-react";
+import { Pencil, Plus, List, CalendarDays } from "lucide-react";
 import { Tables } from "@/lib/supabase/types";
+import JournalCalendar from "@/components/journal-calendar";
 
 type JournalEntry = Tables<"journal_entries">;
 
@@ -19,6 +20,7 @@ const QUALITY_EMOJIS = ["😞", "😕", "😐", "😊", "🤩"];
 export default function JournalList({ userId }: JournalListProps) {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<"list" | "calendar">("list");
   const router = useRouter();
   const supabase = createClient();
 
@@ -104,14 +106,42 @@ export default function JournalList({ userId }: JournalListProps) {
   const olderEntries = entries.filter((e) => !last7Set.has(e.entry_date!));
 
   return (
-    <div className="space-y-3">
-      {loading && (
+    <div className="space-y-4">
+      {/* View toggle */}
+      <div className="flex items-center justify-end gap-1 p-1 rounded-lg bg-muted w-fit ml-auto">
+        <button
+          onClick={() => setView("list")}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            view === "list"
+              ? "bg-background shadow-sm text-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <List className="h-4 w-4" />
+          List
+        </button>
+        <button
+          onClick={() => setView("calendar")}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            view === "calendar"
+              ? "bg-background shadow-sm text-foreground"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <CalendarDays className="h-4 w-4" />
+          Calendar
+        </button>
+      </div>
+
+      {view === "calendar" && !loading && <JournalCalendar entries={entries} />}
+
+      {view === "list" && loading && (
         <div className="text-center py-12 text-muted-foreground">
           Loading your journal entries...
         </div>
       )}
 
-      {!loading && (
+      {view === "list" && !loading && (
         <>
           {/* Past 7 days in order */}
           {last7Days.map((dateStr) => {
