@@ -44,16 +44,25 @@ export default function JournalList({ userId }: JournalListProps) {
     }
   };
 
+  // Use local date, NOT toISOString() which is UTC and can show yesterday
+  const getLocalDateString = (d: Date = new Date()) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const canEdit = (entryDate: string) => {
-    const today = new Date();
-    const entry = new Date(entryDate);
+    const todayStr = getLocalDateString();
+    const today = new Date(todayStr + "T00:00:00");
+    const entry = new Date(entryDate + "T00:00:00");
     const diffTime = today.getTime() - entry.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     return diffDays <= 7;
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    const date = new Date(dateString + "T00:00:00");
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
@@ -78,134 +87,215 @@ export default function JournalList({ userId }: JournalListProps) {
     }
   };
 
-  const getTodayDate = () => {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
-  };
+  const getTodayDate = () => getLocalDateString();
 
-  const hasTodayEntry = entries.some(
-    (entry) => entry.entry_date === getTodayDate(),
-  );
+  // Build an ordered list of the past 7 days (today first)
+  const last7Days: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    last7Days.push(getLocalDateString(d));
+  }
+
+  const entryByDate = new Map(entries.map((e) => [e.entry_date, e]));
+
+  // Entries older than 7 days
+  const last7Set = new Set(last7Days);
+  const olderEntries = entries.filter((e) => !last7Set.has(e.entry_date!));
 
   return (
-    <div className="space-y-4">
-      {!hasTodayEntry && (
-        <Card className="border-dashed border-2 hover:bg-accent cursor-pointer transition-colors">
-          <CardContent className="p-6">
-            <button
-              onClick={() => router.push(`/journal/${getTodayDate()}`)}
-              className="w-full flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground"
-            >
-              <Plus className="h-5 w-5" />
-              <span className="text-lg">Write today's entry</span>
-            </button>
-          </CardContent>
-        </Card>
-      )}
-
+    <div className="space-y-3">
       {loading && (
         <div className="text-center py-12 text-muted-foreground">
           Loading your journal entries...
         </div>
       )}
 
-      {!loading && entries.length === 0 && (
-        <div className="text-center py-12 text-muted-foreground">
-          <p className="mb-4">No journal entries yet.</p>
-          <Button onClick={() => router.push(`/journal/${getTodayDate()}`)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Your First Entry
-          </Button>
-        </div>
-      )}
+      {!loading && (
+        <>
+          {/* Past 7 days in order */}
+          {last7Days.map((dateStr) => {
+            const entry = entryByDate.get(dateStr);
+            const label = formatDate(dateStr);
 
-      {!loading &&
-        entries.map((entry) => {
-          const editable = canEdit(entry.entry_date!);
-          const quality = entry.day_quality || 3;
-          const qualityEmoji = QUALITY_EMOJIS[quality - 1];
-          const textExcerpt = entry.text_content
-            ? entry.text_content.length > 150
-              ? entry.text_content.substring(0, 150) + "..."
-              : entry.text_content
-            : "No notes";
+            if (!entry) {
+              // Empty slot — compact add button
+              return (
+                <button
+                  key={dateStr}
+                  onClick={() => router.push(`/journal/${dateStr}`)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors text-sm"
+                >
+                  <span>{label}</span>
+                  <Plus className="h-4 w-4 shrink-0" />
+                </button>
+              );
+            }
 
-          return (
-            <Card
-              key={entry.id}
-              className="hover:bg-accent transition-colors cursor-pointer"
-              onClick={() => router.push(`/journal/${entry.entry_date}`)}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="flex relative">
-                        <div className="w-12 h-12 rounded-full border-2 border-border flex items-center justify-center text-2xl bg-background">
-                          {entry.day_emoji || "📅"}
+            // Existing entry card
+            const editable = canEdit(entry.entry_date!);
+            const quality = entry.day_quality || 3;
+            const qualityEmoji = QUALITY_EMOJIS[quality - 1];
+            const textExcerpt = entry.text_content
+              ? entry.text_content.length > 150
+                ? entry.text_content.substring(0, 150) + "..."
+                : entry.text_content
+              : "No notes";
+
+            return (
+              <Card
+                key={entry.id}
+                className="hover:bg-accent transition-colors cursor-pointer"
+                onClick={() => router.push(`/journal/${entry.entry_date}`)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="flex relative">
+                          <div className="w-12 h-12 rounded-full border-2 border-border flex items-center justify-center text-2xl bg-background">
+                            {entry.day_emoji || "📅"}
+                          </div>
+                          <div className="w-5 h-5 absolute -right-1 bottom-0 text-[16px] p-0 m-0 leading-none">
+                            {qualityEmoji}
+                          </div>
                         </div>
-                        <div className="w-5 h-5 absolute -right-1 bottom-0 text-[16px] p-0 m-0 leading-none">
-                          {qualityEmoji}
-                        </div>
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-semibold text-lg">
-                          {formatDate(entry.entry_date!)}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {new Date(entry.entry_date!).toLocaleDateString(
-                            "en-US",
-                            {
+                        <div className="flex-1">
+                          <div className="font-semibold text-lg">{label}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {new Date(
+                              entry.entry_date! + "T00:00:00",
+                            ).toLocaleDateString("en-US", {
                               month: "long",
                               day: "numeric",
                               year: "numeric",
-                            },
-                          )}
+                            })}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    {entry.title && (
-                      <p className="font-medium text-base mb-1">
-                        {entry.title}
+                      {entry.title && (
+                        <p className="font-medium text-base mb-1">
+                          {entry.title}
+                        </p>
+                      )}
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {textExcerpt}
                       </p>
-                    )}
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {textExcerpt}
-                    </p>
-                    {(entry.photo_urls || entry.video_url) && (
-                      <div className="flex gap-2 mt-2">
-                        {entry.photo_urls && (
-                          <span className="text-xs bg-secondary px-2 py-1 rounded">
-                            📷 {entry.photo_urls.length} photo
-                            {entry.photo_urls.length !== 1 ? "s" : ""}
-                          </span>
-                        )}
-                        {entry.video_url && (
-                          <span className="text-xs bg-secondary px-2 py-1 rounded">
-                            🎥 Video
-                          </span>
-                        )}
-                      </div>
+                      {(entry.photo_urls || entry.video_url) && (
+                        <div className="flex gap-2 mt-2">
+                          {entry.photo_urls && (
+                            <span className="text-xs bg-secondary px-2 py-1 rounded">
+                              📷 {entry.photo_urls.length} photo
+                              {entry.photo_urls.length !== 1 ? "s" : ""}
+                            </span>
+                          )}
+                          {entry.video_url && (
+                            <span className="text-xs bg-secondary px-2 py-1 rounded">
+                              🎥 Video
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {editable && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/journal/${entry.entry_date}?edit=true`);
+                        }}
+                        title="Edit entry"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
                     )}
                   </div>
-                  {editable && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        router.push(`/journal/${entry.entry_date}?edit=true`);
-                      }}
-                      title="Edit entry"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+                </CardContent>
+              </Card>
+            );
+          })}
+
+          {/* Older entries */}
+          {olderEntries.map((entry) => {
+            const quality = entry.day_quality || 3;
+            const qualityEmoji = QUALITY_EMOJIS[quality - 1];
+            const textExcerpt = entry.text_content
+              ? entry.text_content.length > 150
+                ? entry.text_content.substring(0, 150) + "..."
+                : entry.text_content
+              : "No notes";
+
+            return (
+              <Card
+                key={entry.id}
+                className="hover:bg-accent transition-colors cursor-pointer"
+                onClick={() => router.push(`/journal/${entry.entry_date}`)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="flex relative">
+                          <div className="w-12 h-12 rounded-full border-2 border-border flex items-center justify-center text-2xl bg-background">
+                            {entry.day_emoji || "📅"}
+                          </div>
+                          <div className="w-5 h-5 absolute -right-1 bottom-0 text-[16px] p-0 m-0 leading-none">
+                            {qualityEmoji}
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-semibold text-lg">
+                            {formatDate(entry.entry_date!)}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {new Date(
+                              entry.entry_date! + "T00:00:00",
+                            ).toLocaleDateString("en-US", {
+                              month: "long",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                      {entry.title && (
+                        <p className="font-medium text-base mb-1">
+                          {entry.title}
+                        </p>
+                      )}
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {textExcerpt}
+                      </p>
+                      {(entry.photo_urls || entry.video_url) && (
+                        <div className="flex gap-2 mt-2">
+                          {entry.photo_urls && (
+                            <span className="text-xs bg-secondary px-2 py-1 rounded">
+                              📷 {entry.photo_urls.length} photo
+                              {entry.photo_urls.length !== 1 ? "s" : ""}
+                            </span>
+                          )}
+                          {entry.video_url && (
+                            <span className="text-xs bg-secondary px-2 py-1 rounded">
+                              🎥 Video
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+
+          {entries.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground">
+              <p>No journal entries yet. Write your first one above!</p>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

@@ -109,7 +109,7 @@ export default function JournalView({ entry, canEdit }: JournalViewProps) {
 
       {/* Date + Emoji hero */}
       <div className="flex flex-col items-center gap-3 pt-8">
-        <div className="w-24 h-24 rounded-full border-2 border-border flex items-center justify-center text-5xl bg-background shadow-sm">
+        <div className="w-36 h-36 rounded-full border-2 border-border flex items-center justify-center text-7xl bg-background shadow-sm">
           {entry.day_emoji || "📅"}
         </div>
         <div className="text-center">
