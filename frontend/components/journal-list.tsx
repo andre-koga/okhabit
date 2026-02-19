@@ -181,8 +181,7 @@ export default function JournalList({ userId }: JournalListProps) {
                 </SelectContent>
               </Select>
               <Select value={filterBookmark} onValueChange={setFilterBookmark}>
-                <SelectTrigger className="flex-1 min-w-[140px] h-8 text-xs">
-                </SelectTrigger>
+                <SelectTrigger className="flex-1 min-w-[140px] h-8 text-xs"></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All entries</SelectItem>
                   <SelectItem value="bookmarked">🔖 Bookmarked</SelectItem>
@@ -193,8 +192,7 @@ export default function JournalList({ userId }: JournalListProps) {
                 value={filterHasPhotos}
                 onValueChange={setFilterHasPhotos}
               >
-                <SelectTrigger className="flex-1 min-w-[140px] h-8 text-xs">
-                </SelectTrigger>
+                <SelectTrigger className="flex-1 min-w-[140px] h-8 text-xs"></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All (photos)</SelectItem>
                   <SelectItem value="yes">📷 Has photos</SelectItem>
@@ -202,8 +200,7 @@ export default function JournalList({ userId }: JournalListProps) {
                 </SelectContent>
               </Select>
               <Select value={filterHasVideo} onValueChange={setFilterHasVideo}>
-                <SelectTrigger className="flex-1 min-w-[140px] h-8 text-xs">
-                </SelectTrigger>
+                <SelectTrigger className="flex-1 min-w-[140px] h-8 text-xs"></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All (video)</SelectItem>
                   <SelectItem value="yes">🎥 Has video</SelectItem>
