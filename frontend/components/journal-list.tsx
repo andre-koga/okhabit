@@ -166,9 +166,9 @@ export default function JournalList({ userId }: JournalListProps) {
             </div>
 
             {/* Filter dropdowns */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Select value={filterQuality} onValueChange={setFilterQuality}>
-                <SelectTrigger className="flex-1 h-8 text-xs">
+                <SelectTrigger className="flex-1 min-w-[140px] h-8 text-xs">
                   <SelectValue placeholder="Quality" />
                 </SelectTrigger>
                 <SelectContent>
@@ -181,8 +181,7 @@ export default function JournalList({ userId }: JournalListProps) {
                 </SelectContent>
               </Select>
               <Select value={filterBookmark} onValueChange={setFilterBookmark}>
-                <SelectTrigger className="flex-1 h-8 text-xs">
-                  <SelectValue placeholder="Bookmark" />
+                <SelectTrigger className="flex-1 min-w-[140px] h-8 text-xs">
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All entries</SelectItem>
@@ -194,8 +193,7 @@ export default function JournalList({ userId }: JournalListProps) {
                 value={filterHasPhotos}
                 onValueChange={setFilterHasPhotos}
               >
-                <SelectTrigger className="flex-1 h-8 text-xs">
-                  <SelectValue placeholder="Photos" />
+                <SelectTrigger className="flex-1 min-w-[140px] h-8 text-xs">
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All (photos)</SelectItem>
@@ -204,8 +202,7 @@ export default function JournalList({ userId }: JournalListProps) {
                 </SelectContent>
               </Select>
               <Select value={filterHasVideo} onValueChange={setFilterHasVideo}>
-                <SelectTrigger className="flex-1 h-8 text-xs">
-                  <SelectValue placeholder="Video" />
+                <SelectTrigger className="flex-1 min-w-[140px] h-8 text-xs">
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All (video)</SelectItem>
@@ -339,6 +336,9 @@ export default function JournalList({ userId }: JournalListProps) {
               })}
           </div>
         )}
+
+        {/* Calendar view */}
+        {view === "calendar" && <JournalCalendar entries={entries} />}
 
         {view === "list" && loading && (
           <div className="text-center py-12 text-muted-foreground">
