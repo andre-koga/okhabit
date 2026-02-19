@@ -12,7 +12,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Pencil, Plus, List, CalendarDays } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Pencil, Plus, List, CalendarDays, Search } from "lucide-react";
 import { Tables } from "@/lib/supabase/types";
 import JournalCalendar from "@/components/journal-calendar";
 
@@ -27,7 +28,8 @@ const QUALITY_EMOJIS = ["😞", "😕", "😐", "😊", "🤩"];
 export default function JournalList({ userId }: JournalListProps) {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<"list" | "calendar">("list");
+  const [view, setView] = useState<"list" | "calendar" | "search">("list");
+  const [searchText, setSearchText] = useState("");
   const [filterQuality, setFilterQuality] = useState<string>("all");
   const [filterBookmark, setFilterBookmark] = useState<string>("all");
   const [filterHasPhotos, setFilterHasPhotos] = useState<string>("all");
@@ -116,13 +118,14 @@ export default function JournalList({ userId }: JournalListProps) {
   const last7Set = new Set(last7Days);
   const olderEntries = entries.filter((e) => !last7Set.has(e.entry_date!));
 
-  // Apply filters
+  // Search & filter (used in search view)
   const filtersActive =
+    searchText.trim() !== "" ||
     filterQuality !== "all" ||
     filterBookmark !== "all" ||
     filterHasPhotos !== "all" ||
     filterHasVideo !== "all";
-  const applyFilters = (e: JournalEntry) => {
+  const applySearch = (e: JournalEntry) => {
     if (filterQuality !== "all" && e.day_quality !== Number(filterQuality))
       return false;
     if (filterBookmark === "bookmarked" && !e.is_bookmarked) return false;
@@ -133,392 +136,443 @@ export default function JournalList({ userId }: JournalListProps) {
       return false;
     if (filterHasVideo === "yes" && !e.video_url) return false;
     if (filterHasVideo === "no" && e.video_url) return false;
+    if (searchText.trim()) {
+      const q = searchText.toLowerCase();
+      const inTitle = e.title?.toLowerCase().includes(q) ?? false;
+      const inContent = e.text_content?.toLowerCase().includes(q) ?? false;
+      const inEmoji = e.day_emoji?.toLowerCase().includes(q) ?? false;
+      if (!inTitle && !inContent && !inEmoji) return false;
+    }
     return true;
   };
-  const filteredEntries = entries.filter(applyFilters);
+  const searchResults = entries.filter(applySearch);
 
   return (
     <>
-    <div className="space-y-4">
-      {/* Filters — only in list view */}
-      {view === "list" && (
-        <div className="flex flex-col gap-1.5">         
-          <div className="flex items-center gap-2">
-          <Select value={filterQuality} onValueChange={setFilterQuality}>
-            <SelectTrigger className="flex-1 h-8 text-xs">
-              <SelectValue placeholder="Day quality" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All qualities</SelectItem>
-              <SelectItem value="1">😞 Bad</SelectItem>
-              <SelectItem value="2">😕 Poor</SelectItem>
-              <SelectItem value="3">😐 Okay</SelectItem>
-              <SelectItem value="4">😊 Good</SelectItem>
-              <SelectItem value="5">🤩 Great</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterBookmark} onValueChange={setFilterBookmark}>
-            <SelectTrigger className="flex-1 h-8 text-xs">
-              <SelectValue placeholder="Bookmarks" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All entries</SelectItem>
-              <SelectItem value="bookmarked">🔖 Bookmarked</SelectItem>
-              <SelectItem value="not-bookmarked">Not bookmarked</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterHasPhotos} onValueChange={setFilterHasPhotos}>
-            <SelectTrigger className="flex-1 h-8 text-xs">
-              <SelectValue placeholder="Photos" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All (photos)</SelectItem>
-              <SelectItem value="yes">📷 Has photos</SelectItem>
-              <SelectItem value="no">No photos</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterHasVideo} onValueChange={setFilterHasVideo}>
-            <SelectTrigger className="flex-1 h-8 text-xs">
-              <SelectValue placeholder="Video" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All (video)</SelectItem>
-              <SelectItem value="yes">🎥 Has video</SelectItem>
-              <SelectItem value="no">No video</SelectItem>
-            </SelectContent>
-          </Select>
-          </div>
-          {filtersActive && (
-            <button
-              onClick={() => {
-                setFilterQuality("all");
-                setFilterBookmark("all");
-                setFilterHasPhotos("all");
-                setFilterHasVideo("all");
-              }}
-              className="text-xs text-muted-foreground hover:text-foreground underline self-center"
-            >
-              Clear filters
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Filtered list — flat view */}
-      {view === "list" && !loading && filtersActive && (
-        <>
-          {filteredEntries.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
-              No entries match the selected filters.
+      <div className="space-y-4">
+        {/* Search view */}
+        {view === "search" && (
+          <div className="space-y-3">
+            {/* Text search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                placeholder="Search by title, notes, emoji…"
+                className="pl-9"
+                autoFocus
+              />
             </div>
-          )}
-          {filteredEntries.map((entry) => {
-            const editable = canEdit(entry.entry_date!);
-            const quality = entry.day_quality || 3;
-            const qualityEmoji = QUALITY_EMOJIS[quality - 1];
-            const textExcerpt = entry.text_content
-              ? entry.text_content.length > 150
-                ? entry.text_content.substring(0, 150) + "..."
-                : entry.text_content
-              : "No notes";
-            return (
-              <Card
-                key={entry.id}
-                className="hover:bg-accent transition-colors cursor-pointer"
-                onClick={() => router.push(`/journal/${entry.entry_date}`)}
+
+            {/* Filter dropdowns */}
+            <div className="flex items-center gap-2">
+              <Select value={filterQuality} onValueChange={setFilterQuality}>
+                <SelectTrigger className="flex-1 h-8 text-xs">
+                  <SelectValue placeholder="Quality" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All qualities</SelectItem>
+                  <SelectItem value="1">😞 Bad</SelectItem>
+                  <SelectItem value="2">😕 Poor</SelectItem>
+                  <SelectItem value="3">😐 Okay</SelectItem>
+                  <SelectItem value="4">😊 Good</SelectItem>
+                  <SelectItem value="5">🤩 Great</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterBookmark} onValueChange={setFilterBookmark}>
+                <SelectTrigger className="flex-1 h-8 text-xs">
+                  <SelectValue placeholder="Bookmark" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All entries</SelectItem>
+                  <SelectItem value="bookmarked">🔖 Bookmarked</SelectItem>
+                  <SelectItem value="not-bookmarked">Not bookmarked</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={filterHasPhotos}
+                onValueChange={setFilterHasPhotos}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="flex relative">
-                          <div className="w-12 h-12 rounded-full border-2 border-border flex items-center justify-center text-2xl bg-background">
-                            {entry.day_emoji || "📅"}
-                          </div>
-                          <div className="w-5 h-5 absolute -right-1 bottom-0 text-[16px] p-0 m-0 leading-none">
-                            {qualityEmoji}
-                          </div>
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-semibold text-lg">
-                            {formatDate(entry.entry_date!)}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {new Date(
-                              entry.entry_date! + "T00:00:00",
-                            ).toLocaleDateString("en-US", {
-                              month: "long",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                      {entry.title && (
-                        <p className="font-medium text-base mb-1">
-                          {entry.title}
-                        </p>
-                      )}
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {textExcerpt}
-                      </p>
-                      {(entry.photo_urls || entry.video_url) && (
-                        <div className="flex gap-2 mt-2">
-                          {entry.photo_urls && (
-                            <span className="text-xs bg-secondary px-2 py-1 rounded">
-                              📷 {entry.photo_urls.length} photo
-                              {entry.photo_urls.length !== 1 ? "s" : ""}
-                            </span>
-                          )}
-                          {entry.video_url && (
-                            <span className="text-xs bg-secondary px-2 py-1 rounded">
-                              🎥 Video
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    {editable && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/journal/${entry.entry_date}?edit=true`);
-                        }}
-                        title="Edit entry"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </>
-      )}
+                <SelectTrigger className="flex-1 h-8 text-xs">
+                  <SelectValue placeholder="Photos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All (photos)</SelectItem>
+                  <SelectItem value="yes">📷 Has photos</SelectItem>
+                  <SelectItem value="no">No photos</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterHasVideo} onValueChange={setFilterHasVideo}>
+                <SelectTrigger className="flex-1 h-8 text-xs">
+                  <SelectValue placeholder="Video" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All (video)</SelectItem>
+                  <SelectItem value="yes">🎥 Has video</SelectItem>
+                  <SelectItem value="no">No video</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-      {view === "list" && loading && (
-        <div className="text-center py-12 text-muted-foreground">
-          Loading your journal entries...
-        </div>
-      )}
-
-      {view === "list" && !loading && !filtersActive && (
-        <>
-          {/* Past 7 days in order */}
-          {last7Days.map((dateStr) => {
-            const entry = entryByDate.get(dateStr);
-            const label = formatDate(dateStr);
-
-            if (!entry) {
-              // Empty slot — compact add button
-              return (
+            {/* Clear */}
+            {filtersActive && (
+              <div className="flex justify-center">
                 <button
-                  key={dateStr}
-                  onClick={() => router.push(`/journal/${dateStr}`)}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors text-sm"
+                  onClick={() => {
+                    setSearchText("");
+                    setFilterQuality("all");
+                    setFilterBookmark("all");
+                    setFilterHasPhotos("all");
+                    setFilterHasVideo("all");
+                  }}
+                  className="text-xs text-muted-foreground hover:text-foreground underline"
                 >
-                  <span>{label}</span>
-                  <Plus className="h-4 w-4 shrink-0" />
+                  Clear all
                 </button>
+              </div>
+            )}
+
+            {/* Results */}
+            {loading && (
+              <div className="text-center py-12 text-muted-foreground">
+                Loading your journal entries…
+              </div>
+            )}
+            {!loading && !filtersActive && (
+              <div className="text-center py-12 text-muted-foreground">
+                Type something or use the filters above to search your entries.
+              </div>
+            )}
+            {!loading && filtersActive && searchResults.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                No entries match your search.
+              </div>
+            )}
+            {!loading &&
+              filtersActive &&
+              searchResults.map((entry) => {
+                const editable = canEdit(entry.entry_date!);
+                const quality = entry.day_quality || 3;
+                const qualityEmoji = QUALITY_EMOJIS[quality - 1];
+                const textExcerpt = entry.text_content
+                  ? entry.text_content.length > 150
+                    ? entry.text_content.substring(0, 150) + "..."
+                    : entry.text_content
+                  : "No notes";
+                return (
+                  <Card
+                    key={entry.id}
+                    className="hover:bg-accent transition-colors cursor-pointer"
+                    onClick={() => router.push(`/journal/${entry.entry_date}`)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="flex relative">
+                              <div className="w-12 h-12 rounded-full border-2 border-border flex items-center justify-center text-2xl bg-background">
+                                {entry.day_emoji || "📅"}
+                              </div>
+                              <div className="w-5 h-5 absolute -right-1 bottom-0 text-[16px] p-0 m-0 leading-none">
+                                {qualityEmoji}
+                              </div>
+                            </div>
+                            <div className="flex-1">
+                              <div className="font-semibold text-lg">
+                                {formatDate(entry.entry_date!)}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {new Date(
+                                  entry.entry_date! + "T00:00:00",
+                                ).toLocaleDateString("en-US", {
+                                  month: "long",
+                                  day: "numeric",
+                                  year: "numeric",
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                          {entry.title && (
+                            <p className="font-medium text-base mb-1">
+                              {entry.title}
+                            </p>
+                          )}
+                          <p className="text-sm text-muted-foreground line-clamp-2">
+                            {textExcerpt}
+                          </p>
+                          {(entry.photo_urls || entry.video_url) && (
+                            <div className="flex gap-2 mt-2">
+                              {entry.photo_urls && (
+                                <span className="text-xs bg-secondary px-2 py-1 rounded">
+                                  📷 {entry.photo_urls.length} photo
+                                  {entry.photo_urls.length !== 1 ? "s" : ""}
+                                </span>
+                              )}
+                              {entry.video_url && (
+                                <span className="text-xs bg-secondary px-2 py-1 rounded">
+                                  🎥 Video
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        {editable && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(ev) => {
+                              ev.stopPropagation();
+                              router.push(
+                                `/journal/${entry.entry_date}?edit=true`,
+                              );
+                            }}
+                            title="Edit entry"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+          </div>
+        )}
+
+        {view === "list" && loading && (
+          <div className="text-center py-12 text-muted-foreground">
+            Loading your journal entries...
+          </div>
+        )}
+
+        {view === "list" && !loading && (
+          <>
+            {/* Past 7 days in order */}
+            {last7Days.map((dateStr) => {
+              const entry = entryByDate.get(dateStr);
+              const label = formatDate(dateStr);
+
+              if (!entry) {
+                // Empty slot — compact add button
+                return (
+                  <button
+                    key={dateStr}
+                    onClick={() => router.push(`/journal/${dateStr}`)}
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors text-sm"
+                  >
+                    <span>{label}</span>
+                    <Plus className="h-4 w-4 shrink-0" />
+                  </button>
+                );
+              }
+
+              // Existing entry card
+              const editable = canEdit(entry.entry_date!);
+              const quality = entry.day_quality || 3;
+              const qualityEmoji = QUALITY_EMOJIS[quality - 1];
+              const textExcerpt = entry.text_content
+                ? entry.text_content.length > 150
+                  ? entry.text_content.substring(0, 150) + "..."
+                  : entry.text_content
+                : "No notes";
+
+              return (
+                <Card
+                  key={entry.id}
+                  className="hover:bg-accent transition-colors cursor-pointer"
+                  onClick={() => router.push(`/journal/${entry.entry_date}`)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="flex relative">
+                            <div className="w-12 h-12 rounded-full border-2 border-border flex items-center justify-center text-2xl bg-background">
+                              {entry.day_emoji || "📅"}
+                            </div>
+                            <div className="w-5 h-5 absolute -right-1 bottom-0 text-[16px] p-0 m-0 leading-none">
+                              {qualityEmoji}
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-semibold text-lg">{label}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {new Date(
+                                entry.entry_date! + "T00:00:00",
+                              ).toLocaleDateString("en-US", {
+                                month: "long",
+                                day: "numeric",
+                                year: "numeric",
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                        {entry.title && (
+                          <p className="font-medium text-base mb-1">
+                            {entry.title}
+                          </p>
+                        )}
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {textExcerpt}
+                        </p>
+                        {(entry.photo_urls || entry.video_url) && (
+                          <div className="flex gap-2 mt-2">
+                            {entry.photo_urls && (
+                              <span className="text-xs bg-secondary px-2 py-1 rounded">
+                                📷 {entry.photo_urls.length} photo
+                                {entry.photo_urls.length !== 1 ? "s" : ""}
+                              </span>
+                            )}
+                            {entry.video_url && (
+                              <span className="text-xs bg-secondary px-2 py-1 rounded">
+                                🎥 Video
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      {editable && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(
+                              `/journal/${entry.entry_date}?edit=true`,
+                            );
+                          }}
+                          title="Edit entry"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               );
-            }
+            })}
 
-            // Existing entry card
-            const editable = canEdit(entry.entry_date!);
-            const quality = entry.day_quality || 3;
-            const qualityEmoji = QUALITY_EMOJIS[quality - 1];
-            const textExcerpt = entry.text_content
-              ? entry.text_content.length > 150
-                ? entry.text_content.substring(0, 150) + "..."
-                : entry.text_content
-              : "No notes";
+            {/* Older entries */}
+            {olderEntries.map((entry) => {
+              const quality = entry.day_quality || 3;
+              const qualityEmoji = QUALITY_EMOJIS[quality - 1];
+              const textExcerpt = entry.text_content
+                ? entry.text_content.length > 150
+                  ? entry.text_content.substring(0, 150) + "..."
+                  : entry.text_content
+                : "No notes";
 
-            return (
-              <Card
-                key={entry.id}
-                className="hover:bg-accent transition-colors cursor-pointer"
-                onClick={() => router.push(`/journal/${entry.entry_date}`)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="flex relative">
-                          <div className="w-12 h-12 rounded-full border-2 border-border flex items-center justify-center text-2xl bg-background">
-                            {entry.day_emoji || "📅"}
+              return (
+                <Card
+                  key={entry.id}
+                  className="hover:bg-accent transition-colors cursor-pointer"
+                  onClick={() => router.push(`/journal/${entry.entry_date}`)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="flex relative">
+                            <div className="w-12 h-12 rounded-full border-2 border-border flex items-center justify-center text-2xl bg-background">
+                              {entry.day_emoji || "📅"}
+                            </div>
+                            <div className="w-5 h-5 absolute -right-1 bottom-0 text-[16px] p-0 m-0 leading-none">
+                              {qualityEmoji}
+                            </div>
                           </div>
-                          <div className="w-5 h-5 absolute -right-1 bottom-0 text-[16px] p-0 m-0 leading-none">
-                            {qualityEmoji}
+                          <div className="flex-1">
+                            <div className="font-semibold text-lg">
+                              {formatDate(entry.entry_date!)}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {new Date(
+                                entry.entry_date! + "T00:00:00",
+                              ).toLocaleDateString("en-US", {
+                                month: "long",
+                                day: "numeric",
+                                year: "numeric",
+                              })}
+                            </div>
                           </div>
                         </div>
-                        <div className="flex-1">
-                          <div className="font-semibold text-lg">{label}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {new Date(
-                              entry.entry_date! + "T00:00:00",
-                            ).toLocaleDateString("en-US", {
-                              month: "long",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                      {entry.title && (
-                        <p className="font-medium text-base mb-1">
-                          {entry.title}
+                        {entry.title && (
+                          <p className="font-medium text-base mb-1">
+                            {entry.title}
+                          </p>
+                        )}
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {textExcerpt}
                         </p>
-                      )}
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {textExcerpt}
-                      </p>
-                      {(entry.photo_urls || entry.video_url) && (
-                        <div className="flex gap-2 mt-2">
-                          {entry.photo_urls && (
-                            <span className="text-xs bg-secondary px-2 py-1 rounded">
-                              📷 {entry.photo_urls.length} photo
-                              {entry.photo_urls.length !== 1 ? "s" : ""}
-                            </span>
-                          )}
-                          {entry.video_url && (
-                            <span className="text-xs bg-secondary px-2 py-1 rounded">
-                              🎥 Video
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    {editable && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/journal/${entry.entry_date}?edit=true`);
-                        }}
-                        title="Edit entry"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-
-          {/* Older entries */}
-          {olderEntries.map((entry) => {
-            const quality = entry.day_quality || 3;
-            const qualityEmoji = QUALITY_EMOJIS[quality - 1];
-            const textExcerpt = entry.text_content
-              ? entry.text_content.length > 150
-                ? entry.text_content.substring(0, 150) + "..."
-                : entry.text_content
-              : "No notes";
-
-            return (
-              <Card
-                key={entry.id}
-                className="hover:bg-accent transition-colors cursor-pointer"
-                onClick={() => router.push(`/journal/${entry.entry_date}`)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="flex relative">
-                          <div className="w-12 h-12 rounded-full border-2 border-border flex items-center justify-center text-2xl bg-background">
-                            {entry.day_emoji || "📅"}
+                        {(entry.photo_urls || entry.video_url) && (
+                          <div className="flex gap-2 mt-2">
+                            {entry.photo_urls && (
+                              <span className="text-xs bg-secondary px-2 py-1 rounded">
+                                📷 {entry.photo_urls.length} photo
+                                {entry.photo_urls.length !== 1 ? "s" : ""}
+                              </span>
+                            )}
+                            {entry.video_url && (
+                              <span className="text-xs bg-secondary px-2 py-1 rounded">
+                                🎥 Video
+                              </span>
+                            )}
                           </div>
-                          <div className="w-5 h-5 absolute -right-1 bottom-0 text-[16px] p-0 m-0 leading-none">
-                            {qualityEmoji}
-                          </div>
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-semibold text-lg">
-                            {formatDate(entry.entry_date!)}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {new Date(
-                              entry.entry_date! + "T00:00:00",
-                            ).toLocaleDateString("en-US", {
-                              month: "long",
-                              day: "numeric",
-                              year: "numeric",
-                            })}
-                          </div>
-                        </div>
+                        )}
                       </div>
-                      {entry.title && (
-                        <p className="font-medium text-base mb-1">
-                          {entry.title}
-                        </p>
-                      )}
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {textExcerpt}
-                      </p>
-                      {(entry.photo_urls || entry.video_url) && (
-                        <div className="flex gap-2 mt-2">
-                          {entry.photo_urls && (
-                            <span className="text-xs bg-secondary px-2 py-1 rounded">
-                              📷 {entry.photo_urls.length} photo
-                              {entry.photo_urls.length !== 1 ? "s" : ""}
-                            </span>
-                          )}
-                          {entry.video_url && (
-                            <span className="text-xs bg-secondary px-2 py-1 rounded">
-                              🎥 Video
-                            </span>
-                          )}
-                        </div>
-                      )}
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                  </CardContent>
+                </Card>
+              );
+            })}
 
-          {entries.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
-              <p>No journal entries yet. Write your first one above!</p>
-            </div>
-          )}
-        </>
-      )}
-    </div>
-
-    {/* Fixed view toggle — sits above bottom nav (h-16) */}
-    <div className="fixed bottom-16 left-0 right-0 z-40 flex justify-center pb-2 pointer-events-none">
-      <div className="flex items-center gap-1 p-1 rounded-full bg-background border border-border shadow-lg pointer-events-auto">
-        <button
-          onClick={() => setView("list")}
-          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-            view === "list"
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <List className="h-4 w-4" />
-          List
-        </button>
-        <button
-          onClick={() => setView("calendar")}
-          className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-            view === "calendar"
-              ? "bg-primary text-primary-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <CalendarDays className="h-4 w-4" />
-          Calendar
-        </button>
+            {entries.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                <p>No journal entries yet. Write your first one above!</p>
+              </div>
+            )}
+          </>
+        )}
       </div>
-    </div>
+
+      {/* Fixed view toggle — sits above bottom nav (h-16) */}
+      <div className="fixed bottom-16 left-0 right-0 z-40 flex justify-center pb-2 pointer-events-none">
+        <div className="flex items-center gap-1 p-1 rounded-full bg-background border border-border shadow-lg pointer-events-auto">
+          <button
+            onClick={() => setView("list")}
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              view === "list"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <List className="h-4 w-4" />
+            List
+          </button>
+          <button
+            onClick={() => setView("calendar")}
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              view === "calendar"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <CalendarDays className="h-4 w-4" />
+            Calendar
+          </button>
+          <button
+            onClick={() => setView("search")}
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              view === "search"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Search className="h-4 w-4" />
+            Search
+          </button>
+        </div>
+      </div>
     </>
   );
 }
