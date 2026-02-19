@@ -140,10 +140,14 @@ export default function JournalList({ userId }: JournalListProps) {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2">
-                      <span className="text-2xl">{qualityEmoji}</span>
-                      {entry.day_emoji && (
-                        <span className="text-xl">{entry.day_emoji}</span>
-                      )}
+                      <div className="flex relative">
+                        <div className="w-12 h-12 rounded-full border-2 border-border flex items-center justify-center text-2xl bg-background">
+                          {entry.day_emoji || "📅"}
+                        </div>
+                        <div className="w-5 h-5 absolute -right-1 bottom-0 text-[16px] p-0 m-0 leading-none">
+                          {qualityEmoji}
+                        </div>
+                      </div>
                       <div className="flex-1">
                         <div className="font-semibold text-lg">
                           {formatDate(entry.entry_date!)}

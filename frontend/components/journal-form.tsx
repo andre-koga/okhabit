@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -105,6 +105,39 @@ export default function JournalForm({
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [photoSignedUrls, setPhotoSignedUrls] = useState<
+    Record<string, string>
+  >({});
+  const [videoSignedUrl, setVideoSignedUrl] = useState<string | null>(null);
+
+  // Generate signed URLs for private storage objects whenever media paths change
+  useEffect(() => {
+    const generateSignedUrls = async () => {
+      const newUrls: Record<string, string> = {};
+      for (const path of existingPhotoUrls) {
+        const { data } = await supabase.storage
+          .from("journal-photos")
+          .createSignedUrl(path, 3600);
+        if (data?.signedUrl) newUrls[path] = data.signedUrl;
+      }
+      setPhotoSignedUrls(newUrls);
+    };
+    if (existingPhotoUrls.length > 0) generateSignedUrls();
+  }, [existingPhotoUrls]);
+
+  useEffect(() => {
+    const generateVideoSignedUrl = async () => {
+      if (!existingVideoUrl) {
+        setVideoSignedUrl(null);
+        return;
+      }
+      const { data } = await supabase.storage
+        .from("journal-videos")
+        .createSignedUrl(existingVideoUrl, 3600);
+      setVideoSignedUrl(data?.signedUrl ?? null);
+    };
+    generateVideoSignedUrl();
+  }, [existingVideoUrl]);
 
   const characterCount = textContent.length;
   const characterLimit = 300;
@@ -383,8 +416,16 @@ export default function JournalForm({
                 <div className="flex flex-wrap gap-2 mb-2">
                   {existingPhotoUrls.map((url) => (
                     <div key={url} className="relative">
-                      <div className="w-20 h-20 border rounded-lg bg-muted flex items-center justify-center">
-                        <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                      <div className="w-20 h-20 border rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                        {photoSignedUrls[url] ? (
+                          <img
+                            src={photoSignedUrls[url]}
+                            alt="Journal photo"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                        )}
                       </div>
                       {!isViewMode && (
                         <button
@@ -449,22 +490,40 @@ export default function JournalForm({
             ) : (
               <>
                 {(existingVideoUrl || videoFile) && (
-                  <div className="flex items-center gap-2 p-3 border rounded-lg w-full max-w-2xl">
-                    <Video className="h-5 w-5" />
-                    <span className="text-sm flex-1">
-                      {videoFile?.name || "Existing video"}
-                    </span>
+                  <div className="w-full max-w-2xl space-y-2">
+                    {existingVideoUrl && videoSignedUrl ? (
+                      <video
+                        src={videoSignedUrl}
+                        controls
+                        className="w-full rounded-lg border"
+                        preload="metadata"
+                      />
+                    ) : videoFile ? (
+                      <video
+                        src={URL.createObjectURL(videoFile)}
+                        controls
+                        className="w-full rounded-lg border"
+                        preload="metadata"
+                      />
+                    ) : (
+                      <div className="flex items-center gap-2 p-3 border rounded-lg">
+                        <Video className="h-5 w-5" />
+                        <span className="text-sm">Loading video...</span>
+                      </div>
+                    )}
                     {!isViewMode && (
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
                         onClick={() => {
                           setVideoFile(null);
                           setExistingVideoUrl(null);
                         }}
+                        className="w-full"
                       >
-                        <X className="h-4 w-4" />
+                        <X className="h-4 w-4 mr-2" />
+                        Remove video
                       </Button>
                     )}
                   </div>
