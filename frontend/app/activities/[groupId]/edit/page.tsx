@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import { Suspense } from "react";
-import { connection } from "next/server";
 import EditGroupForm from "@/components/edit-group-form";
 
 interface EditGroupPageProps {
@@ -11,8 +10,6 @@ interface EditGroupPageProps {
 }
 
 async function EditGroupContent({ groupId }: { groupId: string }) {
-  await connection();
-
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.getClaims();

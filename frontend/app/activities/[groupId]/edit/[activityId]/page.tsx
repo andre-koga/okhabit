@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import { Suspense } from "react";
-import { connection } from "next/server";
 import EditActivityForm from "@/components/edit-activity-form";
 
 interface EditActivityPageProps {
@@ -18,8 +17,6 @@ async function EditActivityContent({
   groupId: string;
   activityId: string;
 }) {
-  await connection();
-
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.getClaims();
