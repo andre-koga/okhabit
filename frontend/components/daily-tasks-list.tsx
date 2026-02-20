@@ -3,16 +3,22 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Tables, TablesInsert } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
 import {
-  CalendarDays,
   ChevronLeft,
   ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
   Play,
+  Plus,
+  RotateCcw,
   Square,
+  Trash2,
   X,
 } from "lucide-react";
 
@@ -20,6 +26,7 @@ type Activity = Tables<"activities">;
 type ActivityGroup = Tables<"activity_groups">;
 type DailyEntry = Tables<"daily_entries">;
 type ActivityPeriod = Tables<"activity_periods">;
+type OneTimeTask = Tables<"one_time_tasks">;
 
 interface DailyTasksListProps {
   userId: string;
@@ -43,6 +50,10 @@ export default function DailyTasksList({
     null,
   );
   const [, setTick] = useState(0); // Force re-render every second
+  const [oneTimeTasks, setOneTimeTasks] = useState<OneTimeTask[]>([]);
+  const [showAddTask, setShowAddTask] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [addingTask, setAddingTask] = useState(false);
 
   const supabase = createClient();
 
@@ -51,6 +62,7 @@ export default function DailyTasksList({
   useEffect(() => {
     loadDailyEntry();
     loadActivityPeriods();
+    loadOneTimeTasks();
   }, [currentDate, userId]);
 
   // Update time every second when there's an active activity
@@ -128,6 +140,62 @@ export default function DailyTasksList({
     } catch (error) {
       console.error("Error loading activity periods:", error);
     }
+  };
+
+  const loadOneTimeTasks = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("one_time_tasks")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("date", dateString)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      setOneTimeTasks(data || []);
+    } catch (error) {
+      console.error("Error loading one-time tasks:", error);
+    }
+  };
+
+  const createOneTimeTask = async () => {
+    if (!newTaskTitle.trim()) return;
+    try {
+      setAddingTask(true);
+      const { data, error } = await supabase
+        .from("one_time_tasks")
+        .insert({
+          user_id: userId,
+          date: dateString,
+          title: newTaskTitle.trim(),
+          is_completed: false,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      setOneTimeTasks((prev) => [...prev, data]);
+      setNewTaskTitle("");
+      setShowAddTask(false);
+    } catch (error) {
+      console.error("Error creating one-time task:", error);
+    } finally {
+      setAddingTask(false);
+    }
+  };
+
+  const toggleOneTimeTask = async (task: OneTimeTask) => {
+    const newVal = !task.is_completed;
+    setOneTimeTasks((prev) =>
+      prev.map((t) => (t.id === task.id ? { ...t, is_completed: newVal } : t)),
+    );
+    await supabase
+      .from("one_time_tasks")
+      .update({ is_completed: newVal })
+      .eq("id", task.id);
+  };
+
+  const deleteOneTimeTask = async (taskId: string) => {
+    setOneTimeTasks((prev) => prev.filter((t) => t.id !== taskId));
+    await supabase.from("one_time_tasks").delete().eq("id", taskId);
   };
 
   const calculateActivityTime = (activityId: string): number => {
@@ -351,25 +419,68 @@ export default function DailyTasksList({
 
   return (
     <div className="flex flex-col h-full">
-      <div>
-        <div className="flex items-center justify-between text-sm">
-          <p className="text-muted-foreground">
-            {currentDate.toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </p>
-          {dailyActivities.length > 0 && (
-            <p className="text-muted-foreground">
-              {completedNonNeverTasksCount} / {nonNeverTasksCount} (
-              {completionRate}
-              %)
-            </p>
+      {/* Date Navigator */}
+      <div className="flex items-center justify-between mb-4">
+        <button
+          onClick={() => changeDate(-1)}
+          className="h-9 w-9 flex items-center justify-center rounded-md hover:bg-accent transition-colors"
+          aria-label="Previous day"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+
+        <div className="flex items-center gap-1">
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="font-semibold text-sm hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-accent">
+                {currentDate.toLocaleDateString("en-US", {
+                  weekday: "short",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="center">
+              <Calendar
+                mode="single"
+                selected={currentDate}
+                onSelect={(d) => d && setCurrentDate(d)}
+                disabled={(d) => d > new Date()}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+
+          {!isToday && (
+            <button
+              onClick={goToToday}
+              className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              aria-label="Go to today"
+              title="Go to today"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+            </button>
           )}
         </div>
+
+        <button
+          onClick={() => changeDate(1)}
+          disabled={isToday}
+          className="h-9 w-9 flex items-center justify-center rounded-md hover:bg-accent transition-colors disabled:opacity-30"
+          aria-label="Next day"
+        >
+          <ChevronRight className="h-5 w-5" />
+        </button>
       </div>
+
+      {/* Completion summary */}
+      {dailyActivities.length > 0 && (
+        <p className="text-xs text-muted-foreground text-right mb-2">
+          {completedNonNeverTasksCount} / {nonNeverTasksCount} ({completionRate}
+          %)
+        </p>
+      )}
       <div className="space-y-2 mt-4 flex-1">
         {loading && (
           <p className="text-sm text-muted-foreground text-center py-4">
@@ -462,49 +573,87 @@ export default function DailyTasksList({
             );
           })}
       </div>
-      <div className="flex items-center gap-2 w-full mt-4 pt-4 border-t">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => changeDate(-7)}
-          className="flex-1"
+
+      {/* One-time Tasks */}
+      {oneTimeTasks.length > 0 && (
+        <div className="space-y-2 mt-6">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            One-time Tasks
+          </p>
+          {oneTimeTasks.map((task) => (
+            <div
+              key={task.id}
+              className="flex items-center gap-3 p-3 border rounded-md hover:bg-accent"
+            >
+              <Checkbox
+                id={`ott-${task.id}`}
+                checked={task.is_completed ?? false}
+                onCheckedChange={() => toggleOneTimeTask(task)}
+              />
+              <label
+                htmlFor={`ott-${task.id}`}
+                className={`flex-1 text-sm cursor-pointer ${
+                  task.is_completed ? "line-through text-muted-foreground" : ""
+                }`}
+              >
+                {task.title}
+              </label>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                onClick={() => deleteOneTimeTask(task.id)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Quick-add overlay */}
+      {showAddTask && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center pb-24"
+          onClick={() => setShowAddTask(false)}
         >
-          <ChevronsLeft className="h-4 w-4" />
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => changeDate(-1)}
-          className="flex-1"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <Button
-          size="sm"
-          variant={isToday ? "default" : "outline"}
-          onClick={goToToday}
-          style={{ flexGrow: 2 }}
-          className="flex-1"
-        >
-          Today
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => changeDate(1)}
-          className="flex-1"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => changeDate(7)}
-          className="flex-1"
-        >
-          <ChevronsRight className="h-4 w-4" />
-        </Button>
-      </div>
+          <div
+            className="bg-background border rounded-xl shadow-xl p-4 mx-4 w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-sm font-semibold mb-3">New one-time task</p>
+            <div className="flex gap-2">
+              <input
+                autoFocus
+                type="text"
+                value={newTaskTitle}
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") createOneTimeTask();
+                  if (e.key === "Escape") setShowAddTask(false);
+                }}
+                placeholder="Task title…"
+                className="flex-1 px-3 py-2 text-sm border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <Button
+                size="sm"
+                onClick={createOneTimeTask}
+                disabled={addingTask || !newTaskTitle.trim()}
+              >
+                Add
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Action Button */}
+      <button
+        onClick={() => setShowAddTask((v) => !v)}
+        className="fixed bottom-24 right-4 z-40 h-12 w-12 rounded-xl bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors"
+      >
+        {showAddTask ? <X className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+      </button>
     </div>
   );
 }

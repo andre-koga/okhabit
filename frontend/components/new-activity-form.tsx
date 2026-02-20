@@ -88,9 +88,11 @@ export default function NewActivityForm({
           <CardHeader>
             <div className="flex items-center gap-3 mb-2">
               <div
-                className="w-12 h-12 rounded-lg flex-shrink-0"
+                className="w-12 h-12 rounded-lg flex-shrink-0 flex items-center justify-center text-2xl"
                 style={{ backgroundColor: group.color || "#000" }}
-              />
+              >
+                {group.emoji || ""}
+              </div>
               <div>
                 <p className="text-sm text-muted-foreground">{group.name}</p>
                 <CardTitle>Create New Activity</CardTitle>
