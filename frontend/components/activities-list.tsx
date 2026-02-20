@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Tables } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -101,17 +101,32 @@ export default function ActivitiesList({ userId }: ActivitiesListProps) {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="space-y-2">
             {groups.map((group) => (
-              <Card
+              <div
                 key={group.id}
-                className="cursor-pointer hover:shadow-lg transition-shadow relative"
+                className="flex items-center justify-between px-4 py-3 rounded-lg border hover:bg-accent transition-colors cursor-pointer"
                 onClick={() => router.push(`/activities/${group.id}`)}
               >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-base"
+                    style={{ backgroundColor: group.color || "#000" }}
+                  >
+                    {group.emoji || ""}
+                  </div>
+                  <span className="font-medium truncate">{group.name}</span>
+                  <span className="text-sm text-muted-foreground shrink-0">
+                    {getActivitiesCount(group.id)}{" "}
+                    {getActivitiesCount(group.id) === 1
+                      ? "activity"
+                      : "activities"}
+                  </span>
+                </div>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute top-2 right-2 h-8 w-8 z-10"
+                  className="h-8 w-8 shrink-0"
                   onClick={(e) => {
                     e.stopPropagation();
                     router.push(`/activities/${group.id}/edit`);
@@ -119,26 +134,7 @@ export default function ActivitiesList({ userId }: ActivitiesListProps) {
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-12 h-12 rounded-lg flex-shrink-0 flex items-center justify-center text-2xl"
-                      style={{ backgroundColor: group.color || "#000" }}
-                    >
-                      {group.emoji || ""}
-                    </div>
-                    <CardTitle className="text-lg pr-8">{group.name}</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    {getActivitiesCount(group.id)}{" "}
-                    {getActivitiesCount(group.id) === 1
-                      ? "activity"
-                      : "activities"}
-                  </p>
-                </CardContent>
-              </Card>
+              </div>
             ))}
           </div>
         )}

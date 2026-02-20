@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Tables } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Pencil, Archive } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -222,53 +222,52 @@ export default function GroupActivitiesContent({
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-2">
             {activities.map((activity) => (
-              <Card key={activity.id}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-xl">{activity.name}</CardTitle>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() =>
-                          router.push(
-                            `/activities/${group.id}/edit/${activity.id}`,
-                          )
-                        }
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() =>
-                          setArchiveDialog({
-                            open: true,
-                            activityId: activity.id,
-                            activityName: activity.name,
-                          })
-                        }
-                      >
-                        <Archive className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
+              <div
+                key={activity.id}
+                className="flex items-center justify-between px-4 py-3 rounded-lg border hover:bg-accent transition-colors"
+              >
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <span className="font-medium truncate">{activity.name}</span>
+                  <div className="flex gap-1.5 shrink-0">
                     {activity.pattern && (
-                      <Badge variant="secondary">
+                      <Badge variant="secondary" className="text-xs">
                         {getPatternDisplay(activity.pattern)}
                       </Badge>
                     )}
-                    <Badge variant="outline">
+                    <Badge variant="outline" className="text-xs">
                       {getRoutineDisplay(activity.routine)}
                     </Badge>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() =>
+                      router.push(`/activities/${group.id}/edit/${activity.id}`)
+                    }
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() =>
+                      setArchiveDialog({
+                        open: true,
+                        activityId: activity.id,
+                        activityName: activity.name,
+                      })
+                    }
+                  >
+                    <Archive className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             ))}
           </div>
         )}
