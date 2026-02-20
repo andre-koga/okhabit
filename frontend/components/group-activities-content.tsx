@@ -168,14 +168,20 @@ export default function GroupActivitiesContent({
   return (
     <div className="min-h-screen p-4 pb-20">
       <div className="max-w-4xl mx-auto">
-        <Button
-          variant="ghost"
-          onClick={() => router.push("/activities")}
-          className="mb-6"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Groups
-        </Button>
+        <div className="flex items-center justify-between mb-6">
+          <Button variant="ghost" onClick={() => router.push("/activities")}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Groups
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push(`/activities/${group.id}/edit`)}
+          >
+            <Pencil className="h-4 w-4 mr-2" />
+            Edit Group
+          </Button>
+        </div>
 
         <div className="mb-4 flex items-center gap-4">
           <div

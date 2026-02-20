@@ -5,7 +5,7 @@ import { Tables } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type ActivityGroup = Tables<"activity_groups">;
@@ -105,9 +105,20 @@ export default function ActivitiesList({ userId }: ActivitiesListProps) {
             {groups.map((group) => (
               <Card
                 key={group.id}
-                className="cursor-pointer hover:shadow-lg transition-shadow"
+                className="cursor-pointer hover:shadow-lg transition-shadow relative"
                 onClick={() => router.push(`/activities/${group.id}`)}
               >
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2 h-8 w-8 z-10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    router.push(`/activities/${group.id}/edit`);
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-3">
                     <div
@@ -116,7 +127,7 @@ export default function ActivitiesList({ userId }: ActivitiesListProps) {
                     >
                       {group.emoji || ""}
                     </div>
-                    <CardTitle className="text-lg">{group.name}</CardTitle>
+                    <CardTitle className="text-lg pr-8">{group.name}</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
