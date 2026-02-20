@@ -22,7 +22,7 @@ import {
   Bookmark,
 } from "lucide-react";
 import { Tables } from "@/lib/supabase/types";
-import JournalCalendar from "@/components/journal-calendar";
+import JournalCalendar from "@/components/journal/journal-calendar";
 
 type JournalEntry = Tables<"journal_entries">;
 

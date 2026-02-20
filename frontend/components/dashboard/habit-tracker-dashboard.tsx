@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { Tables } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
-import ActivityGroupsManager from "@/components/activity-groups-manager";
-import ActivitiesManager from "@/components/activities-manager";
-import DailyTasksList from "@/components/daily-tasks-list";
-import TimeTracker from "@/components/time-tracker";
+import ActivityGroupsManager from "@/components/activities/activity-groups-manager";
+import ActivitiesManager from "@/components/activities/activities-manager";
+import DailyTasksList from "@/components/tasks/daily-tasks-list";
+import TimeTracker from "@/components/timer/time-tracker";
 
 type ActivityGroup = Tables<"activity_groups">;
 type Activity = Tables<"activities">;

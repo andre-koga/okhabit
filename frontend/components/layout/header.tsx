@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { AuthButton } from "./auth-button";
+import { AuthButton } from "@/components/auth/auth-button";
 
 export function Header() {
   return (

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Tables } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
-import DailyTasksList from "@/components/daily-tasks-list";
+import DailyTasksList from "@/components/tasks/daily-tasks-list";
 
 type Activity = Tables<"activities">;
 type ActivityGroup = Tables<"activity_groups">;

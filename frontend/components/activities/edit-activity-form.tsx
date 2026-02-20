@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tables } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
 import { ArrowLeft } from "lucide-react";
-import ActivityFormFields from "@/components/activity-form-fields";
+import ActivityFormFields from "@/components/activities/activity-form-fields";
 
 type ActivityGroup = Tables<"activity_groups">;
 type Activity = Tables<"activities">;

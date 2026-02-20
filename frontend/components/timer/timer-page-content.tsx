@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Tables } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
-import TimeTracker from "@/components/time-tracker";
+import TimeTracker from "@/components/timer/time-tracker";
 
 type Activity = Tables<"activities">;
 

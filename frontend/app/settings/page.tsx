@@ -3,9 +3,9 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LogOut, Moon, Sun, User, Clock, Archive } from "lucide-react";
-import { ThemeSwitcher } from "@/components/theme-switcher";
+import { ThemeSwitcher } from "@/components/layout/theme-switcher";
 import { Button } from "@/components/ui/button";
-import { UserPreferencesForm } from "@/components/user-preferences-form";
+import { UserPreferencesForm } from "@/components/settings/user-preferences-form";
 import Link from "next/link";
 
 async function SettingsContent() {

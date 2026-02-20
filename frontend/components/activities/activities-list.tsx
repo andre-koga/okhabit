@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Pencil } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
-import ActivityNavMenu from "@/components/activity-nav-menu";
+import ActivityNavMenu from "@/components/activities/activity-nav-menu";
 
 type ActivityGroup = Tables<"activity_groups">;
 type Activity = Tables<"activities">;

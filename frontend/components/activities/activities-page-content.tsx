@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { Tables } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
-import ActivityGroupsManager from "@/components/activity-groups-manager";
-import ActivitiesManager from "@/components/activities-manager";
+import ActivityGroupsManager from "@/components/activities/activity-groups-manager";
+import ActivitiesManager from "@/components/activities/activities-manager";
 
 type ActivityGroup = Tables<"activity_groups">;
 type Activity = Tables<"activities">;

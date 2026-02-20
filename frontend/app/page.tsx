@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import PixelGrid from "@/components/pixel-grid";
+import PixelGrid from "@/components/dashboard/pixel-grid";
 
 async function DashboardOverview() {
   const supabase = await createClient();

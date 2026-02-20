@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import TasksPageContent from "@/components/tasks-page-content";
+import TasksPageContent from "@/components/tasks/tasks-page-content";
 
 async function TasksContent() {
   const supabase = await createClient();
