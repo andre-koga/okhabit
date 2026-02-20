@@ -13,7 +13,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Pencil, Plus, List, CalendarDays, Search } from "lucide-react";
+import {
+  Pencil,
+  Plus,
+  List,
+  CalendarDays,
+  Search,
+  Bookmark,
+} from "lucide-react";
 import { Tables } from "@/lib/supabase/types";
 import JournalCalendar from "@/components/journal-calendar";
 
@@ -31,15 +38,35 @@ export default function JournalList({ userId }: JournalListProps) {
   const [view, setView] = useState<"list" | "calendar" | "search">("list");
   const [searchText, setSearchText] = useState("");
   const [filterQuality, setFilterQuality] = useState<string>("all");
-  const [filterBookmark, setFilterBookmark] = useState<string>("all");
-  const [filterHasPhotos, setFilterHasPhotos] = useState<string>("all");
-  const [filterHasVideo, setFilterHasVideo] = useState<string>("all");
+  const [filterBookmark, setFilterBookmark] = useState<boolean | undefined>(
+    undefined,
+  );
+  const [filterHasPhotos, setFilterHasPhotos] = useState<boolean | undefined>(
+    undefined,
+  );
+  const [filterHasVideo, setFilterHasVideo] = useState<boolean | undefined>(
+    undefined,
+  );
   const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
     loadEntries();
   }, [userId]);
+
+  const toggleBookmark = async (entry: JournalEntry) => {
+    const newVal = !entry.is_bookmarked;
+    // Optimistic update
+    setEntries((prev) =>
+      prev.map((e) =>
+        e.id === entry.id ? { ...e, is_bookmarked: newVal } : e,
+      ),
+    );
+    await supabase
+      .from("journal_entries")
+      .update({ is_bookmarked: newVal })
+      .eq("id", entry.id);
+  };
 
   const loadEntries = async () => {
     try {
@@ -119,23 +146,30 @@ export default function JournalList({ userId }: JournalListProps) {
   const olderEntries = entries.filter((e) => !last7Set.has(e.entry_date!));
 
   // Search & filter (used in search view)
+  // Cycle: undefined → true → false → undefined
+  const cycleFilter = (current: boolean | undefined): boolean | undefined => {
+    if (current === undefined) return true;
+    if (current === true) return false;
+    return undefined;
+  };
+
   const filtersActive =
     searchText.trim() !== "" ||
     filterQuality !== "all" ||
-    filterBookmark !== "all" ||
-    filterHasPhotos !== "all" ||
-    filterHasVideo !== "all";
+    filterBookmark !== undefined ||
+    filterHasPhotos !== undefined ||
+    filterHasVideo !== undefined;
   const applySearch = (e: JournalEntry) => {
     if (filterQuality !== "all" && e.day_quality !== Number(filterQuality))
       return false;
-    if (filterBookmark === "bookmarked" && !e.is_bookmarked) return false;
-    if (filterBookmark === "not-bookmarked" && e.is_bookmarked) return false;
-    if (filterHasPhotos === "yes" && !(e.photo_urls && e.photo_urls.length > 0))
+    if (filterBookmark === true && !e.is_bookmarked) return false;
+    if (filterBookmark === false && e.is_bookmarked) return false;
+    if (filterHasPhotos === true && !(e.photo_urls && e.photo_urls.length > 0))
       return false;
-    if (filterHasPhotos === "no" && e.photo_urls && e.photo_urls.length > 0)
+    if (filterHasPhotos === false && e.photo_urls && e.photo_urls.length > 0)
       return false;
-    if (filterHasVideo === "yes" && !e.video_url) return false;
-    if (filterHasVideo === "no" && e.video_url) return false;
+    if (filterHasVideo === true && !e.video_url) return false;
+    if (filterHasVideo === false && e.video_url) return false;
     if (searchText.trim()) {
       const q = searchText.toLowerCase();
       const inTitle = e.title?.toLowerCase().includes(q) ?? false;
@@ -180,33 +214,40 @@ export default function JournalList({ userId }: JournalListProps) {
                   <SelectItem value="5">🤩 Great</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={filterBookmark} onValueChange={setFilterBookmark}>
-                <SelectTrigger className="flex-1 min-w-[140px] h-8 text-xs"></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All entries</SelectItem>
-                  <SelectItem value="bookmarked">🔖 Bookmarked</SelectItem>
-                  <SelectItem value="not-bookmarked">Not bookmarked</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select
-                value={filterHasPhotos}
-                onValueChange={setFilterHasPhotos}
-              >
-                <SelectTrigger className="flex-1 min-w-[140px] h-8 text-xs"></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All (photos)</SelectItem>
-                  <SelectItem value="yes">📷 Has photos</SelectItem>
-                  <SelectItem value="no">No photos</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filterHasVideo} onValueChange={setFilterHasVideo}>
-                <SelectTrigger className="flex-1 min-w-[140px] h-8 text-xs"></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All (video)</SelectItem>
-                  <SelectItem value="yes">🎥 Has video</SelectItem>
-                  <SelectItem value="no">No video</SelectItem>
-                </SelectContent>
-              </Select>
+              {(
+                [
+                  {
+                    label: "🔖",
+                    value: filterBookmark,
+                    set: setFilterBookmark,
+                  },
+                  {
+                    label: "📷",
+                    value: filterHasPhotos,
+                    set: setFilterHasPhotos,
+                  },
+                  {
+                    label: "🎥",
+                    value: filterHasVideo,
+                    set: setFilterHasVideo,
+                  },
+                ] as const
+              ).map(({ label, value, set }) => (
+                <button
+                  key={label}
+                  onClick={() => set(cycleFilter(value))}
+                  className={[
+                    "h-8 w-8 rounded-md border-2 text-base flex items-center justify-center transition-colors",
+                    value === undefined
+                      ? "border-dashed border-muted-foreground/40 bg-background opacity-50 hover:opacity-75"
+                      : value === true
+                        ? "border-solid border-primary bg-primary/10"
+                        : "border-solid border-destructive bg-destructive/10",
+                  ].join(" ")}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
 
             {/* Clear */}
@@ -216,9 +257,9 @@ export default function JournalList({ userId }: JournalListProps) {
                   onClick={() => {
                     setSearchText("");
                     setFilterQuality("all");
-                    setFilterBookmark("all");
-                    setFilterHasPhotos("all");
-                    setFilterHasVideo("all");
+                    setFilterBookmark(undefined);
+                    setFilterHasPhotos(undefined);
+                    setFilterHasVideo(undefined);
                   }}
                   className="text-xs text-muted-foreground hover:text-foreground underline"
                 >
@@ -311,21 +352,44 @@ export default function JournalList({ userId }: JournalListProps) {
                             </div>
                           )}
                         </div>
-                        {editable && (
+                        <div className="flex items-center gap-1 shrink-0">
                           <Button
                             size="sm"
-                            variant="ghost"
+                            variant="outline"
                             onClick={(ev) => {
                               ev.stopPropagation();
-                              router.push(
-                                `/journal/${entry.entry_date}?edit=true`,
-                              );
+                              toggleBookmark(entry);
                             }}
-                            title="Edit entry"
+                            title={
+                              entry.is_bookmarked
+                                ? "Remove bookmark"
+                                : "Bookmark"
+                            }
+                            className={`h-8 w-8 p-0 ${
+                              entry.is_bookmarked
+                                ? "bg-red-500/50 hover:bg-red-500/50 hover:border-red-500/50 border-red-500/50 text-white"
+                                : ""
+                            }`}
                           >
-                            <Pencil className="h-4 w-4" />
+                            <Bookmark className="h-4 w-4" />
                           </Button>
-                        )}
+                          {editable && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(ev) => {
+                                ev.stopPropagation();
+                                router.push(
+                                  `/journal/${entry.entry_date}?edit=true`,
+                                );
+                              }}
+                              title="Edit entry"
+                              className="h-8 w-8 p-0 hover:border-white"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -429,21 +493,42 @@ export default function JournalList({ userId }: JournalListProps) {
                           </div>
                         )}
                       </div>
-                      {editable && (
+                      <div className="flex items-center gap-1 shrink-0">
                         <Button
                           size="sm"
-                          variant="ghost"
+                          variant="outline"
                           onClick={(e) => {
                             e.stopPropagation();
-                            router.push(
-                              `/journal/${entry.entry_date}?edit=true`,
-                            );
+                            toggleBookmark(entry);
                           }}
-                          title="Edit entry"
+                          title={
+                            entry.is_bookmarked ? "Remove bookmark" : "Bookmark"
+                          }
+                          className={`h-8 w-8 p-0 ${
+                            entry.is_bookmarked
+                              ? "bg-red-500/50 hover:bg-red-500/50 hover:border-red-500/50 border-red-500/50 text-white"
+                              : ""
+                          }`}
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Bookmark className="h-4 w-4" />
                         </Button>
-                      )}
+                        {editable && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(
+                                `/journal/${entry.entry_date}?edit=true`,
+                              );
+                            }}
+                            title="Edit entry"
+                            className="h-8 w-8 p-0 hover:border-white"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -517,6 +602,24 @@ export default function JournalList({ userId }: JournalListProps) {
                           </div>
                         )}
                       </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleBookmark(entry);
+                        }}
+                        title={
+                          entry.is_bookmarked ? "Remove bookmark" : "Bookmark"
+                        }
+                        className={`h-8 w-8 p-0 ${
+                          entry.is_bookmarked
+                            ? "bg-red-500/50 hover:bg-red-500/50 border-red-500/50 text-white"
+                            : ""
+                        }`}
+                      >
+                        <Bookmark className="h-4 w-4" />
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
