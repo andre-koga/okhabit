@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import ActivitiesList from "@/components/activities-list";
+import NewGroupForm from "@/components/new-group-form";
 
-async function ActivitiesContent() {
+async function NewGroupContent() {
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.getClaims();
@@ -13,20 +13,20 @@ async function ActivitiesContent() {
     redirect("/auth/login");
   }
 
-  return <ActivitiesList userId={uid} />;
+  return <NewGroupForm userId={uid} />;
 }
 
-export default async function ActivitiesPage() {
+export default async function NewGroupPage() {
   return (
     <main className="flex-1">
       <Suspense
         fallback={
           <div className="flex items-center justify-center py-12">
-            <p className="text-muted-foreground">Loading activities...</p>
+            <p className="text-muted-foreground">Loading...</p>
           </div>
         }
       >
-        <ActivitiesContent />
+        <NewGroupContent />
       </Suspense>
     </main>
   );

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tables } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Square } from "lucide-react";
 
 type Activity = Tables<"activities">;
 type DailyEntry = Tables<"daily_entries">;
@@ -152,8 +152,12 @@ export default function PixelGrid({ userId }: PixelGridProps) {
           if (activity) {
             setCurrentActivity(activity);
           } else {
-            // Current activity is archived, switch to Transition
-            await switchToTransitionActivity(data.id);
+            // Current activity is archived, clear it
+            await supabase
+              .from("daily_entries")
+              .update({ current_activity_id: null })
+              .eq("id", data.id);
+            setCurrentActivity(null);
           }
         }
       }
@@ -200,122 +204,7 @@ export default function PixelGrid({ userId }: PixelGridProps) {
     return group?.color || "#cccccc";
   };
 
-  const switchToTransitionActivity = async (dailyEntryId: string) => {
-    try {
-      // Find Transition activity from System group
-      const systemGroup = groups.find((g) => g.name === "System");
-      const transitionActivity = activities.find(
-        (a) => a.name === "Transition" && a.group_id === systemGroup?.id,
-      );
-
-      if (!transitionActivity) {
-        console.error("Transition activity not found");
-        return;
-      }
-
-      const now = new Date();
-
-      // Close any current activity period
-      const { data: currentPeriod } = await supabase
-        .from("activity_periods")
-        .select("*")
-        .eq("daily_entry_id", dailyEntryId)
-        .is("end_time", null)
-        .maybeSingle();
-
-      if (currentPeriod) {
-        await supabase
-          .from("activity_periods")
-          .update({ end_time: now.toISOString() })
-          .eq("id", currentPeriod.id);
-      }
-
-      // Create new period for Transition
-      const { data: newPeriod } = await supabase
-        .from("activity_periods")
-        .insert({
-          user_id: userId,
-          daily_entry_id: dailyEntryId,
-          activity_id: transitionActivity.id,
-          start_time: now.toISOString(),
-          end_time: null,
-        })
-        .select()
-        .single();
-
-      // Update daily entry
-      await supabase
-        .from("daily_entries")
-        .update({ current_activity_id: transitionActivity.id })
-        .eq("id", dailyEntryId);
-
-      setCurrentActivity(transitionActivity);
-      if (newPeriod) {
-        setCurrentPeriod(newPeriod);
-      }
-      await loadActivityPeriods(dailyEntryId);
-    } catch (error) {
-      console.error("Error switching to Transition:", error);
-    }
-  };
-
-  const handleWakeUp = async () => {
-    try {
-      const now = new Date();
-
-      // Find the Downtime activity from the System group
-      const systemGroup = groups.find((g) => g.name === "System");
-      const downtimeActivity = activities.find(
-        (a) => a.name === "Downtime" && a.group_id === systemGroup?.id,
-      );
-      const startActivity = downtimeActivity || activities[0];
-
-      if (!startActivity) {
-        alert("No activities available. Please create an activity first.");
-        return;
-      }
-
-      // Create today's entry
-      const { data: newEntry, error: entryError } = await supabase
-        .from("daily_entries")
-        .insert({
-          user_id: userId,
-          date: now.toISOString(),
-          wake_time: now.toISOString(),
-          is_awake: true,
-          current_activity_id: startActivity.id,
-        })
-        .select()
-        .single();
-
-      if (entryError) throw entryError;
-
-      // Create the first activity period
-      const { data: newPeriod, error: periodError } = await supabase
-        .from("activity_periods")
-        .insert({
-          user_id: userId,
-          daily_entry_id: newEntry.id,
-          activity_id: startActivity.id,
-          start_time: now.toISOString(),
-          end_time: null,
-        })
-        .select()
-        .single();
-
-      if (periodError) throw periodError;
-
-      setDailyEntry(newEntry);
-      setIsAwake(true);
-      setCurrentActivity(startActivity);
-      setCurrentPeriod(newPeriod);
-      await loadActivityPeriods(newEntry.id);
-    } catch (error) {
-      console.error("Error waking up:", error);
-    }
-  };
-
-  const handleGoToSleep = async () => {
+  const stopCurrentActivity = async () => {
     if (!dailyEntry || !currentPeriod) return;
 
     try {
@@ -328,6 +217,66 @@ export default function PixelGrid({ userId }: PixelGridProps) {
         .eq("id", currentPeriod.id);
 
       if (periodError) throw periodError;
+
+      // Clear current activity on daily entry
+      const { error } = await supabase
+        .from("daily_entries")
+        .update({ current_activity_id: null })
+        .eq("id", dailyEntry.id);
+
+      if (error) throw error;
+
+      setCurrentActivity(null);
+      setCurrentPeriod(null);
+      await loadActivityPeriods(dailyEntry.id);
+    } catch (error) {
+      console.error("Error stopping activity:", error);
+    }
+  };
+
+  const handleWakeUp = async () => {
+    try {
+      const now = new Date();
+
+      // Create today's entry with no activity set
+      const { data: newEntry, error: entryError } = await supabase
+        .from("daily_entries")
+        .insert({
+          user_id: userId,
+          date: now.toISOString(),
+          wake_time: now.toISOString(),
+          is_awake: true,
+          current_activity_id: null,
+        })
+        .select()
+        .single();
+
+      if (entryError) throw entryError;
+
+      setDailyEntry(newEntry);
+      setIsAwake(true);
+      setCurrentActivity(null);
+      setCurrentPeriod(null);
+    } catch (error) {
+      console.error("Error waking up:", error);
+    }
+  };
+
+  const handleGoToSleep = async () => {
+    if (!dailyEntry) return;
+
+    try {
+      const now = new Date();
+
+      // Close the current activity period if one exists
+      if (currentPeriod) {
+        const { error: periodError } = await supabase
+          .from("activity_periods")
+          .update({ end_time: now.toISOString() })
+          .eq("id", currentPeriod.id);
+
+        if (periodError) throw periodError;
+      }
 
       // Update daily entry
       const { error } = await supabase
@@ -355,19 +304,21 @@ export default function PixelGrid({ userId }: PixelGridProps) {
   };
 
   const switchActivity = async (activity: Activity) => {
-    if (!dailyEntry || !isAwake || !currentPeriod) return;
+    if (!dailyEntry || !isAwake) return;
     if (activity.id === currentActivity?.id) return; // Same activity
 
     try {
       const now = new Date();
 
-      // Close the current period
-      const { error: closeError } = await supabase
-        .from("activity_periods")
-        .update({ end_time: now.toISOString() })
-        .eq("id", currentPeriod.id);
+      // Close the current period if one exists
+      if (currentPeriod) {
+        const { error: closeError } = await supabase
+          .from("activity_periods")
+          .update({ end_time: now.toISOString() })
+          .eq("id", currentPeriod.id);
 
-      if (closeError) throw closeError;
+        if (closeError) throw closeError;
+      }
 
       // Create new period
       const { data: newPeriod, error: periodError } = await supabase
@@ -551,8 +502,8 @@ export default function PixelGrid({ userId }: PixelGridProps) {
           <Button
             size="lg"
             onClick={handleWakeUp}
-            disabled={activities.length === 0}
             className="gap-2"
+            disabled={activities.length === 0}
           >
             <Sun className="h-5 w-5" />
             Wake Up
@@ -571,21 +522,37 @@ export default function PixelGrid({ userId }: PixelGridProps) {
       </div>
 
       {/* Current Activity Display */}
-      {isAwake && currentActivity && (
+      {isAwake && (
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-4 h-4 rounded-full"
-                style={{ backgroundColor: getGroupColor(currentActivity) }}
-              />
-              <div className="flex-1">
-                <p className="text-sm text-muted-foreground">
-                  Current Activity
-                </p>
-                <p className="font-semibold text-lg">{currentActivity.name}</p>
+            {currentActivity ? (
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-4 h-4 rounded-full"
+                  style={{ backgroundColor: getGroupColor(currentActivity) }}
+                />
+                <div className="flex-1">
+                  <p className="text-sm text-muted-foreground">
+                    Current Activity
+                  </p>
+                  <p className="font-semibold text-lg">
+                    {currentActivity.name}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={stopCurrentActivity}
+                >
+                  <Square className="h-4 w-4 mr-1" />
+                  Stop
+                </Button>
               </div>
-            </div>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center">
+                No activity running. Pick one below to start tracking.
+              </p>
+            )}
           </CardContent>
         </Card>
       )}
@@ -623,7 +590,7 @@ export default function PixelGrid({ userId }: PixelGridProps) {
       </Card>
 
       {/* Activity Switcher */}
-      {isAwake && (
+      {isAwake && activities.length > 0 && (
         <Card>
           <CardContent className="p-4">
             <h3 className="font-semibold mb-3">Switch Activity</h3>

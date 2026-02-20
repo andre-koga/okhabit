@@ -18,7 +18,7 @@ export default function DailyTasks({ userId }: { userId: string }) {
 
       const { data, error, status } = await supabase
         .from("daily_entries")
-        .select(`id, date, completed_tasks`)
+        .select(`id, date, task_counts`)
         .eq("user_id", userId);
 
       if (error && status !== 406) throw error;
@@ -40,7 +40,7 @@ export default function DailyTasks({ userId }: { userId: string }) {
       const supabase = createClient();
 
       const insertPayload: TablesInsert<"daily_entries"> = {
-        completed_tasks: [],
+        task_counts: {},
         date: new Date().toISOString(),
         user_id: userId,
         id: v4(),

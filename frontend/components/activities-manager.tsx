@@ -95,7 +95,6 @@ export default function ActivitiesManager({
           pattern: formData.pattern,
           group_id: formData.group_id,
           routine: routineConfig,
-          is_completed: false,
         };
 
         const { error } = await supabase
@@ -160,7 +159,7 @@ export default function ActivitiesManager({
     setIsAdding(true);
   };
 
-  const switchToTransition = async (activityId: string) => {
+  const stopCurrentActivity = async (activityId: string) => {
     try {
       // Get today's daily entry
       const today = new Date().toISOString().split("T")[0];
@@ -174,28 +173,6 @@ export default function ActivitiesManager({
       if (!dailyEntry || dailyEntry.current_activity_id !== activityId) {
         return; // Not currently active
       }
-
-      // Find Transition activity from System group (query fresh from DB)
-      const { data: systemGroup } = await supabase
-        .from("activity_groups")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("name", "System")
-        .eq("is_archived", false)
-        .maybeSingle();
-
-      if (!systemGroup) return;
-
-      const { data: transitionActivity } = await supabase
-        .from("activities")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("group_id", systemGroup.id)
-        .eq("name", "Transition")
-        .eq("is_archived", false)
-        .maybeSingle();
-
-      if (!transitionActivity) return;
 
       const now = new Date();
 
@@ -214,22 +191,13 @@ export default function ActivitiesManager({
           .eq("id", currentPeriod.id);
       }
 
-      // Create new period for Transition
-      await supabase.from("activity_periods").insert({
-        user_id: userId,
-        daily_entry_id: dailyEntry.id,
-        activity_id: transitionActivity.id,
-        start_time: now.toISOString(),
-        end_time: null,
-      });
-
-      // Update daily entry
+      // Clear current activity
       await supabase
         .from("daily_entries")
-        .update({ current_activity_id: transitionActivity.id })
+        .update({ current_activity_id: null })
         .eq("id", dailyEntry.id);
     } catch (error) {
-      console.error("Error switching to Transition:", error);
+      console.error("Error stopping current activity:", error);
     }
   };
 
@@ -241,8 +209,8 @@ export default function ActivitiesManager({
     if (!archiveDialog.activityId) return;
 
     try {
-      // Switch to Transition if this activity is currently active
-      await switchToTransition(archiveDialog.activityId);
+      // Stop current activity if this one is active
+      await stopCurrentActivity(archiveDialog.activityId);
 
       const { error } = await supabase
         .from("activities")
@@ -312,11 +280,6 @@ export default function ActivitiesManager({
     return group?.color || "#6b7280";
   };
 
-  const isSystemActivity = (activity: Activity) => {
-    const group = groups.find((g) => g.id === activity.group_id);
-    return group?.name === "System";
-  };
-
   const groupedActivities = groups.map((group) => ({
     group,
     activities: activities.filter((a) => a.group_id === group.id),
@@ -328,12 +291,11 @@ export default function ActivitiesManager({
         <CardTitle>Activities & Habits</CardTitle>
         {!isAdding && groups.length > 0 && (
           <Button
-            size="sm"
+            size="icon"
             onClick={() => setIsAdding(true)}
             className="flex items-center gap-2"
           >
-            <Plus className="h-4 w-4" />
-            New Activity
+            <Plus />
           </Button>
         )}
       </CardHeader>
@@ -402,7 +364,7 @@ export default function ActivitiesManager({
               {formData.routine === "weekly" && (
                 <div className="mt-3 space-y-2">
                   <Label className="text-sm">Select days:</Label>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex gap-2">
                     {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
                       (day, index) => (
                         <Button
@@ -531,6 +493,9 @@ export default function ActivitiesManager({
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: group.color || "#3b82f6" }}
                 />
+                {group.emoji && (
+                  <span className="text-sm leading-none">{group.emoji}</span>
+                )}
                 <h3 className="font-semibold text-sm">{group.name}</h3>
                 <Badge variant="outline" className="text-xs">
                   {groupActivities.length}
@@ -587,12 +552,6 @@ export default function ActivitiesManager({
                           size="sm"
                           variant="ghost"
                           onClick={() => handleEdit(activity)}
-                          disabled={isSystemActivity(activity)}
-                          title={
-                            isSystemActivity(activity)
-                              ? "System activities cannot be edited"
-                              : "Edit activity"
-                          }
                         >
                           <Pencil className="h-3 w-3" />
                         </Button>
@@ -600,12 +559,6 @@ export default function ActivitiesManager({
                           size="sm"
                           variant="ghost"
                           onClick={() => handleArchive(activity.id)}
-                          disabled={isSystemActivity(activity)}
-                          title={
-                            isSystemActivity(activity)
-                              ? "System activities cannot be archived"
-                              : "Archive activity"
-                          }
                         >
                           <Archive className="h-3 w-3" />
                         </Button>
