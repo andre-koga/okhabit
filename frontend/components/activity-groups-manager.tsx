@@ -22,6 +22,33 @@ import {
 
 type ActivityGroup = Tables<"activity_groups">;
 
+const EMOJI_OPTIONS = [
+  "💪",
+  "🏃",
+  "🧘",
+  "📚",
+  "💻",
+  "🎨",
+  "🎵",
+  "🍎",
+  "😴",
+  "🧹",
+  "💰",
+  "🌿",
+  "✍️",
+  "🎯",
+  "🏋️",
+  "🚴",
+  "🤸",
+  "🧗",
+  "🏊",
+  "🚶",
+  "🧠",
+  "❤️",
+  "⭐",
+  "🔥",
+];
+
 interface ActivityGroupsManagerProps {
   userId: string;
   groups: ActivityGroup[];
@@ -42,6 +69,7 @@ export default function ActivityGroupsManager({
   const [formData, setFormData] = useState({
     name: "",
     color: COLOR_PALETTE[0].value,
+    emoji: "",
   });
 
   const supabase = createClient();
@@ -56,6 +84,7 @@ export default function ActivityGroupsManager({
           .update({
             name: formData.name,
             color: formData.color,
+            emoji: formData.emoji || null,
           })
           .eq("id", editingId);
 
@@ -67,6 +96,7 @@ export default function ActivityGroupsManager({
           user_id: userId,
           name: formData.name,
           color: formData.color,
+          emoji: formData.emoji || null,
           is_archived: false,
         };
 
@@ -78,7 +108,7 @@ export default function ActivityGroupsManager({
         setIsAdding(false);
       }
 
-      setFormData({ name: "", color: COLOR_PALETTE[0].value });
+      setFormData({ name: "", color: COLOR_PALETTE[0].value, emoji: "" });
       onGroupsChange();
     } catch (error) {
       console.error("Error saving group:", error);
@@ -96,6 +126,7 @@ export default function ActivityGroupsManager({
     setFormData({
       name: group.name || "",
       color: group.color || COLOR_PALETTE[0].value,
+      emoji: group.emoji || "",
     });
     setIsAdding(true);
   };
@@ -188,25 +219,24 @@ export default function ActivityGroupsManager({
   const handleCancel = () => {
     setIsAdding(false);
     setEditingId(null);
-    setFormData({ name: "", color: COLOR_PALETTE[0].value });
+    setFormData({ name: "", color: COLOR_PALETTE[0].value, emoji: "" });
   };
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader>
         <CardTitle>Activity Groups</CardTitle>
-        {!isAdding && (
-          <Button
-            size="sm"
-            onClick={() => setIsAdding(true)}
-            className="flex items-center gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            New Group
-          </Button>
-        )}
       </CardHeader>
       <CardContent className="space-y-4">
+        {!isAdding && (
+          <button
+            onClick={() => setIsAdding(true)}
+            className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors text-sm"
+          >
+            <span>New Group</span>
+            <Plus className="h-4 w-4 shrink-0" />
+          </button>
+        )}
         {isAdding && (
           <form
             onSubmit={handleSubmit}
@@ -245,6 +275,39 @@ export default function ActivityGroupsManager({
                 ))}
               </div>
             </div>
+            <div>
+              <Label>Emoji (optional)</Label>
+              <div className="grid grid-cols-8 gap-1 mt-2">
+                {EMOJI_OPTIONS.map((em) => (
+                  <button
+                    key={em}
+                    type="button"
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        emoji: formData.emoji === em ? "" : em,
+                      })
+                    }
+                    className={`h-9 w-9 rounded-md text-xl flex items-center justify-center transition-all border ${
+                      formData.emoji === em
+                        ? "border-primary bg-primary/10 scale-110"
+                        : "border-transparent hover:bg-accent hover:scale-105"
+                    }`}
+                  >
+                    {em}
+                  </button>
+                ))}
+              </div>
+              {formData.emoji && (
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, emoji: "" })}
+                  className="text-xs text-muted-foreground hover:text-foreground underline mt-1"
+                >
+                  Clear emoji
+                </button>
+              )}
+            </div>
             <div className="flex gap-2">
               <Button type="submit" size="sm">
                 {editingId ? "Update" : "Create"}
@@ -274,11 +337,14 @@ export default function ActivityGroupsManager({
             >
               <div className="flex items-center gap-3">
                 <div
-                  className="w-4 h-4 rounded-full"
+                  className="w-4 h-4 rounded-full shrink-0"
                   style={{
                     backgroundColor: group.color || COLOR_PALETTE[0].value,
                   }}
                 />
+                {group.emoji && (
+                  <span className="text-lg leading-none">{group.emoji}</span>
+                )}
                 <span className="font-medium">{group.name}</span>
               </div>
               <div className="flex gap-2">

@@ -177,27 +177,29 @@ export default function GroupActivitiesContent({
           Back to Groups
         </Button>
 
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div
-              className="w-16 h-16 rounded-lg flex-shrink-0"
-              style={{ backgroundColor: group.color || "#000" }}
-            />
-            <div>
-              <h1 className="text-3xl font-bold mb-2">{group.name}</h1>
-              <p className="text-muted-foreground">
-                {activities.length}{" "}
-                {activities.length === 1 ? "activity" : "activities"}
-              </p>
-            </div>
-          </div>
-          <Button
-            size="icon"
-            onClick={() => router.push(`/activities/${group.id}/new`)}
+        <div className="mb-4 flex items-center gap-4">
+          <div
+            className="w-16 h-16 rounded-lg flex-shrink-0 flex items-center justify-center text-4xl"
+            style={{ backgroundColor: group.color || "#000" }}
           >
-            <Plus />
-          </Button>
+            {group.emoji || ""}
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold mb-2">{group.name}</h1>
+            <p className="text-muted-foreground">
+              {activities.length}{" "}
+              {activities.length === 1 ? "activity" : "activities"}
+            </p>
+          </div>
         </div>
+
+        <button
+          onClick={() => router.push(`/activities/${group.id}/new`)}
+          className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors text-sm mb-6"
+        >
+          <span>New Activity</span>
+          <Plus className="h-4 w-4 shrink-0" />
+        </button>
 
         {activities.length === 0 ? (
           <Card>

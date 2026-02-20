@@ -494,6 +494,9 @@ export default function ActivitiesManager({
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: group.color || "#3b82f6" }}
                 />
+                {group.emoji && (
+                  <span className="text-sm leading-none">{group.emoji}</span>
+                )}
                 <h3 className="font-semibold text-sm">{group.name}</h3>
                 <Badge variant="outline" className="text-xs">
                   {groupActivities.length}

@@ -237,7 +237,7 @@ export default function JournalList({ userId }: JournalListProps) {
                   key={label}
                   onClick={() => set(cycleFilter(value))}
                   className={[
-                    "h-8 w-8 rounded-md border-2 text-base flex items-center justify-center transition-colors",
+                    "h-8 w-8 rounded-md border text-base flex items-center justify-center transition-colors",
                     value === undefined
                       ? "border-dashed border-muted-foreground/40 bg-background opacity-50 hover:opacity-75"
                       : value === true

@@ -73,17 +73,20 @@ export default function ActivitiesList({ userId }: ActivitiesListProps) {
   return (
     <div className="min-h-screen p-4 pb-20">
       <div className="max-w-4xl mx-auto">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Activity Groups</h1>
-            <p className="text-muted-foreground">
-              Organize your activities into groups
-            </p>
-          </div>
-          <Button size="icon" onClick={() => router.push("/activities/new")}>
-            <Plus />
-          </Button>
+        <div className="mb-4">
+          <h1 className="text-3xl font-bold mb-2">Activity Groups</h1>
+          <p className="text-muted-foreground">
+            Organize your activities into groups
+          </p>
         </div>
+
+        <button
+          onClick={() => router.push("/activities/new")}
+          className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors text-sm mb-6"
+        >
+          <span>New Group</span>
+          <Plus className="h-4 w-4 shrink-0" />
+        </button>
 
         {groups.length === 0 ? (
           <Card>
@@ -108,9 +111,11 @@ export default function ActivitiesList({ userId }: ActivitiesListProps) {
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-3">
                     <div
-                      className="w-12 h-12 rounded-lg flex-shrink-0"
+                      className="w-12 h-12 rounded-lg flex-shrink-0 flex items-center justify-center text-2xl"
                       style={{ backgroundColor: group.color || "#000" }}
-                    />
+                    >
+                      {group.emoji || ""}
+                    </div>
                     <CardTitle className="text-lg">{group.name}</CardTitle>
                   </div>
                 </CardHeader>

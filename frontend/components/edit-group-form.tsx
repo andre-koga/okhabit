@@ -6,13 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TablesInsert } from "@/lib/supabase/types";
+import { Tables } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
 import { ArrowLeft } from "lucide-react";
 import { COLOR_PALETTE } from "@/lib/colors";
 
-interface NewGroupFormProps {
-  userId: string;
+type ActivityGroup = Tables<"activity_groups">;
+
+interface EditGroupFormProps {
+  group: ActivityGroup;
 }
 
 const EMOJI_OPTIONS = [
@@ -42,12 +44,12 @@ const EMOJI_OPTIONS = [
   "🔥",
 ];
 
-export default function NewGroupForm({ userId }: NewGroupFormProps) {
+export default function EditGroupForm({ group }: EditGroupFormProps) {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    name: "",
-    color: COLOR_PALETTE[0].value,
-    emoji: "",
+    name: group.name || "",
+    color: group.color || COLOR_PALETTE[0].value,
+    emoji: group.emoji || "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,26 +68,22 @@ export default function NewGroupForm({ userId }: NewGroupFormProps) {
     try {
       setIsSubmitting(true);
 
-      const insertPayload: TablesInsert<"activity_groups"> = {
-        user_id: userId,
-        name: formData.name.trim(),
-        color: formData.color,
-        emoji: formData.emoji || null,
-        is_archived: false,
-      };
-
-      const { error: insertError } = await supabase
+      const { error: updateError } = await supabase
         .from("activity_groups")
-        .insert(insertPayload);
+        .update({
+          name: formData.name.trim(),
+          color: formData.color,
+          emoji: formData.emoji || null,
+        })
+        .eq("id", group.id);
 
-      if (insertError) throw insertError;
+      if (updateError) throw updateError;
 
-      // Redirect back to activities page
-      router.push("/activities");
+      router.push(`/activities/${group.id}`);
       router.refresh();
     } catch (error) {
-      console.error("Error creating group:", error);
-      setError("Failed to create group. Please try again.");
+      console.error("Error updating group:", error);
+      setError("Failed to update group. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -101,7 +99,7 @@ export default function NewGroupForm({ userId }: NewGroupFormProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Create New Activity Group</CardTitle>
+            <CardTitle>Edit Activity Group</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -188,7 +186,7 @@ export default function NewGroupForm({ userId }: NewGroupFormProps) {
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Creating..." : "Create Group"}
+                  {isSubmitting ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
             </form>
