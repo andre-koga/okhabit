@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
   PopoverContent,
@@ -18,6 +17,7 @@ import {
 import { Tables, TablesInsert } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
 import {
+  Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -50,7 +50,7 @@ export default function DailyTasksList({
 }: DailyTasksListProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [dailyEntry, setDailyEntry] = useState<DailyEntry | null>(null);
-  const [completedTasks, setCompletedTasks] = useState<string[]>([]);
+  const [taskCounts, setTaskCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
   const [activityPeriods, setActivityPeriods] = useState<ActivityPeriod[]>([]);
   const [currentActivityId, setCurrentActivityId] = useState<string | null>(
@@ -152,7 +152,7 @@ export default function DailyTasksList({
       }
 
       setDailyEntry(data);
-      setCompletedTasks(data?.completed_tasks || []);
+      setTaskCounts((data?.task_counts as Record<string, number>) || {});
       setCurrentActivityId(data?.current_activity_id || null);
     } catch (error) {
       console.error("Error loading daily entry:", error);
@@ -328,28 +328,31 @@ export default function DailyTasksList({
     }
   };
 
-  const toggleTask = async (activityId: string) => {
+  const incrementTask = async (activityId: string, target: number) => {
     try {
-      const newCompletedTasks = completedTasks.includes(activityId)
-        ? completedTasks.filter((id) => id !== activityId)
-        : [...completedTasks, activityId];
+      const current = taskCounts[activityId] || 0;
+      const next = current >= target ? 0 : current + 1;
+      const newCounts = { ...taskCounts };
+      if (next === 0) {
+        delete newCounts[activityId];
+      } else {
+        newCounts[activityId] = next;
+      }
 
-      setCompletedTasks(newCompletedTasks);
+      setTaskCounts(newCounts);
 
       if (dailyEntry) {
-        // Update existing entry
         const { error } = await supabase
           .from("daily_entries")
-          .update({ completed_tasks: newCompletedTasks })
+          .update({ task_counts: newCounts })
           .eq("id", dailyEntry.id);
 
         if (error) throw error;
       } else {
-        // Create new entry
         const insertPayload: TablesInsert<"daily_entries"> = {
           user_id: userId,
           date: new Date(currentDate).toISOString(),
-          completed_tasks: newCompletedTasks,
+          task_counts: newCounts,
         };
 
         const { data, error } = await supabase
@@ -362,8 +365,7 @@ export default function DailyTasksList({
         setDailyEntry(data);
       }
     } catch (error) {
-      console.error("Error toggling task:", error);
-      // Revert on error
+      console.error("Error updating task count:", error);
       loadDailyEntry();
     }
   };
@@ -453,23 +455,19 @@ export default function DailyTasksList({
     return group?.color || "#cccccc";
   };
 
-  const completionRate = (() => {
-    const nonNeverTasks = dailyActivities.filter((a) => a.routine !== "never");
-    if (nonNeverTasks.length === 0) return 0;
-    const completedNonNeverTasks = completedTasks.filter((taskId) => {
-      const activity = dailyActivities.find((a) => a.id === taskId);
-      return activity && activity.routine !== "never";
-    }).length;
-    return Math.round((completedNonNeverTasks / nonNeverTasks.length) * 100);
-  })();
+  const isTaskComplete = (activity: Activity) =>
+    (taskCounts[activity.id] || 0) >= (activity.completion_target ?? 1);
 
   const nonNeverTasksCount = dailyActivities.filter(
     (a) => a.routine !== "never",
   ).length;
-  const completedNonNeverTasksCount = completedTasks.filter((taskId) => {
-    const activity = dailyActivities.find((a) => a.id === taskId);
-    return activity && activity.routine !== "never";
-  }).length;
+  const completedNonNeverTasksCount = dailyActivities.filter(
+    (a) => a.routine !== "never" && isTaskComplete(a),
+  ).length;
+  const completionRate =
+    nonNeverTasksCount === 0
+      ? 0
+      : Math.round((completedNonNeverTasksCount / nonNeverTasksCount) * 100);
 
   return (
     <div className="flex flex-col h-full">
@@ -611,7 +609,9 @@ export default function DailyTasksList({
             const timeSpent = calculateActivityTime(activity.id);
             const isCurrentActivity = currentActivityId === activity.id;
             const isNeverTask = activity.routine === "never";
-            const isCompleted = completedTasks.includes(activity.id);
+            const target = activity.completion_target ?? 1;
+            const count = taskCounts[activity.id] || 0;
+            const isComplete = count >= target;
 
             return (
               <div
@@ -619,34 +619,61 @@ export default function DailyTasksList({
                 className="flex items-center gap-3 p-3 border rounded-md hover:bg-accent"
               >
                 {isNeverTask ? (
+                  // "Avoid" tasks: red X when done
                   <div
-                    onClick={() => toggleTask(activity.id)}
+                    onClick={() => incrementTask(activity.id, target)}
                     className={`flex items-center justify-center w-4 h-4 rounded border border-destructive cursor-pointer ${
-                      isCompleted ? "bg-destructive" : "bg-transparent"
+                      isComplete ? "bg-destructive" : "bg-transparent"
                     }`}
                     role="button"
                     tabIndex={0}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        toggleTask(activity.id);
+                        incrementTask(activity.id, target);
                       }
                     }}
                   >
-                    {isCompleted && (
+                    {isComplete && (
                       <X className="h-3 w-3 text-destructive-foreground" />
                     )}
                   </div>
+                ) : target <= 1 ? (
+                  // Boolean-style: pill that matches counter shape
+                  <button
+                    onClick={() => incrementTask(activity.id, target)}
+                    className={`flex items-center justify-center h-6 w-6 rounded-full border transition-colors ${
+                      isComplete
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "border-muted-foreground text-muted-foreground hover:border-foreground"
+                    }`}
+                    title={isComplete ? "Mark incomplete" : "Mark complete"}
+                  >
+                    {isComplete && <Check className="h-3 w-3" />}
+                  </button>
                 ) : (
-                  <Checkbox
-                    id={activity.id}
-                    checked={completedTasks.includes(activity.id)}
-                    onCheckedChange={() => toggleTask(activity.id)}
-                  />
+                  // Counter-style: "N/target" pill
+                  <button
+                    onClick={() => incrementTask(activity.id, target)}
+                    className={`flex items-center justify-center min-w-[2.75rem] h-6 rounded-full text-xs font-semibold px-2 border transition-colors ${
+                      isComplete
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : count > 0
+                          ? "bg-primary/20 text-primary border-primary/40"
+                          : "border-muted-foreground text-muted-foreground hover:border-foreground"
+                    }`}
+                    title={`${count} / ${target} — click to increment`}
+                  >
+                    {count}/{target}
+                  </button>
                 )}
                 <label
-                  htmlFor={activity.id}
                   className="flex items-center gap-2 flex-1 cursor-pointer"
+                  onClick={
+                    !isNeverTask
+                      ? () => incrementTask(activity.id, target)
+                      : undefined
+                  }
                 >
                   <div
                     className="w-3 h-3 rounded-full"
@@ -654,9 +681,7 @@ export default function DailyTasksList({
                   />
                   <span
                     className={
-                      completedTasks.includes(activity.id)
-                        ? "line-through text-muted-foreground"
-                        : ""
+                      isComplete ? "line-through text-muted-foreground" : ""
                     }
                   >
                     {activity.name}
@@ -699,13 +724,19 @@ export default function DailyTasksList({
               key={task.id}
               className="flex items-center gap-3 p-3 border rounded-md hover:bg-accent"
             >
-              <Checkbox
-                id={`ott-${task.id}`}
-                checked={task.is_completed ?? false}
-                onCheckedChange={() => toggleOneTimeTask(task)}
-              />
+              <button
+                onClick={() => toggleOneTimeTask(task)}
+                className={`flex items-center justify-center h-6 w-6 rounded-full border transition-colors ${
+                  task.is_completed
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-muted-foreground text-muted-foreground hover:border-foreground"
+                }`}
+                title={task.is_completed ? "Mark incomplete" : "Mark complete"}
+              >
+                {task.is_completed && <Check className="h-3 w-3" />}
+              </button>
               <label
-                htmlFor={`ott-${task.id}`}
+                onClick={() => toggleOneTimeTask(task)}
                 className={`flex-1 text-sm cursor-pointer ${
                   task.is_completed ? "line-through text-muted-foreground" : ""
                 }`}

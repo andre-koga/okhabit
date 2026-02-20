@@ -33,6 +33,7 @@ export default function EditActivityForm({
     name: string;
     pattern: string;
     routine: string;
+    completion_target: number;
   }) => {
     setError(null);
 
@@ -59,6 +60,7 @@ export default function EditActivityForm({
           name: data.name,
           pattern: data.pattern,
           routine: data.routine,
+          completion_target: data.completion_target,
         })
         .eq("id", activity.id)
         .eq("user_id", userId);

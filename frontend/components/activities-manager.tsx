@@ -95,7 +95,6 @@ export default function ActivitiesManager({
           pattern: formData.pattern,
           group_id: formData.group_id,
           routine: routineConfig,
-          is_completed: false,
         };
 
         const { error } = await supabase

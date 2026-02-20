@@ -30,6 +30,7 @@ export default function NewActivityForm({
     name: string;
     pattern: string;
     routine: string;
+    completion_target: number;
   }) => {
     setError(null);
 
@@ -56,7 +57,7 @@ export default function NewActivityForm({
         pattern: data.pattern,
         group_id: group.id,
         routine: data.routine,
-        is_completed: false,
+        completion_target: data.completion_target,
       };
 
       const { error: insertError } = await supabase

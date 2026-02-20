@@ -36,33 +36,33 @@ export type Database = {
     Tables: {
       activities: {
         Row: {
+          completion_target: number
           created_at: string | null
           group_id: string
           id: string
           is_archived: boolean | null
-          is_completed: boolean | null
           name: string | null
           pattern: string | null
           routine: string | null
           user_id: string
         }
         Insert: {
+          completion_target?: number
           created_at?: string | null
           group_id: string
           id?: string
           is_archived?: boolean | null
-          is_completed?: boolean | null
           name?: string | null
           pattern?: string | null
           routine?: string | null
           user_id: string
         }
         Update: {
+          completion_target?: number
           created_at?: string | null
           group_id?: string
           id?: string
           is_archived?: boolean | null
-          is_completed?: boolean | null
           name?: string | null
           pattern?: string | null
           routine?: string | null
@@ -177,32 +177,32 @@ export type Database = {
       }
       daily_entries: {
         Row: {
-          completed_tasks: string[] | null
           current_activity_id: string | null
           date: string | null
           id: string
           is_awake: boolean | null
           sleep_time: string | null
+          task_counts: Json
           user_id: string
           wake_time: string | null
         }
         Insert: {
-          completed_tasks?: string[] | null
           current_activity_id?: string | null
           date?: string | null
           id?: string
           is_awake?: boolean | null
           sleep_time?: string | null
+          task_counts?: Json
           user_id: string
           wake_time?: string | null
         }
         Update: {
-          completed_tasks?: string[] | null
           current_activity_id?: string | null
           date?: string | null
           id?: string
           is_awake?: boolean | null
           sleep_time?: string | null
+          task_counts?: Json
           user_id?: string
           wake_time?: string | null
         }

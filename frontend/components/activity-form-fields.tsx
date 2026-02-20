@@ -11,7 +11,12 @@ type Activity = Tables<"activities">;
 
 interface ActivityFormFieldsProps {
   initialData?: Partial<Activity>;
-  onSubmit: (data: { name: string; pattern: string; routine: string }) => void;
+  onSubmit: (data: {
+    name: string;
+    pattern: string;
+    routine: string;
+    completion_target: number;
+  }) => void;
   onCancel: () => void;
   submitLabel: string;
   isSubmitting: boolean;
@@ -24,8 +29,9 @@ interface FormData {
   routine: string;
   weeklyDays: number[];
   monthlyDay: number;
-  customInterval: number;
+  customInterval: number | string;
   customUnit: "days" | "weeks" | "months";
+  completion_target: number | string;
 }
 
 export default function ActivityFormFields({
@@ -44,6 +50,7 @@ export default function ActivityFormFields({
     monthlyDay: 1,
     customInterval: 1,
     customUnit: "days",
+    completion_target: 1,
   });
 
   // Parse initial data
@@ -79,6 +86,7 @@ export default function ActivityFormFields({
       monthlyDay,
       customInterval,
       customUnit,
+      completion_target: initialData.completion_target ?? 1,
     });
   }, [initialData]);
 
@@ -101,13 +109,17 @@ export default function ActivityFormFields({
     } else if (formData.routine === "monthly") {
       routineConfig = `monthly:${formData.monthlyDay}`;
     } else if (formData.routine === "custom") {
-      routineConfig = `custom:${formData.customInterval}:${formData.customUnit}`;
+      routineConfig = `custom:${Math.max(1, parseInt(String(formData.customInterval)) || 1)}:${formData.customUnit}`;
     }
 
     onSubmit({
       name: formData.name.trim(),
       pattern: formData.pattern,
       routine: routineConfig,
+      completion_target: Math.max(
+        1,
+        parseInt(String(formData.completion_target)) || 1,
+      ),
     });
   };
 
@@ -204,7 +216,8 @@ export default function ActivityFormFields({
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    customInterval: parseInt(e.target.value) || 1,
+                    customInterval:
+                      e.target.value === "" ? "" : parseInt(e.target.value),
                   })
                 }
                 className="w-20"
@@ -226,6 +239,28 @@ export default function ActivityFormFields({
             </div>
           </div>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="completion_target">Completion target</Label>
+        <p className="text-xs text-muted-foreground">
+          How many times you need to do this per day. 1 = simple checkbox.
+        </p>
+        <Input
+          id="completion_target"
+          type="number"
+          min="1"
+          max="100"
+          value={formData.completion_target}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              completion_target:
+                e.target.value === "" ? "" : parseInt(e.target.value),
+            })
+          }
+          className="w-24"
+        />
       </div>
 
       <div className="space-y-2">
