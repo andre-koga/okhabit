@@ -3,15 +3,22 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tables, TablesInsert } from "@/lib/supabase/types";
 import { createClient } from "@/lib/supabase/client";
 import {
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Play,
@@ -54,6 +61,53 @@ export default function DailyTasksList({
   const [showAddTask, setShowAddTask] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [addingTask, setAddingTask] = useState(false);
+
+  // Date picker popover state
+  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
+  const [popMonth, setPopMonth] = useState(currentDate.getMonth());
+  const [popDay, setPopDay] = useState(currentDate.getDate());
+  const [popYear, setPopYear] = useState(currentDate.getFullYear());
+
+  const today = new Date();
+  const MONTHS = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  const YEARS = Array.from(
+    { length: today.getFullYear() - 2020 + 1 },
+    (_, i) => 2020 + i,
+  );
+  const daysInPopMonth = (() => {
+    const maxDay = new Date(popYear, popMonth + 1, 0).getDate();
+    const isCurrentMonthYear =
+      popYear === today.getFullYear() && popMonth === today.getMonth();
+    return isCurrentMonthYear ? Math.min(maxDay, today.getDate()) : maxDay;
+  })();
+
+  const handleDatePopoverOpen = (open: boolean) => {
+    if (open) {
+      setPopMonth(currentDate.getMonth());
+      setPopDay(currentDate.getDate());
+      setPopYear(currentDate.getFullYear());
+    }
+    setDatePopoverOpen(open);
+  };
+
+  const applyDateSelection = () => {
+    const clampedDay = Math.min(popDay, daysInPopMonth);
+    setCurrentDate(new Date(popYear, popMonth, clampedDay));
+    setDatePopoverOpen(false);
+  };
 
   const supabase = createClient();
 
@@ -430,25 +484,85 @@ export default function DailyTasksList({
         </button>
 
         <div className="flex items-center gap-1">
-          <Popover>
+          <Popover open={datePopoverOpen} onOpenChange={handleDatePopoverOpen}>
             <PopoverTrigger asChild>
-              <button className="font-semibold text-sm hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-accent">
+              <button className="flex items-center gap-1 font-semibold text-sm hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-accent">
                 {currentDate.toLocaleDateString("en-US", {
                   weekday: "short",
                   month: "long",
                   day: "numeric",
                   year: "numeric",
                 })}
+                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="center">
-              <Calendar
-                mode="single"
-                selected={currentDate}
-                onSelect={(d) => d && setCurrentDate(d)}
-                disabled={(d) => d > new Date()}
-                initialFocus
-              />
+            <PopoverContent className="w-64 p-4 space-y-3" align="center">
+              <Select
+                value={String(popMonth)}
+                onValueChange={(v) => {
+                  const m = Number(v);
+                  setPopMonth(m);
+                  setPopDay((d) =>
+                    Math.min(d, new Date(popYear, m + 1, 0).getDate()),
+                  );
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MONTHS.map((name, i) => {
+                    const disabled =
+                      popYear === today.getFullYear() && i > today.getMonth();
+                    return (
+                      <SelectItem key={i} value={String(i)} disabled={disabled}>
+                        {name}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              <Select
+                value={String(popDay)}
+                onValueChange={(v) => setPopDay(Number(v))}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Array.from({ length: daysInPopMonth }, (_, i) => i + 1).map(
+                    (d) => (
+                      <SelectItem key={d} value={String(d)}>
+                        {d}
+                      </SelectItem>
+                    ),
+                  )}
+                </SelectContent>
+              </Select>
+              <Select
+                value={String(popYear)}
+                onValueChange={(v) => {
+                  const y = Number(v);
+                  setPopYear(y);
+                  setPopDay((d) =>
+                    Math.min(d, new Date(y, popMonth + 1, 0).getDate()),
+                  );
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {YEARS.map((y) => (
+                    <SelectItem key={y} value={String(y)}>
+                      {y}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button className="w-full" onClick={applyDateSelection}>
+                Go
+              </Button>
             </PopoverContent>
           </Popover>
 
@@ -614,7 +728,7 @@ export default function DailyTasksList({
       {/* Quick-add overlay */}
       {showAddTask && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center pb-24"
+          className="fixed inset-0 z-50 flex items-end justify-center pb-20"
           onClick={() => setShowAddTask(false)}
         >
           <div
@@ -650,7 +764,7 @@ export default function DailyTasksList({
       {/* Floating Action Button */}
       <button
         onClick={() => setShowAddTask((v) => !v)}
-        className="fixed bottom-24 right-4 z-40 h-12 w-12 rounded-xl bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors"
+        className="fixed bottom-20 right-4 z-40 h-12 w-12 rounded-xl bg-primary text-primary-foreground shadow-lg flex items-center justify-center hover:bg-primary/90 transition-colors"
       >
         {showAddTask ? <X className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
       </button>
