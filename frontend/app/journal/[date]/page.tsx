@@ -59,7 +59,7 @@ async function JournalContent({
     <div className="min-h-screen px-4 py-4 pb-24">
       <div className="max-w-2xl mx-auto">
         {initialMode === "view" ? (
-          <JournalView entry={journalEntry} canEdit={canEdit} />
+          <JournalView entry={journalEntry!} canEdit={canEdit} />
         ) : (
           <JournalForm
             userId={uid}
