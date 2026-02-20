@@ -145,6 +145,8 @@ export default function DailyTasksList({
         .eq("user_id", userId)
         .gte("date", startOfDay.toISOString())
         .lte("date", endOfDay.toISOString())
+        .order("date", { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (error) {
@@ -384,6 +386,15 @@ export default function DailyTasksList({
 
   // Filter activities that should be shown for the current date
   const shouldShowActivity = (activity: Activity) => {
+    // Never show an activity on days before it was created
+    if (activity.created_at) {
+      const creationDay = new Date(activity.created_at);
+      creationDay.setHours(0, 0, 0, 0);
+      const viewDay = new Date(currentDate);
+      viewDay.setHours(0, 0, 0, 0);
+      if (viewDay < creationDay) return false;
+    }
+
     const routine = activity.routine || "daily";
 
     if (routine === "anytime") return true;
@@ -692,22 +703,24 @@ export default function DailyTasksList({
                     {formatTime(timeSpent)}
                   </span>
                 )}
-                <Button
-                  size="sm"
-                  variant={isCurrentActivity ? "default" : "ghost"}
-                  onClick={() => handleStartActivity(activity.id)}
-                  title={
-                    isCurrentActivity
-                      ? "Stop this activity"
-                      : "Start this activity"
-                  }
-                >
-                  {isCurrentActivity ? (
-                    <Square className="h-3 w-3" />
-                  ) : (
-                    <Play className="h-3 w-3" />
-                  )}
-                </Button>
+                {isToday && (
+                  <Button
+                    size="sm"
+                    variant={isCurrentActivity ? "default" : "ghost"}
+                    onClick={() => handleStartActivity(activity.id)}
+                    title={
+                      isCurrentActivity
+                        ? "Stop this activity"
+                        : "Start this activity"
+                    }
+                  >
+                    {isCurrentActivity ? (
+                      <Square className="h-3 w-3" />
+                    ) : (
+                      <Play className="h-3 w-3" />
+                    )}
+                  </Button>
+                )}
               </div>
             );
           })}
