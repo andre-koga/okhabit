@@ -1,10 +1,12 @@
-# 📊 OKHabit - Habit & Task Tracker
-
 <div align="center">
+
+<img src="app/public/icon-192x192.png" alt="Upwards icon" width="64" height="64" />
+
+# Upwards - Habit & Task Tracker
 
 **A modern, full-featured habit tracking and time management application**
 
-Built with Next.js, Supabase, TypeScript, and Tailwind CSS
+Built with Vite, Supabase, TypeScript, and Tailwind CSS
 
 [Features](#-features) • [Quick Start](#-quick-start) • [Screenshots](#-app-structure) • [Documentation](#-documentation)
 
@@ -56,7 +58,7 @@ Built with Next.js, Supabase, TypeScript, and Tailwind CSS
 1. **Clone the repository**
    ```bash
    git clone <your-repo-url>
-   cd okhabit
+   cd upwards
    ```
 
 2. **Apply database migrations**
@@ -67,7 +69,7 @@ Built with Next.js, Supabase, TypeScript, and Tailwind CSS
 
 3. **Install frontend dependencies**
    ```bash
-   cd ../frontend
+   cd ../app
    pnpm install
    ```
 
@@ -78,7 +80,7 @@ Built with Next.js, Supabase, TypeScript, and Tailwind CSS
 
 5. **Open your browser**
    ```
-   http://localhost:3000
+   http://localhost:5173
    ```
 
 📖 **Detailed setup instructions:** See [SETUP.md](SETUP.md)
@@ -157,7 +159,8 @@ The app features a clean two-column layout:
 ## 🛠️ Tech Stack
 
 ### Frontend
-- **Next.js 15** - React framework with App Router
+- **Vite** - Lightning-fast build tool and dev server
+- **React** - UI library
 - **TypeScript** - Type-safe development
 - **Tailwind CSS** - Utility-first styling
 - **shadcn/ui** - High-quality UI components
@@ -180,32 +183,28 @@ The app features a clean two-column layout:
 ## 📂 Project Structure
 
 ```
-okhabit/
+upwards/
 ├── backend/
 │   └── supabase/
 │       ├── migrations/          # Database migrations
 │       ├── config.toml          # Supabase config
 │       └── seed.sql             # Seed data
 │
-└── frontend/
-    ├── app/
-    │   ├── page.tsx             # Main dashboard
-    │   ├── auth/                # Auth pages
-    │   └── protected/           # Protected routes
-    │
-    ├── components/
-    │   ├── habit-tracker-dashboard.tsx
-    │   ├── activity-groups-manager.tsx
-    │   ├── activities-manager.tsx
-    │   ├── daily-tasks-list.tsx
-    │   ├── time-tracker.tsx
-    │   └── ui/                  # shadcn/ui components
-    │
-    └── lib/
-        └── supabase/
-            ├── types.ts         # Database types
-            ├── client.ts        # Client setup
-            └── server.ts        # Server setup
+└── app/                         # Vite + React frontend
+    ├── src/
+    │   ├── main.tsx             # Entry point
+    │   ├── App.tsx              # Root component
+    │   ├── pages/               # Route pages
+    │   ├── components/          # UI components
+    │   │   ├── activities/
+    │   │   ├── journal/
+    │   │   ├── tasks/
+    │   │   ├── timer/
+    │   │   └── ui/              # shadcn/ui components
+    │   └── lib/
+    │       ├── utils.ts
+    │       └── db/              # Supabase client & queries
+    └── public/                  # Static assets
 ```
 
 ---
@@ -286,7 +285,7 @@ This is a personal project, but suggestions and feedback are welcome!
 ## 🙏 Acknowledgments
 
 - **Supabase** - Excellent backend platform
-- **Vercel** - Next.js creators and hosting
+- **Vite** - Blazing fast dev tooling
 - **shadcn** - Beautiful UI components
 - **Tailwind Labs** - CSS framework
 
@@ -296,6 +295,6 @@ This is a personal project, but suggestions and feedback are welcome!
 
 **Built with ❤️ for better habits and productivity**
 
-[Report Bug](https://github.com/yourusername/okhabit/issues) • [Request Feature](https://github.com/yourusername/okhabit/issues)
+[Report Bug](https://github.com/andre-koga/okhabit/issues) • [Request Feature](https://github.com/andre-koga/okhabit/issues)
 
 </div>

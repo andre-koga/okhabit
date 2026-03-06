@@ -25,11 +25,11 @@ import {
 } from "lucide-react";
 
 const QUALITY_OPTIONS = [
-  { value: 1, emoji: "😞", label: "1 Bad" },
-  { value: 2, emoji: "😕", label: "2 Poor" },
-  { value: 3, emoji: "😐", label: "3 Okay" },
-  { value: 4, emoji: "😊", label: "4 Good" },
-  { value: 5, emoji: "🤩", label: "5 Great" },
+  { value: 1, color: "bg-red-400", label: "Bad" },
+  { value: 2, color: "bg-orange-400", label: "Poor" },
+  { value: 3, color: "bg-yellow-400", label: "Okay" },
+  { value: 4, color: "bg-green-400", label: "Good" },
+  { value: 5, color: "bg-blue-400", label: "Great" },
 ];
 
 const titleCharacterLimit = 30;
@@ -135,7 +135,7 @@ export default function JournalForm({
         )}
         {!canEdit && isViewMode && (
           <span className="text-sm text-muted-foreground">
-            Entries older than 7 days cannot be edited
+            Only today and yesterday can be edited
           </span>
         )}
       </div>
@@ -175,13 +175,13 @@ export default function JournalForm({
                   placeholder=""
                   value={dayEmoji}
                   onChange={(e) => {
-                    // Keep only the first emoji-like character(s)
-                    const val = e.target.value;
-                    // Simple approach: take value and limit to reasonable length
-                    setDayEmoji(val.slice(0, 8));
+                    // Extract only the first emoji-like character (Extended_Pictographic)
+                    const matches = e.target.value.match(
+                      /\p{Extended_Pictographic}/gu,
+                    );
+                    setDayEmoji(matches ? matches[0] : "");
                   }}
                   className="w-24 h-24 rounded-full text-3xl text-center"
-                  maxLength={10}
                 />
                 <Label className="mt-6">Day Emoji</Label>
               </>
@@ -264,14 +264,14 @@ export default function JournalForm({
                   type="button"
                   onClick={() => !isViewMode && setDayQuality(option.value)}
                   disabled={isViewMode}
-                  className={`flex-1 p-3 border rounded-lg transition-all ${
+                  className={`flex-1 p-3 border rounded-lg transition-all flex flex-col items-center gap-2 ${
                     dayQuality === option.value
                       ? "border-primary bg-primary/10 scale-105"
                       : "border-border hover:border-primary/50"
                   } ${isViewMode ? "cursor-default" : "cursor-pointer"}`}
                 >
-                  <div className="text-2xl mb-1">{option.emoji}</div>
-                  <div className="text-xs">{option.label.split(" ")[1]}</div>
+                  <div className={`w-6 h-6 rounded-full ${option.color}`} />
+                  <div className="text-xs">{option.label}</div>
                 </button>
               ))}
             </div>
