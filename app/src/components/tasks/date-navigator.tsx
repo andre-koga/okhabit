@@ -81,7 +81,7 @@ export default function DateNavigator({
   };
 
   return (
-    <div className="flex items-center gap-1 bg-background border border-border rounded-full shadow-lg px-2 py-1.5">
+    <div className="flex items-center gap-0.5 bg-background border border-border rounded-full shadow-lg px-1 py-1">
       <button
         onClick={() => changeDate(-1)}
         className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-accent transition-colors"

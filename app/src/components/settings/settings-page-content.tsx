@@ -149,7 +149,7 @@ export default function SettingsPageContent() {
       {/* Fixed bottom-left home button */}
       <Link
         to="/"
-        className="fixed bottom-6 left-6 z-50 h-8 w-8 flex items-center justify-center rounded-full bg-background border border-border shadow-md text-muted-foreground hover:text-foreground transition-colors"
+        className="fixed bottom-6 left-6 z-50 h-10 w-10 flex items-center justify-center rounded-full bg-background border border-border shadow-md text-muted-foreground hover:text-foreground transition-colors"
         title="Home"
       >
         <Home className="h-3.5 w-3.5" />
