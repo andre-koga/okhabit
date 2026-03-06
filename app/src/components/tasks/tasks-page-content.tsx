@@ -67,67 +67,69 @@ export default function TasksPageContent() {
   const embedUrl = getYoutubeEmbedUrl(journal.draftYoutubeUrl);
 
   return (
-    <div className="p-4 pb-28">
-      <div className="max-w-2xl mx-auto space-y-4">
-        <JournalYoutubeSection
-          canEdit={journal.canEditJournal}
-          youtubeUrl={journal.draftYoutubeUrl}
-          embedUrl={embedUrl}
-          onChange={(url) => {
-            journal.setDraftYoutubeUrl(url);
-            journal.draftRef.current.youtubeUrl = url;
-          }}
-          onBlur={journal.saveDraft}
-        />
+    <div className="pb-28">
+      <JournalYoutubeSection
+        canEdit={journal.canEditJournal}
+        youtubeUrl={journal.draftYoutubeUrl}
+        embedUrl={embedUrl}
+        onChange={(url) => {
+          journal.setDraftYoutubeUrl(url);
+          journal.draftRef.current.youtubeUrl = url;
+        }}
+        onBlur={journal.saveDraft}
+      />
 
-        <JournalMetaRow
-          canEdit={journal.canEditJournal}
-          emoji={journal.draftEmoji}
-          emojiInput={journal.emojiInput}
-          showEmojiInput={journal.showEmojiInput}
-          bookmarked={journal.draftBookmarked}
-          onEmojiInputChange={journal.setEmojiInput}
-          onEmojiCommit={(val) => {
-            journal.setDraftEmoji(val);
-            journal.draftRef.current.emoji = val;
-            journal.saveDraft();
-          }}
-          onShowEmojiInput={journal.setShowEmojiInput}
-          onBookmarkToggle={() => {
-            const next = !journal.draftBookmarked;
-            journal.setDraftBookmarked(next);
-            journal.draftRef.current.bookmarked = next;
-            journal.saveDraft();
-          }}
-        />
+      <div className="p-4">
+        <div className="max-w-2xl mx-auto space-y-4">
+          <JournalMetaRow
+            canEdit={journal.canEditJournal}
+            emoji={journal.draftEmoji}
+            emojiInput={journal.emojiInput}
+            showEmojiInput={journal.showEmojiInput}
+            bookmarked={journal.draftBookmarked}
+            onEmojiInputChange={journal.setEmojiInput}
+            onEmojiCommit={(val) => {
+              journal.setDraftEmoji(val);
+              journal.draftRef.current.emoji = val;
+              journal.saveDraft();
+            }}
+            onShowEmojiInput={journal.setShowEmojiInput}
+            onBookmarkToggle={() => {
+              const next = !journal.draftBookmarked;
+              journal.setDraftBookmarked(next);
+              journal.draftRef.current.bookmarked = next;
+              journal.saveDraft();
+            }}
+          />
 
-        <DateNavigator
-          currentDate={currentDate}
-          onDateChange={setCurrentDate}
-        />
+          <DateNavigator
+            currentDate={currentDate}
+            onDateChange={setCurrentDate}
+          />
 
-        <JournalTextSection
-          canEdit={journal.canEditJournal}
-          title={journal.draftTitle}
-          text={journal.draftText}
-          onTitleChange={(val) => {
-            journal.setDraftTitle(val);
-            journal.draftRef.current.title = val;
-          }}
-          onTextChange={(val) => {
-            journal.setDraftText(val);
-            journal.draftRef.current.text = val;
-          }}
-          onBlur={journal.saveDraft}
-        />
+          <JournalTextSection
+            canEdit={journal.canEditJournal}
+            title={journal.draftTitle}
+            text={journal.draftText}
+            onTitleChange={(val) => {
+              journal.setDraftTitle(val);
+              journal.draftRef.current.title = val;
+            }}
+            onTextChange={(val) => {
+              journal.setDraftText(val);
+              journal.draftRef.current.text = val;
+            }}
+            onBlur={journal.saveDraft}
+          />
 
-        <div className="border-t border-border pt-2" />
+          <div className="border-t border-border pt-2" />
 
-        <DailyTasksList
-          activities={activities}
-          groups={groups}
-          currentDate={currentDate}
-        />
+          <DailyTasksList
+            activities={activities}
+            groups={groups}
+            currentDate={currentDate}
+          />
+        </div>
       </div>
     </div>
   );
