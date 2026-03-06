@@ -14,8 +14,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { db, now, toDateStr } from "@/lib/db";
+import { db, now } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
+import {
+  stopCurrentActivity,
+  formatRoutineDisplay,
+} from "@/lib/activity-utils";
 
 export default function ArchivedItems() {
   const [archivedGroups, setArchivedGroups] = useState<ActivityGroup[]>([]);
@@ -91,62 +95,18 @@ export default function ArchivedItems() {
     }
   };
 
-  const stopCurrentActivity = async (activityId?: string, groupId?: string) => {
-    try {
-      const today = toDateStr(new Date());
-      const dailyEntry = await db.dailyEntries
-        .where("date")
-        .equals(today)
-        .filter((e) => !e.deleted_at)
-        .first();
-      if (!dailyEntry || !dailyEntry.current_activity_id) return;
-
-      let shouldStop = false;
-      if (activityId) {
-        shouldStop = dailyEntry.current_activity_id === activityId;
-      } else if (groupId) {
-        const currentActivity = await db.activities.get(
-          dailyEntry.current_activity_id,
-        );
-        shouldStop = currentActivity?.group_id === groupId;
-      }
-
-      if (!shouldStop) return;
-
-      const n = now();
-      const currentPeriod = await db.activityPeriods
-        .where("daily_entry_id")
-        .equals(dailyEntry.id)
-        .filter((p) => !p.end_time && !p.deleted_at)
-        .first();
-
-      if (currentPeriod) {
-        await db.activityPeriods.update(currentPeriod.id, {
-          end_time: n,
-          updated_at: n,
-        });
-      }
-      await db.dailyEntries.update(dailyEntry.id, {
-        current_activity_id: null,
-        updated_at: n,
-      });
-    } catch (error) {
-      console.error("Error stopping current activity:", error);
-    }
-  };
-
   const confirmDelete = async () => {
     if (!deleteDialog.id || !deleteDialog.type) return;
     try {
       if (deleteDialog.type === "group") {
-        await stopCurrentActivity(undefined, deleteDialog.id);
+        await stopCurrentActivity({ groupId: deleteDialog.id });
         const activities = await db.activities
           .filter((a) => a.group_id === deleteDialog.id!)
           .toArray();
         await db.activities.bulkDelete(activities.map((a) => a.id));
         await db.activityGroups.delete(deleteDialog.id);
       } else {
-        await stopCurrentActivity(deleteDialog.id, undefined);
+        await stopCurrentActivity({ activityId: deleteDialog.id });
         await db.activities.delete(deleteDialog.id);
       }
       setDeleteDialog({ open: false, type: null, id: null });
@@ -164,23 +124,6 @@ export default function ArchivedItems() {
 
   const getPatternLabel = (pattern: string | null) =>
     PATTERN_OPTIONS.find((p) => p.value === pattern)?.name || "Solid";
-
-  const formatRoutineDisplay = (routine: string | null) => {
-    if (!routine) return "daily";
-    if (routine === "anytime") return "anytime";
-    if (routine === "never") return "never";
-    if (routine.startsWith("weekly:")) {
-      const days = routine.split(":")[1].split(",").map(Number);
-      const dayNames = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-      return `weekly: ${days.map((d) => dayNames[d]).join(", ")}`;
-    } else if (routine.startsWith("monthly:")) {
-      return `monthly: day ${routine.split(":")[1]}`;
-    } else if (routine.startsWith("custom:")) {
-      const parts = routine.split(":");
-      return `every ${parts[1]} ${parts[2]}`;
-    }
-    return routine;
-  };
 
   if (loading) {
     return (
