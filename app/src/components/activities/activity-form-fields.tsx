@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { X } from "lucide-react";
-import { PATTERN_OPTIONS } from "@/lib/colors";
 import RoutineSelector from "@/components/activities/routine-selector";
 import ActivityPill from "@/components/activities/activity-pill";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
@@ -11,7 +10,6 @@ interface ActivityFormFieldsProps {
   initialData?: Partial<Activity>;
   onSubmit: (data: {
     name: string;
-    pattern: string;
     routine: string;
     completion_target: number;
   }) => Promise<void>;
@@ -23,7 +21,6 @@ interface ActivityFormFieldsProps {
 
 interface FormData {
   name: string;
-  pattern: string;
   routine: string;
   weeklyDays: number[];
   monthlyDay: number;
@@ -44,7 +41,6 @@ export default function ActivityFormFields({
   const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
     name: "",
-    pattern: "solid",
     routine: "daily",
     weeklyDays: [],
     monthlyDay: 1,
@@ -80,7 +76,6 @@ export default function ActivityFormFields({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormData({
       name: initialData.name || "",
-      pattern: initialData.pattern || "solid",
       routine: baseRoutine,
       weeklyDays,
       monthlyDay,
@@ -104,7 +99,6 @@ export default function ActivityFormFields({
 
     await onSubmit({
       name: formData.name.trim(),
-      pattern: formData.pattern,
       routine: routineConfig,
       completion_target: Math.max(
         1,
@@ -205,31 +199,6 @@ export default function ActivityFormFields({
             />
           </div>
         )}
-
-        {/* Pattern selector */}
-        <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
-            Pattern
-          </p>
-          <div className="grid grid-cols-3 gap-2">
-            {PATTERN_OPTIONS.map((pattern) => (
-              <button
-                key={pattern.value}
-                type="button"
-                onClick={() =>
-                  setFormData({ ...formData, pattern: pattern.value })
-                }
-                className={`px-3 py-2 rounded-full border-2 transition-all text-sm ${
-                  formData.pattern === pattern.value
-                    ? "border-primary bg-primary/10 font-semibold"
-                    : "border-muted hover:border-muted-foreground"
-                }`}
-              >
-                {pattern.name}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {error && <p className="text-sm text-destructive">{error}</p>}
       </form>

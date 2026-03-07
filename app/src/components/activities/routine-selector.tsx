@@ -1,5 +1,3 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -53,7 +51,7 @@ export default function RoutineSelector({
           <SelectItem value="anytime">Anytime (no schedule)</SelectItem>
           <SelectItem value="daily">Daily</SelectItem>
           <SelectItem value="weekly">Weekly</SelectItem>
-          <SelectItem value="monthly">Monthly</SelectItem>
+          {/* <SelectItem value="monthly">Monthly</SelectItem> */}
           <SelectItem value="custom">Custom</SelectItem>
           <SelectItem value="never">Never (avoid this)</SelectItem>
         </SelectContent>
@@ -63,22 +61,24 @@ export default function RoutineSelector({
         <div className="pt-3">
           <div className="flex gap-2">
             {DAYS.map((day, index) => (
-              <Button
+              <button
                 key={day}
                 type="button"
-                size="sm"
-                variant={weeklyDays.includes(index) ? "default" : "outline"}
                 onClick={() => toggleWeekday(index)}
-                className="flex-1 rounded-full"
+                className={`flex-1 rounded-full px-3 py-2 text-xs font-medium transition-colors border ${
+                  weeklyDays.includes(index)
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background border-input hover:bg-accent hover:text-accent-foreground"
+                }`}
               >
                 {day}
-              </Button>
+              </button>
             ))}
           </div>
         </div>
       )}
 
-      {routine === "monthly" && (
+      {/* {routine === "monthly" && (
         <div className="pt-3 space-y-2">
           <p className="text-xs font-semibold">Day of month:</p>
           <Input
@@ -91,13 +91,12 @@ export default function RoutineSelector({
             className="w-24 h-10"
           />
         </div>
-      )}
+      )} */}
 
       {routine === "custom" && (
-        <div className="pt-3 space-y-2">
-          <p className="text-xs font-semibold">Every:</p>
+        <div className="pt-3">
           <div className="flex gap-2 items-center">
-            <Input
+            <input
               type="number"
               min="1"
               value={customInterval}
@@ -106,7 +105,7 @@ export default function RoutineSelector({
                   e.target.value === "" ? "" : parseInt(e.target.value),
                 )
               }
-              className="w-20 h-10"
+              className="w-20 h-10 bg-muted/40 border border-border rounded-full px-4 text-base focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors"
             />
             <Select value={customUnit} onValueChange={onCustomUnitChange}>
               <SelectTrigger className="flex-1 rounded-full !h-10 px-4 border-border bg-muted/40">

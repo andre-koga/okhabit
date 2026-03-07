@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArchiveRestore, Trash2 } from "lucide-react";
-import { PATTERN_OPTIONS } from "@/lib/colors";
 import { formatRoutineDisplay } from "@/lib/activity-utils";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 
@@ -18,10 +17,6 @@ function getGroupName(groups: ActivityGroup[], groupId: string) {
 
 function getGroupColor(groups: ActivityGroup[], groupId: string) {
   return groups.find((g) => g.id === groupId)?.color ?? "#6b7280";
-}
-
-function getPatternLabel(pattern: string | null) {
-  return PATTERN_OPTIONS.find((p) => p.value === pattern)?.name ?? "Solid";
 }
 
 export default function ArchivedActivitiesList({
@@ -58,8 +53,7 @@ export default function ArchivedActivitiesList({
               </Badge>
             </div>
             <div className="text-xs text-muted-foreground mt-1">
-              Pattern: {getPatternLabel(activity.pattern)} • Routine:{" "}
-              {formatRoutineDisplay(activity.routine)}
+              Routine: {formatRoutineDisplay(activity.routine)}
             </div>
           </div>
           <div className="flex gap-2">

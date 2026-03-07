@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { X, Plus, Pencil, Archive, ArchiveRestore } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { PATTERN_OPTIONS } from "@/lib/colors";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,12 +60,6 @@ export default function GroupActivitiesContent({
   useEffect(() => {
     setIsArchived(group.is_archived);
   }, [group.is_archived]);
-
-  const getPatternDisplay = (pattern: string | null) => {
-    if (!pattern) return null;
-    const opt = PATTERN_OPTIONS.find((p) => p.value === pattern);
-    return opt?.name || pattern;
-  };
 
   const handleArchiveActivity = async () => {
     if (!archiveDialog.activityId) return;
@@ -182,11 +175,6 @@ export default function GroupActivitiesContent({
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <span className="font-medium truncate">{activity.name}</span>
                   <div className="flex gap-1.5 shrink-0">
-                    {activity.pattern && (
-                      <Badge variant="secondary" className="text-xs">
-                        {getPatternDisplay(activity.pattern)}
-                      </Badge>
-                    )}
                     <Badge variant="outline" className="text-xs">
                       {formatRoutineDisplay(activity.routine)}
                     </Badge>
