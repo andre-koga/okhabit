@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const TITLE_LIMIT = 30;
 const TEXT_LIMIT = 300;
@@ -22,6 +22,25 @@ export default function JournalTextSection({
 }: JournalTextSectionProps) {
   const [titleFocused, setTitleFocused] = useState(false);
   const [textFocused, setTextFocused] = useState(false);
+  const [textExpanded, setTextExpanded] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const textDisplayRef = useRef<HTMLParagraphElement>(null);
+  const [isClamped, setIsClamped] = useState(false);
+
+  // Auto-grow textarea
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [text]);
+
+  // Detect overflow on read-only display (only for non-editable days)
+  useEffect(() => {
+    const el = textDisplayRef.current;
+    if (!el) return;
+    setIsClamped(el.scrollHeight > el.clientHeight);
+  }, [text]);
 
   return (
     <>
@@ -36,7 +55,10 @@ export default function JournalTextSection({
                 maxLength={TITLE_LIMIT}
                 onChange={(e) => onTitleChange(e.target.value)}
                 onFocus={() => setTitleFocused(true)}
-                onBlur={() => { setTitleFocused(false); onBlur(); }}
+                onBlur={() => {
+                  setTitleFocused(false);
+                  onBlur();
+                }}
                 placeholder="Give this day a title…"
                 className="w-full text-2xl font-bold text-center bg-transparent focus:outline-none placeholder:text-muted-foreground/50"
               />
@@ -52,18 +74,23 @@ export default function JournalTextSection({
         </div>
       )}
 
-      {/* Reflection textarea */}
+      {/* Reflection */}
       {(canEdit || text) && (
         <div>
           {canEdit ? (
-            <div className="relative pb-2">
+            // Editable days: always a plain auto-growing textarea
+            <div className="relative pb-4">
               <textarea
+                ref={textareaRef}
                 value={text}
                 maxLength={TEXT_LIMIT}
-                rows={3}
+                rows={1}
                 onChange={(e) => onTextChange(e.target.value)}
                 onFocus={() => setTextFocused(true)}
-                onBlur={() => { setTextFocused(false); onBlur(); }}
+                onBlur={() => {
+                  setTextFocused(false);
+                  onBlur();
+                }}
                 placeholder="Write your thoughts for the day…"
                 className="w-full resize-none bg-transparent focus:outline-none text-sm leading-relaxed placeholder:text-muted-foreground/50 text-center"
               />
@@ -74,9 +101,25 @@ export default function JournalTextSection({
               )}
             </div>
           ) : (
-            <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
-              {text}
-            </p>
+            // Read-only days: clamped with "Read more"
+            <div>
+              <p
+                ref={textDisplayRef}
+                className={`text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap text-center ${
+                  !textExpanded ? "line-clamp-4" : ""
+                }`}
+              >
+                {text}
+              </p>
+              {(isClamped || textExpanded) && (
+                <button
+                  onClick={() => setTextExpanded((v) => !v)}
+                  className="mt-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {textExpanded ? "Read less" : "Read more"}
+                </button>
+              )}
+            </div>
           )}
         </div>
       )}

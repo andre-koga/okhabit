@@ -85,7 +85,7 @@ export default function DailyTasksList({
         </p>
       )}
 
-      <div className="space-y-2 mt-4 flex-1">
+      <div className="space-y-2 flex-1">
         {loading && (
           <p className="text-sm text-muted-foreground text-center py-4">
             Loading...
