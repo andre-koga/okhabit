@@ -128,7 +128,7 @@ export default function DailyTasksList({
         </div>
       )}
 
-      {isToday && <ActivityGroupsDrawer />}
+      <ActivityGroupsDrawer />
     </div>
   );
 }
