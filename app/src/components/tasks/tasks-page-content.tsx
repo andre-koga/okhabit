@@ -30,19 +30,11 @@ function getFirstEmoji(str: string): string {
   return "";
 }
 
-function getDayProgress(): number {
-  const now = new Date();
-  const secondsSinceMidnight =
-    now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-  return secondsSinceMidnight / 86400;
-}
-
 export default function TasksPageContent() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [groups, setGroups] = useState<ActivityGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [dayProgress, setDayProgress] = useState(getDayProgress);
   const [showLocationInput, setShowLocationInput] = useState(false);
   const [locationInputVal, setLocationInputVal] = useState("");
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
@@ -142,21 +134,6 @@ export default function TasksPageContent() {
     );
   }, [isToday, journal]);
 
-  useEffect(() => {
-    const tick = () => setDayProgress(getDayProgress());
-    let intervalId: ReturnType<typeof setInterval>;
-    // align first tick to the next full second for accuracy
-    const msUntilNextSecond = 1000 - (Date.now() % 1000);
-    const timeoutId = setTimeout(() => {
-      tick();
-      intervalId = setInterval(tick, 1000);
-    }, msUntilNextSecond);
-    return () => {
-      clearTimeout(timeoutId);
-      clearInterval(intervalId);
-    };
-  }, []);
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -181,8 +158,8 @@ export default function TasksPageContent() {
       />
 
       {/* Emoji — centered, overlaps the bottom of the video */}
-      <div className="flex justify-center -mt-10 relative z-10">
-        <div className="relative">
+      <div className="flex justify-center -mt-10 relative z-10 pointer-events-none">
+        <div className="relative pointer-events-auto">
           {journal.canEditJournal ? (
             journal.showEmojiInput ? (
               <input
@@ -386,15 +363,6 @@ export default function TasksPageContent() {
         <DateNavigator
           currentDate={currentDate}
           onDateChange={setCurrentDate}
-        />
-      </div>
-
-      {/* Day progress bar — very bottom of screen */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 h-[3px] bg-border/40">
-        <div
-          className="h-full bg-primary/60 transition-[width] duration-1000 ease-linear"
-          style={{ width: `${dayProgress * 100}%` }}
-          title={`${Math.round(dayProgress * 100)}% of today has passed`}
         />
       </div>
     </div>

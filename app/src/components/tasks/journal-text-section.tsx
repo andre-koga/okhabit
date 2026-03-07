@@ -87,7 +87,7 @@ export default function JournalTextSection({
                 onBlur();
               }}
               placeholder="Write your thoughts for the day…"
-              className="w-full resize-none bg-transparent focus:outline-none text-base leading-relaxed placeholder:text-muted-foreground/50 text-center font-crimson"
+              className="w-full resize-none bg-transparent focus:outline-none text-base leading-relaxed text-muted-foreground placeholder:text-muted-foreground/50 text-center font-crimson"
             />
             {textFocused && (
               <p className="absolute bottom-0 right-0 text-xs text-muted-foreground">
@@ -104,7 +104,7 @@ export default function JournalTextSection({
               rows={1}
               readOnly
               placeholder="No reflection written."
-              className="w-full resize-none bg-transparent focus:outline-none text-base leading-relaxed text-center font-crimson text-muted-foreground placeholder:text-muted-foreground/30 placeholder:italic cursor-default"
+              className="w-full resize-none bg-transparent focus:outline-none text-base leading-relaxed text-muted-foreground text-center font-crimson placeholder:text-muted-foreground/30 placeholder:italic cursor-default"
             />
           </div>
         )}
