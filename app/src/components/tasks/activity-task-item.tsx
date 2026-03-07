@@ -11,6 +11,7 @@ interface ActivityTaskItemProps {
   isToday: boolean;
   onIncrement: (activityId: string, target: number) => void;
   onStartActivity: (activityId: string) => void;
+  onStopActivity: () => void;
 }
 
 export default function ActivityTaskItem({
@@ -22,6 +23,7 @@ export default function ActivityTaskItem({
   isToday,
   onIncrement,
   onStartActivity,
+  onStopActivity,
 }: ActivityTaskItemProps) {
   const target = activity.completion_target ?? 1;
   const isComplete = count >= target;
@@ -98,7 +100,14 @@ export default function ActivityTaskItem({
         color={groupColor}
         elapsedMs={timeSpent}
         isRunning={isCurrentActivity}
-        onPlayStop={isToday ? () => onStartActivity(activity.id) : undefined}
+        onPlayStop={
+          isToday
+            ? () =>
+                isCurrentActivity
+                  ? onStopActivity()
+                  : onStartActivity(activity.id)
+            : undefined
+        }
         nameClassName={isComplete ? "line-through text-muted-foreground" : ""}
         readOnly={!isToday}
         className="flex-1"

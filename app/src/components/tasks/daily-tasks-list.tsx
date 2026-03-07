@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toDateStr } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { shouldShowActivity, formatTimerDisplay } from "@/lib/activity-utils";
@@ -10,6 +10,7 @@ import ActivityTimelineItem from "./activity-timeline-item";
 import OneTimeTaskItem from "./one-time-task-item";
 import ActivityGroupsDrawer from "./activity-groups-drawer";
 import ActiveActivityPill from "./active-activity-pill";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface DailyTasksListProps {
   activities: Activity[];
@@ -24,6 +25,7 @@ export default function DailyTasksList({
 }: DailyTasksListProps) {
   const dateString = toDateStr(currentDate);
   const isToday = dateString === toDateStr(new Date());
+  const [showCompleted, setShowCompleted] = useState(false);
 
   const {
     taskCounts,
@@ -65,6 +67,17 @@ export default function DailyTasksList({
 
   const dailyActivities = activities.filter((a) =>
     shouldShowActivity(a, currentDate),
+  );
+
+  const isActivityComplete = (activity: Activity) =>
+    activity.routine !== "never" &&
+    (taskCounts[activity.id] || 0) >= (activity.completion_target ?? 1);
+
+  const incompleteActivities = dailyActivities.filter(
+    (a) => !isActivityComplete(a),
+  );
+  const completedActivities = dailyActivities.filter((a) =>
+    isActivityComplete(a),
   );
 
   const getGroup = (activity: Activity): ActivityGroup | undefined =>
@@ -136,7 +149,7 @@ export default function DailyTasksList({
           </p>
         )}
         {!loading &&
-          dailyActivities.map((activity) => (
+          incompleteActivities.map((activity) => (
             <ActivityTaskItem
               key={activity.id}
               activity={activity}
@@ -147,9 +160,50 @@ export default function DailyTasksList({
               isToday={isToday}
               onIncrement={incrementTask}
               onStartActivity={handleStartActivity}
+              onStopActivity={handleStopActivity}
             />
           ))}
       </div>
+
+      {!loading && completedActivities.length > 0 && (
+        <div className="flex justify-center mt-3">
+          <button
+            onClick={() => setShowCompleted(!showCompleted)}
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1 rounded-full hover:bg-accent"
+          >
+            {showCompleted ? (
+              <>
+                <ChevronUp className="h-3 w-3" />
+                Hide completed ({completedActivities.length})
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-3 w-3" />
+                Show completed ({completedActivities.length})
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      {!loading && showCompleted && completedActivities.length > 0 && (
+        <div className="space-y-2 mt-3">
+          {completedActivities.map((activity) => (
+            <ActivityTaskItem
+              key={activity.id}
+              activity={activity}
+              group={getGroup(activity)}
+              count={taskCounts[activity.id] || 0}
+              timeSpent={calculateActivityTime(activity.id)}
+              isCurrentActivity={currentActivityId === activity.id}
+              isToday={isToday}
+              onIncrement={incrementTask}
+              onStartActivity={handleStartActivity}
+              onStopActivity={handleStopActivity}
+            />
+          ))}
+        </div>
+      )}
 
       {(currentActivityId || timelineSessions.length > 0) && (
         <div className="mt-6 space-y-2">
