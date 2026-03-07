@@ -115,13 +115,6 @@ function ActivityTaskItem({
         </button>
       )}
 
-      <div
-        className={`flex items-center gap-0.5 text-sm font-semibold ${streakColorClass}`}
-      >
-        <Flame className="h-3.5 w-3.5" />
-        <span>{streak}</span>
-      </div>
-
       <Pill
         name={activity.name}
         color={groupColor}
@@ -139,6 +132,13 @@ function ActivityTaskItem({
         readOnly={!isToday}
         className="flex-1"
       />
+
+      <div
+        className={`flex items-center gap-0.5 text-sm font-semibold ${streakColorClass}`}
+      >
+        <Flame className="h-3.5 w-3.5" />
+        <span>{streak}</span>
+      </div>
     </div>
   );
 }
