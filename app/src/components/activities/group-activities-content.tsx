@@ -89,37 +89,25 @@ export default function GroupActivitiesContent({
   }
 
   return (
-    <div className="p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <Button variant="ghost" onClick={() => navigate("/")}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Home
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate(`/activities/${group.id}/edit`)}
-          >
-            <Pencil className="h-4 w-4 mr-2" />
-            Edit Group
-          </Button>
-        </div>
+    <div className="pb-20">
+      {/* Full-bleed gradient banner */}
+      <div
+        className="w-full h-40"
+        style={{
+          background: `linear-gradient(to bottom, ${group.color || "#888"} 0%, transparent 100%)`,
+        }}
+      />
 
-        <div className="mb-4 flex items-center gap-4">
-          <div
-            className="w-16 h-16 rounded-lg flex-shrink-0"
-            style={{ backgroundColor: group.color || "#000" }}
-          />
-          <div>
-            <h1 className="text-3xl font-bold mb-2">{group.name}</h1>
-            <p className="text-muted-foreground">
-              {activities.length}{" "}
-              {activities.length === 1 ? "activity" : "activities"}
-            </p>
-          </div>
-        </div>
+      {/* Group title — overlaps the gradient */}
+      <div className="px-4 -mt-10 mb-6 text-center">
+        <h1 className="text-3xl font-bold">{group.name}</h1>
+        <p className="text-muted-foreground text-sm mt-1">
+          {activities.length}{" "}
+          {activities.length === 1 ? "activity" : "activities"}
+        </p>
+      </div>
 
+      <div className="px-4">
         <button
           onClick={() => navigate(`/activities/${group.id}/new`)}
           className="w-full flex items-center justify-between px-4 py-3 rounded-lg border border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors text-sm mb-6"
@@ -191,6 +179,22 @@ export default function GroupActivitiesContent({
           </div>
         )}
       </div>
+
+      {/* Fixed floating nav buttons */}
+      <button
+        onClick={() => navigate("/")}
+        className="fixed bottom-6 left-6 z-50 h-10 w-10 border border-border flex items-center justify-center rounded-full bg-background shadow-md text-muted-foreground hover:text-foreground transition-colors"
+        title="Back to home"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+      </button>
+      <button
+        onClick={() => navigate(`/activities/${group.id}/edit`)}
+        className="fixed bottom-6 right-6 z-50 h-10 w-10 border border-border flex items-center justify-center rounded-full bg-background shadow-md text-muted-foreground hover:text-foreground transition-colors"
+        title="Edit group"
+      >
+        <Pencil className="h-3.5 w-3.5" />
+      </button>
 
       <AlertDialog
         open={archiveDialog.open}
