@@ -90,11 +90,11 @@ export interface OneTimeTask {
     deleted_at: string | null;
 }
 
-export interface TimeEntry {
+export interface ActivityStreak {
     id: string;
     activity_id: string;
-    time_start: string; // ISO string
-    time_end: string | null; // ISO string
+    date: string; // YYYY-MM-DD
+    streak: number;
     created_at: string;
     updated_at: string;
     synced_at: string | null;

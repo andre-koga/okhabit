@@ -2,10 +2,23 @@ import { useState, useEffect } from "react";
 import { Plus, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { db } from "@/lib/db";
-import type { ActivityGroup } from "@/lib/db/types";
+import type { ActivityGroup, Activity } from "@/lib/db/types";
+import { getOrCreateHiddenGroupDefaultActivity } from "@/lib/activity-utils";
 import GroupPill from "@/components/activities/group-pill";
 
-export default function ActivityGroupsDrawer() {
+interface ActivityGroupsDrawerProps {
+  currentActivityId?: string | null;
+  activities?: Activity[];
+  onStartActivity?: (activityId: string) => void | Promise<void>;
+  onStopActivity?: () => void | Promise<void>;
+}
+
+export default function ActivityGroupsDrawer({
+  currentActivityId,
+  activities = [],
+  onStartActivity,
+  onStopActivity,
+}: ActivityGroupsDrawerProps) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [groups, setGroups] = useState<ActivityGroup[]>([]);
@@ -73,17 +86,36 @@ export default function ActivityGroupsDrawer() {
                 No groups yet.
               </p>
             ) : (
-              groups.map((group) => (
-                <GroupPill
-                  key={group.id}
-                  name={group.name}
-                  color={group.color || "#888"}
-                  onClick={() => {
-                    setOpen(false);
-                    navigate(`/activities/${group.id}`);
-                  }}
-                />
-              ))
+              groups.map((group) => {
+                const currentActivity = currentActivityId
+                  ? activities.find((a) => a.id === currentActivityId)
+                  : undefined;
+                const isRunningInGroup =
+                  currentActivity && currentActivity.group_id === group.id;
+
+                return (
+                  <GroupPill
+                    key={group.id}
+                    name={group.name}
+                    color={group.color || "#888"}
+                    isRunning={isRunningInGroup}
+                    onNameClick={() => {
+                      setOpen(false);
+                      navigate(`/activities/${group.id}`);
+                    }}
+                    onActionClick={async () => {
+                      if (isRunningInGroup) {
+                        await onStopActivity?.();
+                        return;
+                      }
+
+                      const hiddenActivity =
+                        await getOrCreateHiddenGroupDefaultActivity(group);
+                      await onStartActivity?.(hiddenActivity.id);
+                    }}
+                  />
+                );
+              })
             )}
           </div>
         </div>

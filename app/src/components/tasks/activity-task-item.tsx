@@ -1,40 +1,61 @@
-import { Button } from "@/components/ui/button";
-import { Check, Play, Square, X } from "lucide-react";
+import { memo, useEffect, useState } from "react";
+import { Check, X, Flame } from "lucide-react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
-import { formatActivityTime } from "@/lib/activity-utils";
+import Pill from "@/components/ui/pill";
 
 interface ActivityTaskItemProps {
   activity: Activity;
   group: ActivityGroup | undefined;
   count: number;
+  streak: number;
   timeSpent: number;
   isCurrentActivity: boolean;
   isToday: boolean;
   onIncrement: (activityId: string, target: number) => void;
   onStartActivity: (activityId: string) => void;
+  onStopActivity: () => void;
 }
 
-export default function ActivityTaskItem({
+function ActivityTaskItem({
   activity,
   group,
   count,
+  streak,
   timeSpent,
   isCurrentActivity,
   isToday,
   onIncrement,
   onStartActivity,
+  onStopActivity,
 }: ActivityTaskItemProps) {
+  const [, setTick] = useState(0);
+
+  // Only update this specific item when it's running
+  useEffect(() => {
+    if (!isCurrentActivity) return;
+    const interval = setInterval(() => setTick((prev) => prev + 1), 1000);
+    return () => clearInterval(interval);
+  }, [isCurrentActivity]);
+
   const target = activity.completion_target ?? 1;
   const isComplete = count >= target;
   const isNeverTask = activity.routine === "never";
   const groupColor = group?.color || "#cccccc";
+  const streakColorClass =
+    streak === 0
+      ? "text-muted-foreground"
+      : streak <= 5
+        ? "text-yellow-500"
+        : streak <= 25
+          ? "text-orange-500"
+          : "text-red-500";
 
   return (
-    <div className="flex items-center gap-3 p-3 border rounded-md hover:bg-accent">
+    <div className="flex items-center gap-2">
       {isNeverTask ? (
         <div
           onClick={isToday ? () => onIncrement(activity.id, target) : undefined}
-          className={`flex items-center justify-center w-4 h-4 rounded border border-destructive ${
+          className={`flex items-center justify-center h-7 w-[2.75rem] rounded-md border border-destructive transition-colors ${
             isToday ? "cursor-pointer" : "cursor-default opacity-60"
           } ${isComplete ? "bg-destructive" : "bg-transparent"}`}
           role={isToday ? "button" : undefined}
@@ -50,13 +71,13 @@ export default function ActivityTaskItem({
               : undefined
           }
         >
-          {isComplete && <X className="h-3 w-3 text-destructive-foreground" />}
+          {isComplete && <X className="h-4 w-4 text-destructive-foreground" />}
         </div>
       ) : target <= 1 ? (
         <button
           onClick={isToday ? () => onIncrement(activity.id, target) : undefined}
           disabled={!isToday}
-          className={`flex items-center justify-center h-6 w-6 rounded-full border transition-colors ${
+          className={`flex items-center justify-center h-7 w-[2.75rem] rounded-full border transition-colors ${
             isComplete
               ? "bg-primary text-primary-foreground border-primary"
               : "border-muted-foreground text-muted-foreground"
@@ -69,13 +90,13 @@ export default function ActivityTaskItem({
               : undefined
           }
         >
-          {isComplete && <Check className="h-3 w-3" />}
+          {isComplete && <Check className="h-4 w-4" />}
         </button>
       ) : (
         <button
           onClick={isToday ? () => onIncrement(activity.id, target) : undefined}
           disabled={!isToday}
-          className={`flex items-center justify-center min-w-[2.75rem] h-6 rounded-full text-xs font-semibold px-2 border transition-colors ${
+          className={`flex items-center justify-center min-w-[2.75rem] h-7 rounded-full text-xs font-semibold px-2 border transition-colors ${
             isComplete
               ? "bg-primary text-primary-foreground border-primary"
               : count > 0
@@ -88,53 +109,38 @@ export default function ActivityTaskItem({
               : `${count} / ${target}`
           }
         >
-          {count}/{target}
+          <p className="pt-0.5 font-mono">
+            {count}/{target}
+          </p>
         </button>
       )}
 
-      <label
-        className={`flex items-center gap-2 flex-1 ${
-          isToday && !isNeverTask ? "cursor-pointer" : "cursor-default"
-        }`}
-        onClick={
-          isToday && !isNeverTask
-            ? () => onIncrement(activity.id, target)
+      <Pill
+        name={activity.name}
+        color={groupColor}
+        elapsedMs={timeSpent}
+        isRunning={isCurrentActivity}
+        onPlayStop={
+          isToday
+            ? () =>
+                isCurrentActivity
+                  ? onStopActivity()
+                  : onStartActivity(activity.id)
             : undefined
         }
+        nameClassName={isComplete ? "line-through text-muted-foreground" : ""}
+        readOnly={!isToday}
+        className="flex-1"
+      />
+
+      <div
+        className={`flex items-center gap-0.5 text-sm font-semibold ${streakColorClass}`}
       >
-        <div
-          className="w-3 h-3 rounded-full"
-          style={{ backgroundColor: groupColor }}
-        />
-        <span
-          className={isComplete ? "line-through text-muted-foreground" : ""}
-        >
-          {activity.name}
-        </span>
-      </label>
-
-      {timeSpent > 0 && (
-        <span className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full font-mono">
-          {formatActivityTime(timeSpent)}
-        </span>
-      )}
-
-      {isToday && (
-        <Button
-          size="sm"
-          variant={isCurrentActivity ? "default" : "ghost"}
-          onClick={() => onStartActivity(activity.id)}
-          title={
-            isCurrentActivity ? "Stop this activity" : "Start this activity"
-          }
-        >
-          {isCurrentActivity ? (
-            <Square className="h-3 w-3" />
-          ) : (
-            <Play className="h-3 w-3" />
-          )}
-        </Button>
-      )}
+        <Flame className="h-3.5 w-3.5" />
+        <span>{streak}</span>
+      </div>
     </div>
   );
 }
+
+export default memo(ActivityTaskItem);

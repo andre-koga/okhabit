@@ -1,9 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { db, now } from "@/lib/db";
 import type { ActivityGroup, Activity } from "@/lib/db/types";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { X, Plus, Pencil, Archive, ArchiveRestore } from "lucide-react";
+import { X, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   AlertDialog,
@@ -16,9 +14,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  isHiddenGroupDefaultActivity,
   stopCurrentActivity,
-  formatRoutineDisplay,
 } from "@/lib/activity-utils";
+import GroupActivitiesHeader from "@/components/activities/group-activities-header";
+import GroupActivitiesList from "@/components/activities/group-activities-list";
+import GroupActivitiesTimeline from "@/components/activities/group-activities-timeline";
+import { useGroupActivityTracking } from "@/components/activities/hooks/use-group-activity-tracking";
 
 interface GroupActivitiesContentProps {
   group: ActivityGroup;
@@ -31,6 +33,8 @@ export default function GroupActivitiesContent({
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [isArchived, setIsArchived] = useState(group.is_archived);
+  const { currentActivityId, getElapsedMs, toggleActivity } =
+    useGroupActivityTracking();
   const [archiveDialog, setArchiveDialog] = useState<{
     open: boolean;
     activityId: string | null;
@@ -42,7 +46,11 @@ export default function GroupActivitiesContent({
       setLoading(true);
       const data = await db.activities
         .filter(
-          (a) => a.group_id === group.id && !a.is_archived && !a.deleted_at,
+          (a) =>
+            a.group_id === group.id &&
+            !a.is_archived &&
+            !a.deleted_at &&
+            !isHiddenGroupDefaultActivity(a),
         )
         .sortBy("created_at");
       setActivities(data);
@@ -103,54 +111,13 @@ export default function GroupActivitiesContent({
 
   return (
     <div className="pb-20 overflow-y-scroll">
-      {/* Full-bleed gradient banner with edit button and title */}
-      <div className="relative w-full h-40">
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `linear-gradient(to bottom, ${group.color || "#888"} 0%, transparent 100%)`,
-          }}
-        />
-        {/* Bottom fade into background */}
-        <div className="absolute bottom-0 left-0 right-0 h-1/5 bg-gradient-to-b from-transparent to-background pointer-events-none" />
-        {/* Group title — positioned in the fade zone */}
-        <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-full px-4 text-center">
-          {isArchived && (
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-              Archived
-            </p>
-          )}
-          <h1 className="text-3xl font-bold">{group.name}</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {activities.length}{" "}
-            {activities.length === 1 ? "activity" : "activities"}
-          </p>
-        </div>
-        {/* Archive button — below edit button */}
-        <div className="absolute -bottom-12 right-3 z-20">
-          <button
-            onClick={handleArchiveGroup}
-            className="h-7 w-7 flex items-center border border-muted justify-center rounded-full bg-background/80 backdrop-blur-sm shadow-sm hover:bg-background transition-colors"
-            title={isArchived ? "Unarchive group" : "Archive group"}
-          >
-            {isArchived ? (
-              <ArchiveRestore className="h-3.5 w-3.5 text-muted-foreground" />
-            ) : (
-              <Archive className="h-3.5 w-3.5 text-muted-foreground" />
-            )}
-          </button>
-        </div>
-        {/* Edit button */}
-        <div className="absolute -bottom-4 right-3 z-20">
-          <button
-            onClick={() => navigate(`/activities/${group.id}/edit`)}
-            className="h-7 w-7 flex items-center border border-muted justify-center rounded-full bg-background/80 backdrop-blur-sm shadow-sm hover:bg-background transition-colors"
-            title="Edit group"
-          >
-            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
-        </div>
-      </div>
+      <GroupActivitiesHeader
+        group={group}
+        isArchived={isArchived}
+        activityCount={activities.length}
+        onEditGroup={() => navigate(`/activities/${group.id}/edit`)}
+        onToggleArchiveGroup={handleArchiveGroup}
+      />
 
       <div className="mb-6" />
 
@@ -165,51 +132,31 @@ export default function GroupActivitiesContent({
           </button>
         </div>
 
-        {activities.length === 0 ? null : (
-          <div className="space-y-2">
-            {activities.map((activity) => (
-              <div
-                key={activity.id}
-                className="flex items-center justify-between px-4 py-3 rounded-lg border hover:bg-accent transition-colors"
-              >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <span className="font-medium truncate">{activity.name}</span>
-                  <div className="flex gap-1.5 shrink-0">
-                    <Badge variant="outline" className="text-xs">
-                      {formatRoutineDisplay(activity.routine)}
-                    </Badge>
-                  </div>
-                </div>
-                <div className="flex gap-1 shrink-0">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() =>
-                      navigate(`/activities/${group.id}/edit/${activity.id}`)
-                    }
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() =>
-                      setArchiveDialog({
-                        open: true,
-                        activityId: activity.id,
-                        activityName: activity.name,
-                      })
-                    }
-                  >
-                    <Archive className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <GroupActivitiesList
+          activities={activities}
+          groupColor={group.color || "#888"}
+          currentActivityId={currentActivityId}
+          getElapsedMs={getElapsedMs}
+          onToggleActivity={toggleActivity}
+          onEditActivity={(activityId) =>
+            navigate(`/activities/${group.id}/edit/${activityId}`)
+          }
+          onArchiveActivity={(activity) =>
+            setArchiveDialog({
+              open: true,
+              activityId: activity.id,
+              activityName: activity.name,
+            })
+          }
+        />
+      </div>
+
+      {/* Timeline section */}
+      <div className="mt-8 pt-6">
+        <GroupActivitiesTimeline
+          groupId={group.id}
+          groupColor={group.color || "#888"}
+        />
       </div>
 
       {/* Fixed floating back button */}

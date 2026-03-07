@@ -7,7 +7,7 @@ import type {
     ActivityPeriod,
     JournalEntry,
     OneTimeTask,
-    TimeEntry,
+    ActivityStreak,
 } from "./types";
 
 export class UpwardsDB extends Dexie {
@@ -17,7 +17,7 @@ export class UpwardsDB extends Dexie {
     activityPeriods!: Table<ActivityPeriod>;
     journalEntries!: Table<JournalEntry>;
     oneTimeTasks!: Table<OneTimeTask>;
-    timeEntries!: Table<TimeEntry>;
+    activityStreaks!: Table<ActivityStreak>;
 
     constructor() {
         super("okhabit");
@@ -28,7 +28,16 @@ export class UpwardsDB extends Dexie {
             activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
             journalEntries: "id, entry_date, is_bookmarked, deleted_at",
             oneTimeTasks: "id, date, is_completed, deleted_at, created_at",
-            timeEntries: "id, activity_id, time_start, deleted_at",
+        });
+
+        this.version(2).stores({
+            activityGroups: "id, name, is_archived, deleted_at, created_at",
+            activities: "id, group_id, is_archived, deleted_at, created_at",
+            dailyEntries: "id, date, deleted_at",
+            activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
+            journalEntries: "id, entry_date, is_bookmarked, deleted_at",
+            oneTimeTasks: "id, date, is_completed, deleted_at, created_at",
+            activityStreaks: "id, activity_id, date, [activity_id+date], deleted_at",
         });
     }
 }
@@ -60,5 +69,5 @@ export type {
     ActivityPeriod,
     JournalEntry,
     OneTimeTask,
-    TimeEntry,
+    ActivityStreak,
 } from "./types";

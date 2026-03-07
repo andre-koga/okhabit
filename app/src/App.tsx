@@ -5,10 +5,11 @@ import NewGroupPage from "@/pages/new-group";
 import EditGroupPage from "@/pages/edit-group";
 import NewActivityPage from "@/pages/new-activity";
 import EditActivityPage from "@/pages/edit-activity";
+import SessionDetailsPage from "@/pages/session-details";
 import StatsPage from "@/pages/stats";
-import TimerPage from "@/pages/timer";
 import SettingsPage from "@/pages/settings";
 import ArchivedPage from "@/pages/archived";
+import TaskOrderPage from "@/pages/task-order";
 
 export const LOCAL_USER_ID = "local";
 
@@ -26,9 +27,13 @@ export default function App() {
           path="/activities/:groupId/edit/:activityId"
           element={<EditActivityPage />}
         />
-        <Route path="/timer" element={<TimerPage />} />
+        <Route
+          path="/activities/:groupId/sessions/:sessionId"
+          element={<SessionDetailsPage />}
+        />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/settings/archived" element={<ArchivedPage />} />
+        <Route path="/settings/task-order" element={<TaskOrderPage />} />
       </Routes>
     </BrowserRouter>
   );
