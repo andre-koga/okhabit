@@ -24,12 +24,12 @@ interface RoutineSelectorProps {
 export default function RoutineSelector({
   routine,
   weeklyDays,
-  monthlyDay,
+  monthlyDay, // eslint-disable-line @typescript-eslint/no-unused-vars
   customInterval,
   customUnit,
   onRoutineChange,
   onWeeklyDaysChange,
-  onMonthlyDayChange,
+  onMonthlyDayChange, // eslint-disable-line @typescript-eslint/no-unused-vars
   onCustomIntervalChange,
   onCustomUnitChange,
 }: RoutineSelectorProps) {
