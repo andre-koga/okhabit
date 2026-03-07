@@ -111,10 +111,45 @@ export function useActivityTracking(
         ],
     );
 
+    const handleStopActivity = useCallback(
+        async () => {
+            if (!currentActivityId) return;
+            try {
+                const n = now();
+                const entry = await getOrCreateDailyEntry();
+
+                const currentPeriod = await db.activityPeriods
+                    .where("daily_entry_id")
+                    .equals(entry.id)
+                    .filter((p) => !p.end_time && !p.deleted_at)
+                    .first();
+
+                if (currentPeriod) {
+                    await db.activityPeriods.update(currentPeriod.id, {
+                        end_time: n,
+                        updated_at: n,
+                    });
+                }
+
+                await db.dailyEntries.update(entry.id, {
+                    current_activity_id: null,
+                    updated_at: n,
+                });
+
+                setCurrentActivityId(null);
+                await loadActivityPeriods();
+            } catch (error) {
+                console.error("Error stopping activity:", error);
+            }
+        },
+        [currentActivityId, getOrCreateDailyEntry, setCurrentActivityId, loadActivityPeriods],
+    );
+
     return {
         activityPeriods,
         loadActivityPeriods,
         calculateActivityTime,
         handleStartActivity,
+        handleStopActivity,
     };
 }

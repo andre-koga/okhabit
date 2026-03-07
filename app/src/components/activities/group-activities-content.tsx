@@ -19,6 +19,7 @@ import {
   stopCurrentActivity,
   formatRoutineDisplay,
 } from "@/lib/activity-utils";
+import ActivityPill from "@/components/activities/activity-pill";
 
 interface GroupActivitiesContentProps {
   group: ActivityGroup;
@@ -168,17 +169,13 @@ export default function GroupActivitiesContent({
         {activities.length === 0 ? null : (
           <div className="space-y-2">
             {activities.map((activity) => (
-              <div
-                key={activity.id}
-                className="flex items-center justify-between px-4 py-3 rounded-lg border hover:bg-accent transition-colors"
-              >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <span className="font-medium truncate">{activity.name}</span>
-                  <div className="flex gap-1.5 shrink-0">
-                    <Badge variant="outline" className="text-xs">
-                      {formatRoutineDisplay(activity.routine)}
-                    </Badge>
-                  </div>
+              <div key={activity.id} className="flex items-center gap-2">
+                <div className="flex-1 min-w-0">
+                  <ActivityPill
+                    name={activity.name}
+                    color={group.color || "#888"}
+                    readOnly
+                  />
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <Button

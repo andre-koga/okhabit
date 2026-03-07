@@ -15,6 +15,23 @@ export function formatActivityTime(milliseconds: number): string {
 }
 
 /**
+ * Format milliseconds into a timer display string (MM:SS or HH:MM:SS).
+ * Returns "MM:SS" by default, switches to "HH:MM:SS" when elapsed time >= 1 hour.
+ * e.g. 65000 → "01:05", 3661000 → "01:01:01"
+ */
+export function formatTimerDisplay(elapsedMs: number): string {
+    const totalSeconds = Math.floor(elapsedMs / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+        return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+/**
  * Convert a routine string to a human-readable label.
  * e.g. "weekly:1,3,5" → "Weekly: Mon, Wed, Fri"
  */

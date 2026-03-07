@@ -8,6 +8,7 @@ import { useActivityTracking } from "./hooks/use-activity-tracking";
 import ActivityTaskItem from "./activity-task-item";
 import OneTimeTaskItem from "./one-time-task-item";
 import ActivityGroupsDrawer from "./activity-groups-drawer";
+import ActiveActivityPill from "./active-activity-pill";
 
 interface DailyTasksListProps {
   activities: Activity[];
@@ -40,13 +41,17 @@ export default function DailyTasksList({
     deleteOneTimeTask,
   } = useOneTimeTasks(dateString);
 
-  const { loadActivityPeriods, calculateActivityTime, handleStartActivity } =
-    useActivityTracking(
-      dateString,
-      currentActivityId,
-      setCurrentActivityId,
-      getOrCreateDailyEntry,
-    );
+  const {
+    loadActivityPeriods,
+    calculateActivityTime,
+    handleStartActivity,
+    handleStopActivity,
+  } = useActivityTracking(
+    dateString,
+    currentActivityId,
+    setCurrentActivityId,
+    getOrCreateDailyEntry,
+  );
 
   // Reload all data whenever the viewed date changes
   useEffect(() => {
@@ -78,6 +83,14 @@ export default function DailyTasksList({
 
   return (
     <div className="flex flex-col">
+      <ActiveActivityPill
+        currentActivityId={currentActivityId}
+        activities={activities}
+        groups={groups}
+        calculateActivityTime={calculateActivityTime}
+        onStop={handleStopActivity}
+      />
+
       {dailyActivities.length > 0 && (
         <p className="text-xs text-muted-foreground text-right mb-2">
           {completedCount} / {nonNeverCount} ({completionRate}%)
@@ -128,7 +141,10 @@ export default function DailyTasksList({
         </div>
       )}
 
-      <ActivityGroupsDrawer />
+      <ActivityGroupsDrawer
+        currentActivityId={currentActivityId}
+        activities={activities}
+      />
     </div>
   );
 }
