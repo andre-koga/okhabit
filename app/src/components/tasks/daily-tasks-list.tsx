@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { toDateStr } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { shouldShowActivity, formatTimerDisplay } from "@/lib/activity-utils";
+import { getOrComputeActivityStreaksForDate } from "@/lib/streak-utils";
 import { useDailyEntry } from "./hooks/use-daily-entry";
 import { useOneTimeTasks } from "./hooks/use-one-time-tasks";
 import { useActivityTracking } from "./hooks/use-activity-tracking";
@@ -10,7 +11,6 @@ import ActivityTimelineItem from "./activity-timeline-item";
 import OneTimeTaskItem from "./one-time-task-item";
 import ActivityGroupsDrawer from "./activity-groups-drawer";
 import ActiveActivityPill from "./active-activity-pill";
-import { ChevronDown, ChevronUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface DailyTasksListProps {
@@ -27,7 +27,9 @@ export default function DailyTasksList({
   const navigate = useNavigate();
   const dateString = toDateStr(currentDate);
   const isToday = dateString === toDateStr(new Date());
-  const [showCompleted, setShowCompleted] = useState(false);
+  const [activityStreaks, setActivityStreaks] = useState<
+    Record<string, number>
+  >({});
 
   const {
     taskCounts,
@@ -67,27 +69,31 @@ export default function DailyTasksList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDate]);
 
+  // Calculate streaks when activities or task counts change
+  useEffect(() => {
+    let cancelled = false;
+
+    const visibleActivities = activities.filter((activity) =>
+      shouldShowActivity(activity, currentDate),
+    );
+
+    void getOrComputeActivityStreaksForDate(visibleActivities, currentDate, {
+      forceRecomputeTarget: isToday,
+    }).then((streaks) => {
+      if (!cancelled) {
+        setActivityStreaks(streaks);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activities, currentDate, isToday, taskCounts]);
+
   // Memoize expensive array operations
   const dailyActivities = useMemo(
     () => activities.filter((a) => shouldShowActivity(a, currentDate)),
     [activities, currentDate],
-  );
-
-  const isActivityComplete = useCallback(
-    (activity: Activity) =>
-      activity.routine !== "never" &&
-      (taskCounts[activity.id] || 0) >= (activity.completion_target ?? 1),
-    [taskCounts],
-  );
-
-  const incompleteActivities = useMemo(
-    () => dailyActivities.filter((a) => !isActivityComplete(a)),
-    [dailyActivities, isActivityComplete],
-  );
-
-  const completedActivities = useMemo(
-    () => dailyActivities.filter((a) => isActivityComplete(a)),
-    [dailyActivities, isActivityComplete],
   );
 
   const getGroup = useCallback(
@@ -186,12 +192,13 @@ export default function DailyTasksList({
           </p>
         )}
         {!loading &&
-          incompleteActivities.map((activity) => (
+          dailyActivities.map((activity) => (
             <ActivityTaskItem
               key={activity.id}
               activity={activity}
               group={getGroup(activity)}
               count={taskCounts[activity.id] || 0}
+              streak={activityStreaks[activity.id] || 0}
               timeSpent={calculateActivityTime(activity.id)}
               isCurrentActivity={currentActivityId === activity.id}
               isToday={isToday}
@@ -201,46 +208,6 @@ export default function DailyTasksList({
             />
           ))}
       </div>
-
-      {!loading && completedActivities.length > 0 && (
-        <div className="flex justify-center mt-3">
-          <button
-            onClick={() => setShowCompleted(!showCompleted)}
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1 rounded-full hover:bg-accent"
-          >
-            {showCompleted ? (
-              <>
-                <ChevronUp className="h-3 w-3" />
-                Hide completed ({completedActivities.length})
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-3 w-3" />
-                Show completed ({completedActivities.length})
-              </>
-            )}
-          </button>
-        </div>
-      )}
-
-      {!loading && showCompleted && completedActivities.length > 0 && (
-        <div className="space-y-2 mt-3">
-          {completedActivities.map((activity) => (
-            <ActivityTaskItem
-              key={activity.id}
-              activity={activity}
-              group={getGroup(activity)}
-              count={taskCounts[activity.id] || 0}
-              timeSpent={calculateActivityTime(activity.id)}
-              isCurrentActivity={currentActivityId === activity.id}
-              isToday={isToday}
-              onIncrement={incrementTask}
-              onStartActivity={handleStartActivity}
-              onStopActivity={handleStopActivity}
-            />
-          ))}
-        </div>
-      )}
 
       {(currentActivityId || timelineSessions.length > 0) && (
         <div className="mt-6 space-y-2">

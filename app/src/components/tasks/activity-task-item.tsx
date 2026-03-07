@@ -1,5 +1,5 @@
 import { memo, useEffect, useState } from "react";
-import { Check, X } from "lucide-react";
+import { Check, X, Flame } from "lucide-react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import Pill from "@/components/ui/pill";
 
@@ -7,6 +7,7 @@ interface ActivityTaskItemProps {
   activity: Activity;
   group: ActivityGroup | undefined;
   count: number;
+  streak: number;
   timeSpent: number;
   isCurrentActivity: boolean;
   isToday: boolean;
@@ -19,6 +20,7 @@ function ActivityTaskItem({
   activity,
   group,
   count,
+  streak,
   timeSpent,
   isCurrentActivity,
   isToday,
@@ -39,6 +41,14 @@ function ActivityTaskItem({
   const isComplete = count >= target;
   const isNeverTask = activity.routine === "never";
   const groupColor = group?.color || "#cccccc";
+  const streakColorClass =
+    streak === 0
+      ? "text-muted-foreground"
+      : streak <= 5
+        ? "text-yellow-500"
+        : streak <= 25
+          ? "text-orange-500"
+          : "text-red-500";
 
   return (
     <div className="flex items-center gap-2">
@@ -104,6 +114,13 @@ function ActivityTaskItem({
           </p>
         </button>
       )}
+
+      <div
+        className={`flex items-center gap-0.5 text-sm font-semibold ${streakColorClass}`}
+      >
+        <Flame className="h-3.5 w-3.5" />
+        <span>{streak}</span>
+      </div>
 
       <Pill
         name={activity.name}
