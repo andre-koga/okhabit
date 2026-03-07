@@ -62,6 +62,7 @@ export interface JournalEntry {
     day_emoji: string | null;
     is_bookmarked: boolean | null;
     youtube_url: string | null;
+    location: string | null;
     created_at: string;
     updated_at: string;
     synced_at: string | null;

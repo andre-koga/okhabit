@@ -66,14 +66,14 @@ export default function JournalYoutubeSection({
       <div className="absolute bottom-0 left-0 right-0 h-1/5 bg-gradient-to-b from-transparent to-background pointer-events-none z-10" />
 
       {canEdit && (
-        <div className="absolute bottom-2 right-2 z-20">
+        <div className="absolute -bottom-4 right-3 z-20">
           <Popover open={open} onOpenChange={handleOpen}>
             <PopoverTrigger asChild>
               <button
-                className="h-7 w-7 flex items-center justify-center rounded-md bg-background/80 backdrop-blur-sm border border-border shadow-sm hover:bg-background transition-colors"
+                className="h-7 w-7 flex items-center border border-muted justify-center rounded-full bg-background/80 backdrop-blur-sm shadow-sm hover:bg-background transition-colors"
                 title="Set video URL"
               >
-                <Pencil className="h-3.5 w-3.5" />
+                <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-80 p-3" align="end">

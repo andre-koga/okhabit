@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Settings, Bookmark } from "lucide-react";
-import { db } from "@/lib/db";
+import { Settings, Bookmark, MapPin } from "lucide-react";
+import { db, toDateStr } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
 import { useJournalEntry } from "@/components/tasks/hooks/use-journal-entry";
@@ -30,14 +30,28 @@ function getFirstEmoji(str: string): string {
   return "";
 }
 
+function getDayProgress(): number {
+  const now = new Date();
+  const secondsSinceMidnight =
+    now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+  return secondsSinceMidnight / 86400;
+}
+
 export default function TasksPageContent() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [groups, setGroups] = useState<ActivityGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [dayProgress, setDayProgress] = useState(getDayProgress);
+  const [showLocationInput, setShowLocationInput] = useState(false);
+  const [locationInputVal, setLocationInputVal] = useState("");
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const hasTriedGeoRef = useRef(false);
 
   const journal = useJournalEntry(currentDate);
   const { loadJournalEntry } = journal;
+
+  const isToday = toDateStr(currentDate) === toDateStr(new Date());
 
   const loadData = useCallback(async () => {
     try {
@@ -65,7 +79,71 @@ export default function TasksPageContent() {
 
   useEffect(() => {
     loadJournalEntry();
+    // reset geo attempt when date changes so we re-try on today
+    hasTriedGeoRef.current = false;
   }, [loadJournalEntry]);
+
+  // Auto-detect location for today if not already set
+  useEffect(() => {
+    if (!isToday) return;
+    if (journal.draftLocation) return;
+    if (hasTriedGeoRef.current) return;
+    if (!navigator.geolocation) return;
+    hasTriedGeoRef.current = true;
+    setIsDetectingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+          );
+          const data = (await res.json()) as {
+            address: {
+              city?: string;
+              town?: string;
+              village?: string;
+              county?: string;
+            };
+          };
+          const loc =
+            data.address.city ||
+            data.address.town ||
+            data.address.village ||
+            data.address.county ||
+            "";
+          if (loc) {
+            journal.setDraftLocation(loc);
+            journal.draftRef.current.location = loc;
+            journal.saveLocation(loc);
+          }
+        } catch (e) {
+          console.error("Reverse geocoding failed", e);
+        } finally {
+          setIsDetectingLocation(false);
+        }
+      },
+      () => {
+        setIsDetectingLocation(false);
+      },
+      { timeout: 10000, maximumAge: 5 * 60 * 1000 },
+    );
+  }, [isToday, journal]);
+
+  useEffect(() => {
+    const tick = () => setDayProgress(getDayProgress());
+    let intervalId: ReturnType<typeof setInterval>;
+    // align first tick to the next full second for accuracy
+    const msUntilNextSecond = 1000 - (Date.now() % 1000);
+    const timeoutId = setTimeout(() => {
+      tick();
+      intervalId = setInterval(tick, 1000);
+    }, msUntilNextSecond);
+    return () => {
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
+    };
+  }, []);
 
   if (loading) {
     return (
@@ -114,7 +192,7 @@ export default function TasksPageContent() {
                   if (e.key === "Enter" || e.key === "Escape")
                     e.currentTarget.blur();
                 }}
-                placeholder="＋"
+                placeholder=""
                 className="w-20 h-20 text-center text-5xl placeholder:text-xl placeholder:text-muted-foreground rounded-full bg-background shadow-md focus:outline-none focus:ring-2 focus:ring-primary"
               />
             ) : (
@@ -159,29 +237,90 @@ export default function TasksPageContent() {
             onBlur={journal.saveDraft}
           />
 
-          <div className="relative border-t border-border pt-2">
-            <button
-              onClick={() => {
-                const next = !journal.draftBookmarked;
-                journal.setDraftBookmarked(next);
-                journal.draftRef.current.bookmarked = next;
-                journal.saveBookmark(next);
-              }}
-              className={`absolute -top-3.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-background border border-border text-xs text-muted-foreground transition-colors ${
-                journal.draftBookmarked ? "" : "hover:text-foreground"
-              }`}
-              title={
-                journal.draftBookmarked
-                  ? "Remove bookmark"
-                  : "Bookmark this day"
-              }
-            >
-              <Bookmark
-                className={`h-3 w-3 ${journal.draftBookmarked ? "text-red-500" : ""}`}
-                fill={journal.draftBookmarked ? "currentColor" : "none"}
-              />
-              {journal.draftBookmarked ? "Bookmarked!" : "Bookmark"}
-            </button>
+          {/* Info bar — sits on the section divider */}
+          <div className="py-3">
+            <div className="relative border-t border-border">
+              <div className="absolute inset-x-0 -top-3.5 grid grid-cols-3 items-center gap-1 px-0">
+                {/* Location — left */}
+                <div className="flex justify-start">
+                  {showLocationInput ? (
+                    <input
+                      autoFocus
+                      value={locationInputVal}
+                      onChange={(e) => setLocationInputVal(e.target.value)}
+                      onBlur={() => {
+                        const loc = locationInputVal.trim();
+                        journal.setDraftLocation(loc);
+                        journal.draftRef.current.location = loc;
+                        journal.saveLocation(loc || null);
+                        setShowLocationInput(false);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === "Escape")
+                          e.currentTarget.blur();
+                      }}
+                      placeholder="City, State"
+                      className="w-28 px-2 py-1 rounded-full bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    />
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setLocationInputVal(journal.draftLocation);
+                        setShowLocationInput(true);
+                      }}
+                      className="flex items-center gap-1 px-3 py-1 rounded-full bg-background text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      title="Set location"
+                    >
+                      <MapPin className="h-3 w-3 shrink-0" />
+                      <span className="truncate max-w-[80px]">
+                        {isDetectingLocation
+                          ? "detecting…"
+                          : journal.draftLocation || "location"}
+                      </span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Date — center */}
+                <div className="flex justify-center">
+                  <span className="font-crimson text-xl uppercase tracking-widest text-muted-foreground/70 bg-background px-2">
+                    {currentDate.toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </span>
+                </div>
+
+                {/* Bookmark — right */}
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => {
+                      const next = !journal.draftBookmarked;
+                      journal.setDraftBookmarked(next);
+                      journal.draftRef.current.bookmarked = next;
+                      journal.saveBookmark(next);
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full bg-background text-xs text-muted-foreground transition-colors ${
+                      journal.draftBookmarked ? "" : "hover:text-foreground"
+                    }`}
+                    title={
+                      journal.draftBookmarked
+                        ? "Remove bookmark"
+                        : "Bookmark this day"
+                    }
+                  >
+                    <Bookmark
+                      className={`h-3 w-3 ${
+                        journal.draftBookmarked ? "text-red-500" : ""
+                      }`}
+                      fill={journal.draftBookmarked ? "currentColor" : "none"}
+                    />
+                    {journal.draftBookmarked ? "Saved!" : "Save"}
+                  </button>
+                </div>
+              </div>
+              <div className="h-4" />
+            </div>
           </div>
 
           <DailyTasksList
@@ -207,6 +346,15 @@ export default function TasksPageContent() {
         <DateNavigator
           currentDate={currentDate}
           onDateChange={setCurrentDate}
+        />
+      </div>
+
+      {/* Day progress bar — very bottom of screen */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 h-[3px] bg-border/40">
+        <div
+          className="h-full bg-primary/60 transition-[width] duration-1000 ease-linear"
+          style={{ width: `${dayProgress * 100}%` }}
+          title={`${Math.round(dayProgress * 100)}% of today has passed`}
         />
       </div>
     </div>

@@ -8,6 +8,7 @@ export interface JournalFields {
     day_emoji: string | null;
     is_bookmarked: boolean;
     youtube_url: string | null;
+    location: string | null;
 }
 
 export interface JournalDraft {
@@ -16,6 +17,7 @@ export interface JournalDraft {
     emoji: string;
     bookmarked: boolean;
     youtubeUrl: string;
+    location: string;
 }
 
 export function useJournalEntry(currentDate: Date) {
@@ -25,6 +27,7 @@ export function useJournalEntry(currentDate: Date) {
     const [draftEmoji, setDraftEmoji] = useState("");
     const [draftBookmarked, setDraftBookmarked] = useState(false);
     const [draftYoutubeUrl, setDraftYoutubeUrl] = useState("");
+    const [draftLocation, setDraftLocation] = useState("");
     const [emojiInput, setEmojiInput] = useState("");
     const [showEmojiInput, setShowEmojiInput] = useState(false);
 
@@ -35,6 +38,7 @@ export function useJournalEntry(currentDate: Date) {
         emoji: "",
         bookmarked: false,
         youtubeUrl: "",
+        location: "",
     });
 
     const loadJournalEntry = useCallback(async () => {
@@ -60,13 +64,15 @@ export function useJournalEntry(currentDate: Date) {
         const e = journalEntry?.day_emoji ?? "";
         const b = journalEntry?.is_bookmarked ?? false;
         const y = journalEntry?.youtube_url ?? "";
+        const l = journalEntry?.location ?? "";
         setDraftTitle(t);
         setDraftText(tx);
         setDraftEmoji(e);
         setDraftBookmarked(b);
         setDraftYoutubeUrl(y);
+        setDraftLocation(l);
         setEmojiInput(e);
-        draftRef.current = { title: t, text: tx, emoji: e, bookmarked: b, youtubeUrl: y };
+        draftRef.current = { title: t, text: tx, emoji: e, bookmarked: b, youtubeUrl: y, location: l };
     }, [journalEntry, currentDate]);
     /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -122,6 +128,7 @@ export function useJournalEntry(currentDate: Date) {
             day_emoji: r.emoji || null,
             is_bookmarked: r.bookmarked,
             youtube_url: r.youtubeUrl || null,
+            location: r.location || null,
         });
     }, [canEditJournal, saveJournalEntry]);
 
@@ -135,6 +142,23 @@ export function useJournalEntry(currentDate: Date) {
                 day_emoji: r.emoji || null,
                 is_bookmarked: bookmarked,
                 youtube_url: r.youtubeUrl || null,
+                location: r.location || null,
+            });
+        },
+        [saveJournalEntry],
+    );
+
+    // Save only the location field — works for any day
+    const saveLocation = useCallback(
+        (location: string | null) => {
+            const r = draftRef.current;
+            void saveJournalEntry({
+                title: r.title || null,
+                text_content: r.text || null,
+                day_emoji: r.emoji || null,
+                is_bookmarked: r.bookmarked,
+                youtube_url: r.youtubeUrl || null,
+                location: location || null,
             });
         },
         [saveJournalEntry],
@@ -151,9 +175,12 @@ export function useJournalEntry(currentDate: Date) {
         showEmojiInput, setShowEmojiInput,
         draftRef,
         canEditJournal,
+        // state
+        draftLocation, setDraftLocation,
         // actions
         loadJournalEntry,
         saveDraft,
         saveBookmark,
+        saveLocation,
     };
 }
