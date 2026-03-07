@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Settings, Bookmark, MapPin } from "lucide-react";
+import { Settings, Bookmark, MapPin, MapPinOff } from "lucide-react";
 import { db, toDateStr } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
@@ -208,12 +208,12 @@ export default function TasksPageContent() {
                 )}
               </button>
             )
+          ) : journal.draftEmoji ? (
+            <span className="text-5xl w-20 h-20 flex items-center justify-center rounded-full bg-background shadow-md">
+              {journal.draftEmoji}
+            </span>
           ) : (
-            journal.draftEmoji && (
-              <span className="text-5xl w-20 h-20 flex items-center justify-center rounded-full bg-background shadow-md">
-                {journal.draftEmoji}
-              </span>
-            )
+            <span className="w-20 h-20 flex items-center justify-center rounded-full bg-background shadow-md" />
           )}
 
           {/* Bookmark badge — top-right of emoji */}
@@ -247,7 +247,13 @@ export default function TasksPageContent() {
                     <input
                       autoFocus
                       value={locationInputVal}
-                      onChange={(e) => setLocationInputVal(e.target.value)}
+                      onChange={(e) =>
+                        setLocationInputVal(
+                          e.target.value.replace(/\b\w/g, (c) =>
+                            c.toUpperCase(),
+                          ),
+                        )
+                      }
                       onBlur={() => {
                         const loc = locationInputVal.trim();
                         journal.setDraftLocation(loc);
@@ -271,12 +277,21 @@ export default function TasksPageContent() {
                       className="flex items-center gap-1 px-3 py-1 rounded-full bg-background text-xs text-muted-foreground hover:text-foreground transition-colors"
                       title="Set location"
                     >
-                      <MapPin className="h-3 w-3 shrink-0" />
-                      <span className="truncate max-w-[80px]">
-                        {isDetectingLocation
-                          ? "detecting…"
-                          : journal.draftLocation || "location"}
-                      </span>
+                      {isDetectingLocation || journal.draftLocation ? (
+                        <>
+                          <MapPin className="h-3 w-3 shrink-0" />
+                          <span className="truncate max-w-[80px]">
+                            {isDetectingLocation
+                              ? "detecting…"
+                              : journal.draftLocation}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <MapPinOff className="h-3 w-3 shrink-0" />
+                          <span>None</span>
+                        </>
+                      )}
                     </button>
                   )}
                 </div>
@@ -285,7 +300,7 @@ export default function TasksPageContent() {
                 <div className="flex justify-center">
                   <span className="font-crimson text-xl uppercase tracking-widest text-muted-foreground/70 bg-background px-2">
                     {currentDate.toLocaleDateString("en-US", {
-                      month: "long",
+                      month: "short",
                       day: "numeric",
                     })}
                   </span>
