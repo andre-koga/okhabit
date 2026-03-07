@@ -104,18 +104,30 @@ export default function TasksPageContent() {
               town?: string;
               village?: string;
               county?: string;
+              state?: string;
+              country?: string;
+              country_code?: string;
             };
           };
-          const loc =
+          const city =
             data.address.city ||
             data.address.town ||
             data.address.village ||
             data.address.county ||
-            "";
-          if (loc) {
-            journal.setDraftLocation(loc);
-            journal.draftRef.current.location = loc;
-            journal.saveLocation(loc);
+            null;
+          if (city) {
+            const locationData = {
+              displayName: city,
+              city,
+              state: data.address.state ?? null,
+              country: data.address.country ?? null,
+              countryCode: data.address.country_code ?? null,
+              lat: latitude,
+              lon: longitude,
+            };
+            journal.setDraftLocation(locationData);
+            journal.draftRef.current.location = locationData;
+            journal.saveLocation(locationData);
           }
         } catch (e) {
           console.error("Reverse geocoding failed", e);
@@ -255,10 +267,21 @@ export default function TasksPageContent() {
                         )
                       }
                       onBlur={() => {
-                        const loc = locationInputVal.trim();
-                        journal.setDraftLocation(loc);
-                        journal.draftRef.current.location = loc;
-                        journal.saveLocation(loc || null);
+                        const name = locationInputVal.trim();
+                        const locationData = name
+                          ? {
+                              displayName: name,
+                              city: name,
+                              state: null,
+                              country: null,
+                              countryCode: null,
+                              lat: null,
+                              lon: null,
+                            }
+                          : null;
+                        journal.setDraftLocation(locationData);
+                        journal.draftRef.current.location = locationData;
+                        journal.saveLocation(locationData);
                         setShowLocationInput(false);
                       }}
                       onKeyDown={(e) => {
@@ -271,7 +294,9 @@ export default function TasksPageContent() {
                   ) : (
                     <button
                       onClick={() => {
-                        setLocationInputVal(journal.draftLocation);
+                        setLocationInputVal(
+                          journal.draftLocation?.displayName ?? "",
+                        );
                         setShowLocationInput(true);
                       }}
                       className="flex items-center gap-1 px-3 py-1 rounded-full bg-background text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -282,8 +307,8 @@ export default function TasksPageContent() {
                           <MapPin className="h-3 w-3 shrink-0" />
                           <span className="truncate max-w-[80px]">
                             {isDetectingLocation
-                              ? "detecting…"
-                              : journal.draftLocation}
+                              ? "Detecting"
+                              : journal.draftLocation?.displayName}
                           </span>
                         </>
                       ) : (

@@ -54,6 +54,16 @@ export interface ActivityPeriod {
     deleted_at: string | null;
 }
 
+export interface LocationData {
+    displayName: string;      // human-readable, used for display
+    city: string | null;
+    state: string | null;
+    country: string | null;
+    countryCode: string | null;
+    lat: number | null;
+    lon: number | null;
+}
+
 export interface JournalEntry {
     id: string;
     entry_date: string; // YYYY-MM-DD
@@ -62,7 +72,7 @@ export interface JournalEntry {
     day_emoji: string | null;
     is_bookmarked: boolean | null;
     youtube_url: string | null;
-    location: string | null;
+    location: LocationData | null;
     created_at: string;
     updated_at: string;
     synced_at: string | null;
