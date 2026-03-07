@@ -125,6 +125,21 @@ export function useJournalEntry(currentDate: Date) {
         });
     }, [canEditJournal, saveJournalEntry]);
 
+    // Save only the bookmarked field — works for any day, not just editable ones
+    const saveBookmark = useCallback(
+        (bookmarked: boolean) => {
+            const r = draftRef.current;
+            void saveJournalEntry({
+                title: r.title || null,
+                text_content: r.text || null,
+                day_emoji: r.emoji || null,
+                is_bookmarked: bookmarked,
+                youtube_url: r.youtubeUrl || null,
+            });
+        },
+        [saveJournalEntry],
+    );
+
     return {
         // state
         draftTitle, setDraftTitle,
@@ -139,5 +154,6 @@ export function useJournalEntry(currentDate: Date) {
         // actions
         loadJournalEntry,
         saveDraft,
+        saveBookmark,
     };
 }

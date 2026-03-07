@@ -104,7 +104,7 @@ export default function JournalTextSection({
             </div>
           ) : (
             // Read-only days: clamped with "Read more"
-            <div>
+            <div className="pb-4">
               <p
                 ref={textDisplayRef}
                 className={`text-base leading-relaxed text-muted-foreground whitespace-pre-wrap text-center font-crimson ${

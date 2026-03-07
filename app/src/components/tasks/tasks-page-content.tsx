@@ -160,30 +160,28 @@ export default function TasksPageContent() {
           />
 
           <div className="relative border-t border-border pt-2">
-            {journal.canEditJournal && (
-              <button
-                onClick={() => {
-                  const next = !journal.draftBookmarked;
-                  journal.setDraftBookmarked(next);
-                  journal.draftRef.current.bookmarked = next;
-                  journal.saveDraft();
-                }}
-                className={`absolute -top-3.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-background border border-border text-xs text-muted-foreground transition-colors ${
-                  journal.draftBookmarked ? "" : "hover:text-foreground"
-                }`}
-                title={
-                  journal.draftBookmarked
-                    ? "Remove bookmark"
-                    : "Bookmark this day"
-                }
-              >
-                <Bookmark
-                  className={`h-3 w-3 ${journal.draftBookmarked ? "text-red-500" : ""}`}
-                  fill={journal.draftBookmarked ? "currentColor" : "none"}
-                />
-                {journal.draftBookmarked ? "Bookmarked!" : "Bookmark"}
-              </button>
-            )}
+            <button
+              onClick={() => {
+                const next = !journal.draftBookmarked;
+                journal.setDraftBookmarked(next);
+                journal.draftRef.current.bookmarked = next;
+                journal.saveBookmark(next);
+              }}
+              className={`absolute -top-3.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-background border border-border text-xs text-muted-foreground transition-colors ${
+                journal.draftBookmarked ? "" : "hover:text-foreground"
+              }`}
+              title={
+                journal.draftBookmarked
+                  ? "Remove bookmark"
+                  : "Bookmark this day"
+              }
+            >
+              <Bookmark
+                className={`h-3 w-3 ${journal.draftBookmarked ? "text-red-500" : ""}`}
+                fill={journal.draftBookmarked ? "currentColor" : "none"}
+              />
+              {journal.draftBookmarked ? "Bookmarked!" : "Bookmark"}
+            </button>
           </div>
 
           <DailyTasksList
