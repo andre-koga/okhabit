@@ -15,7 +15,8 @@ export default defineConfig({
         description: "Local-first habit tracker",
         theme_color: "#000000",
         background_color: "#000000",
-        display: "standalone",
+        display: "fullscreen",
+        display_override: ["fullscreen", "standalone"],
         start_url: "/",
         icons: [
           { src: "icon-192x192.png", sizes: "192x192", type: "image/png" },
@@ -24,6 +25,22 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        runtimeCaching: [
+          {
+            // Cache YouTube thumbnails via the service worker so they work offline
+            urlPattern: /^https:\/\/img\.youtube\.com\/vi\//,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "youtube-thumbnails",
+              expiration: {
+                maxEntries: 60,
+                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+              },
+              // status 0 = opaque response (cross-origin without CORS headers) — still cacheable
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
       },
     }),
   ],

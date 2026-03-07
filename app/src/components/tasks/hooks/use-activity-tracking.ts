@@ -1,0 +1,120 @@
+import { useState, useCallback, useEffect } from "react";
+import { db, now, newId } from "@/lib/db";
+import type { ActivityPeriod, DailyEntry } from "@/lib/db/types";
+
+export function useActivityTracking(
+    dateString: string,
+    currentActivityId: string | null,
+    setCurrentActivityId: (id: string | null) => void,
+    getOrCreateDailyEntry: () => Promise<DailyEntry>,
+) {
+    const [activityPeriods, setActivityPeriods] = useState<ActivityPeriod[]>([]);
+    const [, setTick] = useState(0);
+
+    // Drive per-second re-renders while an activity is running
+    useEffect(() => {
+        if (!currentActivityId) return;
+        const interval = setInterval(() => setTick((prev) => prev + 1), 1000);
+        return () => clearInterval(interval);
+    }, [currentActivityId]);
+
+    const loadActivityPeriods = useCallback(async () => {
+        try {
+            const entry = await db.dailyEntries
+                .where("date")
+                .equals(dateString)
+                .filter((e) => !e.deleted_at)
+                .first();
+
+            if (!entry) {
+                setActivityPeriods([]);
+                return;
+            }
+
+            const periods = await db.activityPeriods
+                .where("daily_entry_id")
+                .equals(entry.id)
+                .filter((p) => !p.deleted_at)
+                .sortBy("start_time");
+
+            setActivityPeriods(periods);
+        } catch (error) {
+            console.error("Error loading activity periods:", error);
+        }
+    }, [dateString]);
+
+    const calculateActivityTime = useCallback(
+        (activityId: string): number => {
+            const periods = activityPeriods.filter(
+                (p) => p.activity_id === activityId,
+            );
+            return periods.reduce((total, period) => {
+                const start = new Date(period.start_time).getTime();
+                const end = period.end_time
+                    ? new Date(period.end_time).getTime()
+                    : Date.now();
+                return total + (end - start);
+            }, 0);
+        },
+        [activityPeriods],
+    );
+
+    const handleStartActivity = useCallback(
+        async (activityId: string) => {
+            if (currentActivityId === activityId) return;
+            try {
+                const n = now();
+                const entry = await getOrCreateDailyEntry();
+
+                if (currentActivityId) {
+                    const currentPeriod = await db.activityPeriods
+                        .where("daily_entry_id")
+                        .equals(entry.id)
+                        .filter((p) => !p.end_time && !p.deleted_at)
+                        .first();
+                    if (currentPeriod) {
+                        await db.activityPeriods.update(currentPeriod.id, {
+                            end_time: n,
+                            updated_at: n,
+                        });
+                    }
+                }
+
+                const newPeriod: ActivityPeriod = {
+                    id: newId(),
+                    daily_entry_id: entry.id,
+                    activity_id: activityId,
+                    start_time: n,
+                    end_time: null,
+                    created_at: n,
+                    updated_at: n,
+                    synced_at: null,
+                    deleted_at: null,
+                };
+                await db.activityPeriods.add(newPeriod);
+                await db.dailyEntries.update(entry.id, {
+                    current_activity_id: activityId,
+                    updated_at: n,
+                });
+
+                setCurrentActivityId(activityId);
+                await loadActivityPeriods();
+            } catch (error) {
+                console.error("Error switching activity:", error);
+            }
+        },
+        [
+            currentActivityId,
+            getOrCreateDailyEntry,
+            setCurrentActivityId,
+            loadActivityPeriods,
+        ],
+    );
+
+    return {
+        activityPeriods,
+        loadActivityPeriods,
+        calculateActivityTime,
+        handleStartActivity,
+    };
+}

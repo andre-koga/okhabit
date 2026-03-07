@@ -1,27 +1,26 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { PATTERN_OPTIONS } from "@/lib/colors";
-import type { Activity } from "@/lib/db/types";
+import { useNavigate } from "react-router-dom";
+import { X } from "lucide-react";
+import RoutineSelector from "@/components/activities/routine-selector";
+import ActivityPill from "@/components/activities/activity-pill";
+import type { Activity, ActivityGroup } from "@/lib/db/types";
 
 interface ActivityFormFieldsProps {
+  group: ActivityGroup;
   initialData?: Partial<Activity>;
   onSubmit: (data: {
     name: string;
-    pattern: string;
     routine: string;
     completion_target: number;
-  }) => void;
-  onCancel: () => void;
+  }) => Promise<void>;
   submitLabel: string;
   isSubmitting: boolean;
   error?: string | null;
+  backPath?: string;
 }
 
 interface FormData {
   name: string;
-  pattern: string;
   routine: string;
   weeklyDays: number[];
   monthlyDay: number;
@@ -31,16 +30,17 @@ interface FormData {
 }
 
 export default function ActivityFormFields({
+  group,
   initialData,
   onSubmit,
-  onCancel,
   submitLabel,
   isSubmitting,
   error,
+  backPath,
 }: ActivityFormFieldsProps) {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<FormData>({
     name: "",
-    pattern: "solid",
     routine: "daily",
     weeklyDays: [],
     monthlyDay: 1,
@@ -76,7 +76,6 @@ export default function ActivityFormFields({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setFormData({
       name: initialData.name || "",
-      pattern: initialData.pattern || "solid",
       routine: baseRoutine,
       weeklyDays,
       monthlyDay,
@@ -86,16 +85,7 @@ export default function ActivityFormFields({
     });
   }, [initialData]);
 
-  const toggleWeekday = (day: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      weeklyDays: prev.weeklyDays.includes(day)
-        ? prev.weeklyDays.filter((d) => d !== day)
-        : [...prev.weeklyDays, day],
-    }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     let routineConfig = formData.routine;
@@ -107,9 +97,8 @@ export default function ActivityFormFields({
       routineConfig = `custom:${Math.max(1, parseInt(String(formData.customInterval)) || 1)}:${formData.customUnit}`;
     }
 
-    onSubmit({
+    await onSubmit({
       name: formData.name.trim(),
-      pattern: formData.pattern,
       routine: routineConfig,
       completion_target: Math.max(
         1,
@@ -119,179 +108,121 @@ export default function ActivityFormFields({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="name">Activity Name</Label>
-        <Input
-          id="name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          placeholder="e.g., Morning Exercise, Read Book"
-          required
-        />
-      </div>
+    <div className="min-h-screen flex flex-col">
+      <form
+        id="activity-form"
+        onSubmit={handleSubmit}
+        className="flex flex-col flex-1 px-4 pt-0 pb-28 gap-8"
+      >
+        {/* Preview — centered in available top space */}
+        <div className="flex-1 flex flex-col justify-center gap-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
+            Preview
+          </p>
+          <ActivityPill
+            name={formData.name}
+            color={group.color || "#888"}
+            readOnly
+          />
+        </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="routine">Routine</Label>
-        <select
-          id="routine"
-          value={formData.routine}
-          onChange={(e) =>
-            setFormData({ ...formData, routine: e.target.value })
-          }
-          className="w-full px-3 py-2 border rounded-md bg-background"
-        >
-          <option value="anytime">Anytime (no schedule)</option>
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-          <option value="custom">Custom</option>
-          <option value="never">Never (avoid this)</option>
-        </select>
+        <hr className="border-border -mx-4 -mb-2" />
 
-        {formData.routine === "weekly" && (
-          <div className="mt-3 space-y-2">
-            <Label className="text-sm">Select days:</Label>
-            <div className="flex gap-2">
-              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
-                (day, index) => (
-                  <Button
-                    key={day}
-                    type="button"
-                    size="sm"
-                    variant={
-                      formData.weeklyDays.includes(index)
-                        ? "default"
-                        : "outline"
-                    }
-                    onClick={() => toggleWeekday(index)}
-                    className="w-12"
-                  >
-                    {day}
-                  </Button>
-                ),
-              )}
-            </div>
-          </div>
-        )}
+        {/* Activity name */}
+        <div className="space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
+            Activity Name
+          </p>
+          <input
+            id="name"
+            type="text"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            placeholder="e.g. Morning Exercise, Read Book"
+            className="w-full h-10 bg-muted/40 border border-border rounded-full px-4 text-base focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors placeholder:text-muted-foreground/50"
+            required
+          />
+        </div>
 
-        {formData.routine === "monthly" && (
-          <div className="mt-3 space-y-2">
-            <Label htmlFor="monthlyDay" className="text-sm">
-              Day of month:
-            </Label>
-            <Input
-              id="monthlyDay"
+        {/* Routine selector */}
+        <div className="space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
+            Routine
+          </p>
+          <RoutineSelector
+            routine={formData.routine}
+            weeklyDays={formData.weeklyDays}
+            monthlyDay={formData.monthlyDay}
+            customInterval={formData.customInterval}
+            customUnit={formData.customUnit}
+            onRoutineChange={(val) =>
+              setFormData({ ...formData, routine: val })
+            }
+            onWeeklyDaysChange={(days) =>
+              setFormData({ ...formData, weeklyDays: days })
+            }
+            onMonthlyDayChange={(day) =>
+              setFormData({ ...formData, monthlyDay: day })
+            }
+            onCustomIntervalChange={(interval) =>
+              setFormData({ ...formData, customInterval: interval })
+            }
+            onCustomUnitChange={(unit) =>
+              setFormData({ ...formData, customUnit: unit })
+            }
+          />
+        </div>
+
+        {/* Completion target — only show if routine has a schedule */}
+        {formData.routine !== "anytime" && formData.routine !== "never" && (
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
+              Completion Target
+            </p>
+            <p className="text-xs text-muted-foreground text-center">
+              How many times you need to do this per day. 1 = simple checkbox.
+            </p>
+            <input
+              id="completion_target"
               type="number"
               min="1"
-              max="31"
-              value={formData.monthlyDay}
+              max="100"
+              value={formData.completion_target}
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  monthlyDay: parseInt(e.target.value) || 1,
+                  completion_target:
+                    e.target.value === "" ? "" : parseInt(e.target.value),
                 })
               }
-              className="w-24"
+              className="mx-auto block h-10 bg-muted/40 border border-border rounded-full px-4 text-base focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors placeholder:text-muted-foreground/50 w-24"
             />
           </div>
         )}
 
-        {formData.routine === "custom" && (
-          <div className="mt-3 space-y-2">
-            <Label className="text-sm">Every:</Label>
-            <div className="flex gap-2 items-center">
-              <Input
-                type="number"
-                min="1"
-                value={formData.customInterval}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    customInterval:
-                      e.target.value === "" ? "" : parseInt(e.target.value),
-                  })
-                }
-                className="w-20"
-              />
-              <select
-                value={formData.customUnit}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    customUnit: e.target.value as "days" | "weeks" | "months",
-                  })
-                }
-                className="px-3 py-2 border rounded-md flex-1 bg-background"
-              >
-                <option value="days">Days</option>
-                <option value="weeks">Weeks</option>
-                <option value="months">Months</option>
-              </select>
-            </div>
-          </div>
-        )}
-      </div>
+        {error && <p className="text-sm text-destructive">{error}</p>}
+      </form>
 
-      <div className="space-y-2">
-        <Label htmlFor="completion_target">Completion target</Label>
-        <p className="text-xs text-muted-foreground">
-          How many times you need to do this per day. 1 = simple checkbox.
-        </p>
-        <Input
-          id="completion_target"
-          type="number"
-          min="1"
-          max="100"
-          value={formData.completion_target}
-          onChange={(e) =>
-            setFormData({
-              ...formData,
-              completion_target:
-                e.target.value === "" ? "" : parseInt(e.target.value),
-            })
-          }
-          className="w-24"
-        />
-      </div>
+      {/* Fixed bottom — back button left, submit pill center */}
+      <button
+        type="button"
+        onClick={() => navigate(backPath || "/")}
+        className="fixed bottom-6 left-6 z-50 h-10 w-10 border border-border flex items-center justify-center rounded-full bg-background shadow-md text-muted-foreground hover:text-foreground transition-colors"
+        title="Back"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
 
-      <div className="space-y-2">
-        <Label>Pattern</Label>
-        <div className="grid grid-cols-3 gap-2">
-          {PATTERN_OPTIONS.map((pattern) => (
-            <button
-              key={pattern.value}
-              type="button"
-              onClick={() =>
-                setFormData({ ...formData, pattern: pattern.value })
-              }
-              className={`px-3 py-2 rounded-md border-2 transition-all text-sm ${
-                formData.pattern === pattern.value
-                  ? "border-primary bg-primary/10 font-semibold"
-                  : "border-muted hover:border-muted-foreground"
-              }`}
-            >
-              {pattern.name}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {error && <p className="text-sm text-destructive">{error}</p>}
-
-      <div className="flex gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isSubmitting}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+        <button
+          type="submit"
+          form="activity-form"
+          disabled={isSubmitting || !formData.name.trim()}
+          className="flex items-center gap-1.5 bg-primary text-primary-foreground rounded-full shadow-lg px-5 py-2.5 font-semibold text-sm hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          Cancel
-        </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Saving..." : submitLabel}
-        </Button>
+          {isSubmitting ? "Saving…" : submitLabel}
+        </button>
       </div>
-    </form>
+    </div>
   );
 }

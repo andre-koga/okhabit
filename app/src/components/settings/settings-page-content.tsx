@@ -1,6 +1,4 @@
-import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { db } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ThemeSwitcher } from "@/components/layout/theme-switcher";
@@ -11,122 +9,22 @@ import {
   Upload,
   CheckCircle,
   AlertCircle,
+  X,
 } from "lucide-react";
+import { useDataBackup } from "@/components/settings/use-data-backup";
 
 export default function SettingsPageContent() {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [exportStatus, setExportStatus] = useState<
-    "idle" | "success" | "error"
-  >("idle");
-  const [importStatus, setImportStatus] = useState<
-    "idle" | "success" | "error"
-  >("idle");
-  const [importMessage, setImportMessage] = useState("");
-
-  const handleExport = async () => {
-    try {
-      const [
-        activityGroups,
-        activities,
-        dailyEntries,
-        activityPeriods,
-        journalEntries,
-        oneTimeTasks,
-        timeEntries,
-      ] = await Promise.all([
-        db.activityGroups.toArray(),
-        db.activities.toArray(),
-        db.dailyEntries.toArray(),
-        db.activityPeriods.toArray(),
-        db.journalEntries.toArray(),
-        db.oneTimeTasks.toArray(),
-        db.timeEntries.toArray(),
-      ]);
-
-      const backup = {
-        exportedAt: new Date().toISOString(),
-        version: 1,
-        activityGroups,
-        activities,
-        dailyEntries,
-        activityPeriods,
-        journalEntries,
-        oneTimeTasks,
-        timeEntries,
-      };
-
-      const blob = new Blob([JSON.stringify(backup, null, 2)], {
-        type: "application/json",
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `upwards-backup-${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      setExportStatus("success");
-      setTimeout(() => setExportStatus("idle"), 3000);
-    } catch (err) {
-      console.error("Export failed:", err);
-      setExportStatus("error");
-      setTimeout(() => setExportStatus("idle"), 3000);
-    }
-  };
-
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const text = await file.text();
-      const data = JSON.parse(text);
-      if (!data.version || !data.activityGroups) {
-        throw new Error("Invalid backup file format");
-      }
-
-      await db.transaction(
-        "rw",
-        [
-          db.activityGroups,
-          db.activities,
-          db.dailyEntries,
-          db.activityPeriods,
-          db.journalEntries,
-          db.oneTimeTasks,
-          db.timeEntries,
-        ],
-        async () => {
-          if (data.activityGroups?.length)
-            await db.activityGroups.bulkPut(data.activityGroups);
-          if (data.activities?.length)
-            await db.activities.bulkPut(data.activities);
-          if (data.dailyEntries?.length)
-            await db.dailyEntries.bulkPut(data.dailyEntries);
-          if (data.activityPeriods?.length)
-            await db.activityPeriods.bulkPut(data.activityPeriods);
-          if (data.journalEntries?.length)
-            await db.journalEntries.bulkPut(data.journalEntries);
-          if (data.oneTimeTasks?.length)
-            await db.oneTimeTasks.bulkPut(data.oneTimeTasks);
-          if (data.timeEntries?.length)
-            await db.timeEntries.bulkPut(data.timeEntries);
-        },
-      );
-
-      setImportMessage("Backup imported successfully!");
-      setImportStatus("success");
-    } catch (err) {
-      console.error("Import failed:", err);
-      setImportMessage(err instanceof Error ? err.message : "Import failed");
-      setImportStatus("error");
-    } finally {
-      // Reset file input
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      setTimeout(() => setImportStatus("idle"), 4000);
-    }
-  };
+  const {
+    fileInputRef,
+    exportStatus,
+    importStatus,
+    importMessage,
+    handleExport,
+    handleImport,
+  } = useDataBackup();
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-4 p-4 pb-24">
       <div>
         <h1 className="text-2xl font-bold">Settings</h1>
         <p className="text-muted-foreground">Manage your preferences</p>
@@ -247,6 +145,15 @@ export default function SettingsPageContent() {
       <div className="text-center text-xs text-muted-foreground pt-4">
         <p>Upwards — local-first habit tracker</p>
       </div>
+
+      {/* Fixed bottom-left home button */}
+      <Link
+        to="/"
+        className="fixed bottom-6 left-6 z-50 h-10 w-10 flex items-center justify-center rounded-full bg-background border border-border shadow-md text-muted-foreground hover:text-foreground transition-colors"
+        title="Home"
+      >
+        <X className="h-3.5 w-3.5" />
+      </Link>
     </div>
   );
 }
