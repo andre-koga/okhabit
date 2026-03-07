@@ -46,7 +46,7 @@ export default function RoutineSelector({
   return (
     <div className="space-y-0">
       <Select value={routine} onValueChange={onRoutineChange}>
-        <SelectTrigger className="w-full rounded-full py-2.5 text-base border-border bg-muted/40">
+        <SelectTrigger className="w-full rounded-full !h-10 px-4 text-base border-border bg-muted/40">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -88,7 +88,7 @@ export default function RoutineSelector({
             max="31"
             value={monthlyDay}
             onChange={(e) => onMonthlyDayChange(parseInt(e.target.value) || 1)}
-            className="w-24"
+            className="w-24 h-10"
           />
         </div>
       )}
@@ -106,10 +106,10 @@ export default function RoutineSelector({
                   e.target.value === "" ? "" : parseInt(e.target.value),
                 )
               }
-              className="w-20"
+              className="w-20 h-10"
             />
             <Select value={customUnit} onValueChange={onCustomUnitChange}>
-              <SelectTrigger className="flex-1 rounded-full border-border bg-muted/40">
+              <SelectTrigger className="flex-1 rounded-full !h-10 px-4 border-border bg-muted/40">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
