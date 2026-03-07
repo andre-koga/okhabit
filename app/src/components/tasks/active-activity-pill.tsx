@@ -17,7 +17,7 @@ export default function ActiveActivityPill({
   calculateActivityTime,
   onStop,
 }: ActiveActivityPillProps) {
-  const [, setTick] = useState(0);
+  const [tick, setTick] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
 
   // Drive per-second re-renders
@@ -31,7 +31,7 @@ export default function ActiveActivityPill({
   useEffect(() => {
     if (!currentActivityId) return;
     setElapsedMs(calculateActivityTime(currentActivityId));
-  }, [currentActivityId, calculateActivityTime]);
+  }, [currentActivityId, calculateActivityTime, tick]);
 
   if (!currentActivityId) {
     return null;

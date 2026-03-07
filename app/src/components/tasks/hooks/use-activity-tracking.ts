@@ -66,18 +66,21 @@ export function useActivityTracking(
                 const n = now();
                 const entry = await getOrCreateDailyEntry();
 
-                if (currentActivityId) {
-                    const currentPeriod = await db.activityPeriods
-                        .where("daily_entry_id")
-                        .equals(entry.id)
-                        .filter((p) => !p.end_time && !p.deleted_at)
-                        .first();
-                    if (currentPeriod) {
-                        await db.activityPeriods.update(currentPeriod.id, {
-                            end_time: n,
-                            updated_at: n,
-                        });
-                    }
+                const openPeriods = await db.activityPeriods
+                    .where("daily_entry_id")
+                    .equals(entry.id)
+                    .filter((p) => !p.end_time && !p.deleted_at)
+                    .toArray();
+
+                if (openPeriods.length > 0) {
+                    await Promise.all(
+                        openPeriods.map((period) =>
+                            db.activityPeriods.update(period.id, {
+                                end_time: n,
+                                updated_at: n,
+                            }),
+                        ),
+                    );
                 }
 
                 const newPeriod: ActivityPeriod = {
@@ -118,17 +121,21 @@ export function useActivityTracking(
                 const n = now();
                 const entry = await getOrCreateDailyEntry();
 
-                const currentPeriod = await db.activityPeriods
+                const openPeriods = await db.activityPeriods
                     .where("daily_entry_id")
                     .equals(entry.id)
                     .filter((p) => !p.end_time && !p.deleted_at)
-                    .first();
+                    .toArray();
 
-                if (currentPeriod) {
-                    await db.activityPeriods.update(currentPeriod.id, {
-                        end_time: n,
-                        updated_at: n,
-                    });
+                if (openPeriods.length > 0) {
+                    await Promise.all(
+                        openPeriods.map((period) =>
+                            db.activityPeriods.update(period.id, {
+                                end_time: n,
+                                updated_at: n,
+                            }),
+                        ),
+                    );
                 }
 
                 await db.dailyEntries.update(entry.id, {
