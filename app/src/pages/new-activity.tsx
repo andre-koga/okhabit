@@ -12,12 +12,12 @@ export default function NewActivityPage() {
 
   useEffect(() => {
     if (!groupId) {
-      navigate("/activities");
+      navigate("/");
       return;
     }
     db.activityGroups.get(groupId).then((g) => {
       if (!g || g.deleted_at) {
-        navigate("/activities");
+        navigate("/");
         return;
       }
       setGroup(g);

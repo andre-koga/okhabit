@@ -7,8 +7,9 @@ export default function NewGroupForm() {
 
   const handleSubmit = async (data: { name: string; color: string }) => {
     const n = now();
+    const id = newId();
     await db.activityGroups.add({
-      id: newId(),
+      id,
       name: data.name,
       color: data.color,
       is_archived: false,
@@ -18,7 +19,7 @@ export default function NewGroupForm() {
       synced_at: null,
       deleted_at: null,
     });
-    navigate("/activities");
+    navigate(`/activities/${id}`);
   };
 
   return (

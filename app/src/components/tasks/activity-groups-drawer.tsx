@@ -41,7 +41,7 @@ export default function ActivityGroupsDrawer() {
           open ? "translate-y-0" : "translate-y-full"
         }`}
       >
-        <div className="bg-background rounded-t-2xl shadow-xl max-h-[70vh] flex flex-col">
+        <div className="bg-background rounded-t-2xl shadow-xl max-h-[70vh] flex flex-col border-t border-border/50">
           {/* Handle */}
           <div className="flex justify-center pt-3 pb-1 shrink-0">
             <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
@@ -53,7 +53,7 @@ export default function ActivityGroupsDrawer() {
           </div>
 
           {/* New Group button */}
-          <div className="px-4 pb-3 shrink-0 flex justify-center">
+          <div className="px-4 pb-6 shrink-0 flex justify-center">
             <button
               onClick={() => {
                 setOpen(false);
@@ -67,7 +67,7 @@ export default function ActivityGroupsDrawer() {
           </div>
 
           {/* Group list */}
-          <div className="overflow-y-auto px-4 pb-6 space-y-2">
+          <div className="overflow-y-auto px-4 pb-12 space-y-2">
             {groups.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">
                 No groups yet.
