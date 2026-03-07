@@ -96,6 +96,7 @@ export default function RoutineSelector({
       {routine === "custom" && (
         <div className="pt-3">
           <div className="flex gap-2 items-center">
+            <span className="text-base pl-2">Every</span>
             <input
               type="number"
               min="1"
