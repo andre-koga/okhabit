@@ -1,5 +1,4 @@
 import { memo } from "react";
-import { Button } from "@/components/ui/button";
 import { Check, Trash2 } from "lucide-react";
 import type { OneTimeTask } from "@/lib/db/types";
 
@@ -17,7 +16,7 @@ function OneTimeTaskItem({
   onDelete,
 }: OneTimeTaskItemProps) {
   return (
-    <div className="flex items-center gap-3 p-3 border rounded-md hover:bg-accent">
+    <div className="flex items-center gap-2">
       <button
         onClick={isToday ? () => onToggle(task) : undefined}
         disabled={!isToday}
@@ -34,26 +33,30 @@ function OneTimeTaskItem({
             : undefined
         }
       >
-        {task.is_completed && <Check className="h-3 w-3" />}
+        {task.is_completed && <Check className="h-4 w-4" />}
       </button>
-      <label
-        onClick={isToday ? () => onToggle(task) : undefined}
-        className={`flex-1 text-sm ${
-          task.is_completed ? "line-through text-muted-foreground" : ""
-        } ${isToday ? "cursor-pointer" : "cursor-default"}`}
-      >
-        {task.title}
-      </label>
-      {isToday && (
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-          onClick={() => onDelete(task.id)}
+
+      <div className="relative flex-1 flex items-center border border-border rounded-full overflow-hidden h-8">
+        <label
+          onClick={isToday ? () => onToggle(task) : undefined}
+          className={`flex-1 text-left font-medium truncate px-4 text-sm ${
+            task.is_completed ? "line-through text-muted-foreground" : ""
+          } ${isToday ? "cursor-pointer" : "cursor-default"}`}
         >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      )}
+          {task.title}
+        </label>
+
+        {isToday && (
+          <button
+            type="button"
+            aria-label="Delete quick task"
+            className="h-9 flex items-center justify-center flex-shrink-0 mr-0.5 relative rounded-full px-3 text-muted-foreground hover:text-destructive transition-colors"
+            onClick={() => onDelete(task.id)}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -12,6 +12,8 @@ import OneTimeTaskItem from "./one-time-task-item";
 import ActivityGroupsDrawer from "./activity-groups-drawer";
 import ActiveActivityPill from "./active-activity-pill";
 import { useNavigate } from "react-router-dom";
+import AddTaskModal from "./add-task-modal";
+import { CircleCheckBig } from "lucide-react";
 
 interface DailyTasksListProps {
   activities: Activity[];
@@ -44,6 +46,7 @@ export default function DailyTasksList({
   const {
     oneTimeTasks,
     loadOneTimeTasks,
+    createOneTimeTask,
     toggleOneTimeTask,
     deleteOneTimeTask,
   } = useOneTimeTasks(dateString);
@@ -171,6 +174,34 @@ export default function DailyTasksList({
 
   return (
     <div className="flex flex-col">
+      <AddTaskModal
+        onAdd={createOneTimeTask}
+        icon={CircleCheckBig}
+        triggerTitle="Add quick task"
+        triggerClassName="fixed bottom-[4.5rem] right-6 z-[60] h-10 w-10 rounded-full bg-primary text-primary-foreground shadow-md flex items-center justify-center hover:bg-primary/90 transition-colors"
+      />
+
+      {oneTimeTasks.length > 0 && (
+        <div className="space-y-2 mb-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Memos
+          </p>
+          {oneTimeTasks.map((task) => (
+            <OneTimeTaskItem
+              key={task.id}
+              task={task}
+              isToday={isToday}
+              onToggle={toggleOneTimeTask}
+              onDelete={deleteOneTimeTask}
+            />
+          ))}
+        </div>
+      )}
+
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+        For Today
+      </p>
+
       {dailyActivities.length > 0 && (
         <div className="flex items-center justify-between ml-1 mr-1.5 text-xs text-muted-foreground mb-2">
           <span>
@@ -247,23 +278,6 @@ export default function DailyTasksList({
                   : undefined
               }
               onStartActivity={isToday ? handleStartActivity : undefined}
-            />
-          ))}
-        </div>
-      )}
-
-      {oneTimeTasks.length > 0 && (
-        <div className="space-y-2 mt-6">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            One-time Tasks
-          </p>
-          {oneTimeTasks.map((task) => (
-            <OneTimeTaskItem
-              key={task.id}
-              task={task}
-              isToday={isToday}
-              onToggle={toggleOneTimeTask}
-              onDelete={deleteOneTimeTask}
             />
           ))}
         </div>
