@@ -17,7 +17,6 @@ export default function EditActivityForm({
 
   const handleSubmit = async (data: {
     name: string;
-    pattern: string;
     routine: string;
     completion_target: number;
   }) => {
@@ -40,7 +39,6 @@ export default function EditActivityForm({
       setIsSubmitting(true);
       await db.activities.update(activity.id, {
         name: data.name.trim(),
-        pattern: data.pattern,
         routine: data.routine,
         completion_target: data.completion_target,
         updated_at: now(),

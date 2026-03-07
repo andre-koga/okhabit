@@ -6,7 +6,6 @@ import ActivityFormFields from "@/components/activities/activity-form-fields";
 
 interface ActivitySubmitData {
   name: string;
-  pattern: string;
   routine: string;
   completion_target: number;
 }
@@ -48,7 +47,6 @@ export default function ActivityFormPage({
       if (isEditing) {
         await db.activities.update(activity.id, {
           name: data.name.trim(),
-          pattern: data.pattern,
           routine: data.routine,
           completion_target: data.completion_target,
           updated_at: now(),
@@ -59,7 +57,7 @@ export default function ActivityFormPage({
           id: newId(),
           group_id: group.id,
           name: data.name.trim(),
-          pattern: data.pattern,
+          pattern: null,
           routine: data.routine,
           completion_target: data.completion_target,
           color: null,
