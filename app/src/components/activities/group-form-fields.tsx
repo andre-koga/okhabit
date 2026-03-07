@@ -143,9 +143,9 @@ export default function GroupFormFields({
                 <span>Hue</span>
                 <span>{hsl[0]}°</span>
               </div>
-              <div className="relative h-3 rounded-full overflow-hidden">
+              <div className="relative h-4 flex items-center">
                 <div
-                  className="absolute inset-0 rounded-full"
+                  className="absolute inset-y-1 inset-x-0 rounded-full"
                   style={{
                     background:
                       "linear-gradient(to right,hsl(0,80%,55%),hsl(30,80%,55%),hsl(60,80%,55%),hsl(90,80%,55%),hsl(120,80%,55%),hsl(150,80%,55%),hsl(180,80%,55%),hsl(210,80%,55%),hsl(240,80%,55%),hsl(270,80%,55%),hsl(300,80%,55%),hsl(330,80%,55%),hsl(360,80%,55%))",
@@ -158,7 +158,7 @@ export default function GroupFormFields({
                   step={5}
                   value={hsl[0]}
                   onChange={(e) => updateHsl(+e.target.value, hsl[1], hsl[2])}
-                  className="absolute inset-0 w-full opacity-0 cursor-pointer h-full"
+                  className="relative w-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-black/10 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border [&::-moz-range-thumb]:border-black/10 [&::-moz-range-thumb]:shadow"
                 />
               </div>
             </div>
@@ -168,9 +168,9 @@ export default function GroupFormFields({
                 <span>Saturation</span>
                 <span>{hsl[1]}%</span>
               </div>
-              <div className="relative h-3 rounded-full overflow-hidden">
+              <div className="relative h-4 flex items-center">
                 <div
-                  className="absolute inset-0 rounded-full"
+                  className="absolute inset-y-1 inset-x-0 rounded-full"
                   style={{
                     background: `linear-gradient(to right, hsl(${hsl[0]},0%,${hsl[2]}%), hsl(${hsl[0]},100%,${hsl[2]}%))`,
                   }}
@@ -182,7 +182,7 @@ export default function GroupFormFields({
                   step={5}
                   value={hsl[1]}
                   onChange={(e) => updateHsl(hsl[0], +e.target.value, hsl[2])}
-                  className="absolute inset-0 w-full opacity-0 cursor-pointer h-full"
+                  className="relative w-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-black/10 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border [&::-moz-range-thumb]:border-black/10 [&::-moz-range-thumb]:shadow"
                 />
               </div>
             </div>
@@ -192,9 +192,9 @@ export default function GroupFormFields({
                 <span>Lightness</span>
                 <span>{hsl[2]}%</span>
               </div>
-              <div className="relative h-3 rounded-full overflow-hidden">
+              <div className="relative h-4 flex items-center">
                 <div
-                  className="absolute inset-0 rounded-full"
+                  className="absolute inset-y-1 inset-x-0 rounded-full"
                   style={{
                     background: `linear-gradient(to right, hsl(${hsl[0]},${hsl[1]}%,0%), hsl(${hsl[0]},${hsl[1]}%,50%), hsl(${hsl[0]},${hsl[1]}%,100%))`,
                   }}
@@ -206,7 +206,7 @@ export default function GroupFormFields({
                   step={5}
                   value={hsl[2]}
                   onChange={(e) => updateHsl(hsl[0], hsl[1], +e.target.value)}
-                  className="absolute inset-0 w-full opacity-0 cursor-pointer h-full"
+                  className="relative w-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-black/10 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border [&::-moz-range-thumb]:border-black/10 [&::-moz-range-thumb]:shadow"
                 />
               </div>
             </div>
