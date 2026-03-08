@@ -24,7 +24,7 @@ void (async () => {
 if (isSupabaseConfigured && supabase) {
   supabase.auth.onAuthStateChange((event) => {
     if (event === "SIGNED_IN") {
-      syncEngine.startAutoSync(30000);
+      syncEngine.startAutoSync(60000);
     } else if (event === "SIGNED_OUT") {
       syncEngine.stopAutoSync();
     }

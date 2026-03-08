@@ -3,6 +3,8 @@ import { supabase, getCachedUserId, isSupabaseConfigured } from './supabase'
 
 const LAST_SYNC_KEY = 'okhabit_last_sync_at'
 const EPOCH = '1970-01-01T00:00:00.000Z'
+const DEBOUNCE_SYNC_MS = 5_000
+const DEFAULT_PERIODIC_SYNC_MS = 60_000
 
 // ─── Tables that are synced ───────────────────────────────────────────────────
 const SYNC_TABLES = [
@@ -159,8 +161,13 @@ export class SyncEngine {
     }
     private listeners = new Set<StateListener>()
     private syncInterval: ReturnType<typeof setInterval> | null = null
+    private debounceTimer: ReturnType<typeof setTimeout> | null = null
     private onlineHandler: (() => void) | null = null
     private visibilityHandler: (() => void) | null = null
+    private periodicIntervalMs = DEFAULT_PERIODIC_SYNC_MS
+    private isAutoSyncEnabled = false
+    private hasMutationHooks = false
+    private suppressMutationSignals = 0
 
     // ── Pub/sub ─────────────────────────────────────────────────────────────────
 
@@ -176,6 +183,79 @@ export class SyncEngine {
     private setState(patch: Partial<SyncState>): void {
         this.state = { ...this.state, ...patch }
         this.listeners.forEach((l) => l(this.state))
+    }
+
+    private withSuppressedMutationSignals<T>(operation: () => Promise<T>): Promise<T> {
+        this.suppressMutationSignals += 1
+        return operation().finally(() => {
+            this.suppressMutationSignals -= 1
+        })
+    }
+
+    private clearDebounceTimer(): void {
+        if (this.debounceTimer) {
+            clearTimeout(this.debounceTimer)
+            this.debounceTimer = null
+        }
+    }
+
+    private runTriggeredSync(): void {
+        this.clearDebounceTimer()
+        this.resetPeriodicInterval()
+        void this.sync()
+    }
+
+    private scheduleDebouncedSync(): void {
+        if (!this.isAutoSyncEnabled) return
+
+        this.clearDebounceTimer()
+
+        this.debounceTimer = setTimeout(() => {
+            this.debounceTimer = null
+            this.runTriggeredSync()
+        }, DEBOUNCE_SYNC_MS)
+    }
+
+    private resetPeriodicInterval(): void {
+        if (this.syncInterval) {
+            clearInterval(this.syncInterval)
+            this.syncInterval = null
+        }
+
+        if (!this.isAutoSyncEnabled) return
+
+        this.syncInterval = setInterval(
+            () => this.runTriggeredSync(),
+            this.periodicIntervalMs
+        )
+    }
+
+    private registerMutationHooks(): void {
+        if (this.hasMutationHooks) return
+
+        for (const table of SYNC_TABLES) {
+            const dexieTable = TABLE_MAP[table]
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const localTable = db[dexieTable] as any
+
+            localTable.hook('creating', () => {
+                if (this.suppressMutationSignals > 0) return
+                this.scheduleDebouncedSync()
+            })
+
+            localTable.hook('updating', () => {
+                if (this.suppressMutationSignals > 0) return
+                this.scheduleDebouncedSync()
+                return undefined
+            })
+
+            localTable.hook('deleting', () => {
+                if (this.suppressMutationSignals > 0) return
+                this.scheduleDebouncedSync()
+            })
+        }
+
+        this.hasMutationHooks = true
     }
 
     // ── Sync guard ──────────────────────────────────────────────────────────────
@@ -223,12 +303,14 @@ export class SyncEngine {
 
             if (dedupedRows.length === 0) {
                 const now = new Date().toISOString()
-                await Promise.all(
-                    records.map((r) =>
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        (db[dexieTable] as any).update(r.id, { synced_at: now })
+                await this.withSuppressedMutationSignals(async () => {
+                    await Promise.all(
+                        records.map((r) =>
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            (db[dexieTable] as any).update(r.id, { synced_at: now })
+                        )
                     )
-                )
+                })
                 continue
             }
 
@@ -241,12 +323,14 @@ export class SyncEngine {
             }
 
             const now = new Date().toISOString()
-            await Promise.all(
-                records.map((r) =>
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    (db[dexieTable] as any).update(r.id, { synced_at: now })
+            await this.withSuppressedMutationSignals(async () => {
+                await Promise.all(
+                    records.map((r) =>
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        (db[dexieTable] as any).update(r.id, { synced_at: now })
+                    )
                 )
-            )
+            })
         }
     }
 
@@ -272,10 +356,12 @@ export class SyncEngine {
 
             if (!data || data.length === 0) continue
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await (db[dexieTable] as any).bulkPut(
-                data.map((r) => ({ ...r, synced_at: r.updated_at }))
-            )
+            await this.withSuppressedMutationSignals(async () => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                await (db[dexieTable] as any).bulkPut(
+                    data.map((r) => ({ ...r, synced_at: r.updated_at }))
+                )
+            })
         }
 
         const now = new Date().toISOString()
@@ -311,23 +397,31 @@ export class SyncEngine {
 
     // ── Auto-sync lifecycle ────────────────────────────────────────────────────
 
-    startAutoSync(intervalMs = 30_000): void {
+    startAutoSync(intervalMs = DEFAULT_PERIODIC_SYNC_MS): void {
         this.stopAutoSync()
+
+        this.isAutoSyncEnabled = true
+        this.periodicIntervalMs = intervalMs
+        this.registerMutationHooks()
 
         void this.sync()
 
-        this.syncInterval = setInterval(() => void this.sync(), intervalMs)
+        this.resetPeriodicInterval()
 
-        this.onlineHandler = () => void this.sync()
+        this.onlineHandler = () => this.runTriggeredSync()
         window.addEventListener('online', this.onlineHandler)
 
         this.visibilityHandler = () => {
-            if (document.visibilityState === 'visible') void this.sync()
+            if (document.visibilityState === 'visible') this.runTriggeredSync()
         }
         document.addEventListener('visibilitychange', this.visibilityHandler)
     }
 
     stopAutoSync(): void {
+        this.isAutoSyncEnabled = false
+
+        this.clearDebounceTimer()
+
         if (this.syncInterval) {
             clearInterval(this.syncInterval)
             this.syncInterval = null
