@@ -71,6 +71,10 @@ export interface JournalEntry {
     day_emoji: string | null;
     is_bookmarked: boolean | null;
     youtube_url: string | null;
+    is_journal_complete: boolean | null;
+    journal_entry_number: number | null;
+    journal_completion_streak: number | null;
+    journal_completed_at: string | null;
     location: LocationData | null;
     created_at: string;
     updated_at: string;

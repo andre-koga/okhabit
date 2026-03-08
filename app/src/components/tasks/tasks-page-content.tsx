@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Settings, Heart, MapPin, MapPinOff } from "lucide-react";
+import { Settings, Heart, MapPin, MapPinOff, Flame, Hash } from "lucide-react";
 import { db, toDateStr } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
@@ -192,9 +192,23 @@ export default function TasksPageContent() {
   }
 
   const embedUrl = getYoutubeEmbedUrl(journal.draftYoutubeUrl);
+  const isJournalDraftComplete = Boolean(
+    journal.draftEmoji.trim() &&
+    journal.draftTitle.trim() &&
+    journal.draftText.trim() &&
+    journal.draftYoutubeUrl.trim(),
+  );
+  const journalStreakColorClass =
+    (journal.journalCompletionStreak ?? 0) === 0
+      ? "text-muted-foreground"
+      : (journal.journalCompletionStreak ?? 0) <= 5
+        ? "text-yellow-500"
+        : (journal.journalCompletionStreak ?? 0) <= 25
+          ? "text-orange-500"
+          : "text-red-500";
 
   return (
-    <div className="pb-20">
+    <div className="pb-32">
       <JournalYoutubeSection
         canEdit={journal.canEditJournal}
         youtubeUrl={journal.draftYoutubeUrl}
@@ -258,7 +272,7 @@ export default function TasksPageContent() {
         </div>
       </div>
 
-      <div className="px-4 pb-4 pt-3">
+      <div className="px-4 pt-4">
         <div className="max-w-2xl mx-auto space-y-3">
           <JournalTextSection
             canEdit={journal.canEditJournal}
@@ -274,6 +288,35 @@ export default function TasksPageContent() {
             }}
             onBlur={journal.saveDraft}
           />
+
+          <div className="-mt-1 pb-1">
+            {journal.isJournalComplete &&
+            typeof journal.journalCompletionStreak === "number" &&
+            typeof journal.journalEntryNumber === "number" ? (
+              <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+                <span
+                  className={`inline-flex items-center ${journalStreakColorClass}`}
+                >
+                  <Flame className="h-3.5 w-3.5" />
+                  <span className="font-medium pt-0.5">
+                    {journal.journalCompletionStreak}
+                  </span>
+                </span>
+                <span className="inline-flex items-center">
+                  <Hash className="h-3.5 w-3.5" />
+                  <span className="pt-0.5 font-medium">
+                    {journal.journalEntryNumber}
+                  </span>
+                </span>
+              </div>
+            ) : (
+              <p className="text-center text-xs text-muted-foreground/80">
+                {isJournalDraftComplete
+                  ? "Good job!"
+                  : "Keep your journaling streak going!"}
+              </p>
+            )}
+          </div>
 
           {/* Info bar — sits on the section divider */}
           <div className="py-3">

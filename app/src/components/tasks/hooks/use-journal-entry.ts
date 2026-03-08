@@ -23,6 +23,87 @@ export interface JournalFields {
     location: LocationData | null;
 }
 
+interface JournalCompletionMetadata {
+    is_journal_complete: boolean;
+    journal_entry_number: number | null;
+    journal_completion_streak: number | null;
+    journal_completed_at: string | null;
+}
+
+function addDays(date: Date, days: number): Date {
+    const next = new Date(date);
+    next.setDate(next.getDate() + days);
+    return next;
+}
+
+function hasRequiredJournalFields(fields: JournalFields): boolean {
+    return Boolean(
+        fields.day_emoji?.trim() &&
+        fields.title?.trim() &&
+        fields.text_content?.trim() &&
+        fields.youtube_url?.trim(),
+    );
+}
+
+async function getCompletionMetadata(
+    dateStr: string,
+    fields: JournalFields,
+    existing: JournalEntry | undefined,
+    timestamp: string,
+): Promise<JournalCompletionMetadata> {
+    const existingIsComplete = !!existing?.is_journal_complete;
+
+    if (!hasRequiredJournalFields(fields)) {
+        return {
+            is_journal_complete: false,
+            journal_entry_number: existing?.journal_entry_number ?? null,
+            journal_completion_streak: existing?.journal_completion_streak ?? null,
+            journal_completed_at: existing?.journal_completed_at ?? null,
+        };
+    }
+
+    if (existingIsComplete) {
+        return {
+            is_journal_complete: true,
+            journal_entry_number: existing?.journal_entry_number ?? null,
+            journal_completion_streak: existing?.journal_completion_streak ?? null,
+            journal_completed_at: existing?.journal_completed_at ?? null,
+        };
+    }
+
+    const yesterday = toDateStr(addDays(new Date(`${dateStr}T00:00:00`), -1));
+    const yesterdayEntry = await db.journalEntries
+        .where("entry_date")
+        .equals(yesterday)
+        .filter((entry) => !entry.deleted_at)
+        .first();
+
+    const previousStreak = yesterdayEntry?.is_journal_complete
+        ? (yesterdayEntry.journal_completion_streak ?? 0)
+        : 0;
+
+    const completedEntries = await db.journalEntries
+        .filter(
+            (entry) =>
+                !entry.deleted_at &&
+                !!entry.is_journal_complete &&
+                typeof entry.journal_entry_number === "number",
+        )
+        .toArray();
+
+    const maxEntryNumber = completedEntries.reduce(
+        (max, entry) => Math.max(max, entry.journal_entry_number ?? 0),
+        0,
+    );
+
+    return {
+        is_journal_complete: true,
+        journal_entry_number: maxEntryNumber + 1,
+        journal_completion_streak: previousStreak + 1,
+        journal_completed_at: timestamp,
+    };
+}
+
 export interface JournalDraft {
     title: string;
     text: string;
@@ -122,19 +203,41 @@ export function useJournalEntry(currentDate: Date) {
                     .filter((e) => !e.deleted_at)
                     .first();
 
+                const completionMeta = await getCompletionMetadata(
+                    dateStr,
+                    fields,
+                    existing,
+                    n,
+                );
+
                 if (existing) {
-                    await db.journalEntries.update(existing.id, { ...fields, updated_at: n });
+                    const updatedEntry: JournalEntry = {
+                        ...existing,
+                        ...fields,
+                        ...completionMeta,
+                        updated_at: n,
+                    };
+
+                    await db.journalEntries.update(existing.id, {
+                        ...fields,
+                        ...completionMeta,
+                        updated_at: n,
+                    });
+
+                    setJournalEntry(updatedEntry);
                 } else {
                     const entry: JournalEntry = {
                         id: newId(),
                         entry_date: dateStr,
                         ...fields,
+                        ...completionMeta,
                         created_at: n,
                         updated_at: n,
                         synced_at: null,
                         deleted_at: null,
                     };
                     await db.journalEntries.add(entry);
+                    setJournalEntry(entry);
                 }
             } catch (error) {
                 console.error("Error saving journal entry:", error);
@@ -214,6 +317,9 @@ export function useJournalEntry(currentDate: Date) {
         canEditJournal,
         // state
         draftLocation, setDraftLocation,
+        journalCompletionStreak: journalEntry?.journal_completion_streak ?? null,
+        journalEntryNumber: journalEntry?.journal_entry_number ?? null,
+        isJournalComplete: !!journalEntry?.is_journal_complete,
         // actions
         loadJournalEntry,
         saveDraft,

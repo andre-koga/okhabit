@@ -74,7 +74,7 @@ export default function JournalTextSection({
       <div>
         {canEdit ? (
           // Editable days: auto-growing textarea
-          <div className="relative pb-4">
+          <div className="relative pb-2">
             <textarea
               ref={textareaRef}
               value={text}
@@ -97,7 +97,7 @@ export default function JournalTextSection({
           </div>
         ) : (
           // Read-only days: same textarea element so height is identical
-          <div className="pb-4">
+          <div className="pb-2">
             <textarea
               ref={textareaRef}
               value={text}
