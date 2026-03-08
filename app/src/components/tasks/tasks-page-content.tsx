@@ -1,6 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Settings, Heart, MapPin, MapPinOff } from "lucide-react";
+import {
+  Settings,
+  Heart,
+  MapPin,
+  MapPinOff,
+  Flame,
+  Hash,
+  RotateCw,
+} from "lucide-react";
 import { db, toDateStr } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
@@ -42,6 +50,7 @@ export default function TasksPageContent() {
   const [showLocationInput, setShowLocationInput] = useState(false);
   const [locationInputVal, setLocationInputVal] = useState("");
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [isJournalLoaded, setIsJournalLoaded] = useState(false);
   const hasTriedGeoRef = useRef(false);
 
   const journal = useJournalEntry(currentDate);
@@ -119,69 +128,84 @@ export default function TasksPageContent() {
   }, [journal.draftBookmarked]);
 
   useEffect(() => {
-    loadJournalEntry();
+    setIsJournalLoaded(false);
     // reset geo attempt when date changes so we re-try on today
     hasTriedGeoRef.current = false;
+    void loadJournalEntry().finally(() => {
+      setIsJournalLoaded(true);
+    });
   }, [loadJournalEntry]);
+
+  const detectLocation = useCallback(
+    (force = false) => {
+      if (!isToday) return;
+      if (!navigator.geolocation) return;
+      if (isDetectingLocation) return;
+      if (!force) {
+        if (!isJournalLoaded) return;
+        if (journal.draftLocation) return;
+        if (hasTriedGeoRef.current) return;
+      }
+
+      hasTriedGeoRef.current = true;
+      setIsDetectingLocation(true);
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            const { latitude, longitude } = pos.coords;
+            const res = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+            );
+            const data = (await res.json()) as {
+              address: {
+                city?: string;
+                town?: string;
+                village?: string;
+                county?: string;
+                state?: string;
+                country?: string;
+                country_code?: string;
+              };
+            };
+            const city =
+              data.address.city ||
+              data.address.town ||
+              data.address.village ||
+              data.address.county ||
+              null;
+            if (city) {
+              const locationData = {
+                displayName: city,
+                city,
+                state: data.address.state ?? null,
+                country: data.address.country ?? null,
+                countryCode: data.address.country_code ?? null,
+                lat: latitude,
+                lon: longitude,
+              };
+              journal.setDraftLocation(locationData);
+              journal.draftRef.current.location = locationData;
+              journal.saveLocation(locationData);
+            }
+          } catch (e) {
+            console.error("Reverse geocoding failed", e);
+          } finally {
+            setIsDetectingLocation(false);
+          }
+        },
+        () => {
+          setIsDetectingLocation(false);
+        },
+        { timeout: 10000, maximumAge: 5 * 60 * 1000 },
+      );
+    },
+    [isToday, isDetectingLocation, isJournalLoaded, journal],
+  );
 
   // Auto-detect location for today if not already set
   useEffect(() => {
-    if (!isToday) return;
-    if (journal.draftLocation) return;
-    if (hasTriedGeoRef.current) return;
-    if (!navigator.geolocation) return;
-    hasTriedGeoRef.current = true;
-    setIsDetectingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const { latitude, longitude } = pos.coords;
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-          );
-          const data = (await res.json()) as {
-            address: {
-              city?: string;
-              town?: string;
-              village?: string;
-              county?: string;
-              state?: string;
-              country?: string;
-              country_code?: string;
-            };
-          };
-          const city =
-            data.address.city ||
-            data.address.town ||
-            data.address.village ||
-            data.address.county ||
-            null;
-          if (city) {
-            const locationData = {
-              displayName: city,
-              city,
-              state: data.address.state ?? null,
-              country: data.address.country ?? null,
-              countryCode: data.address.country_code ?? null,
-              lat: latitude,
-              lon: longitude,
-            };
-            journal.setDraftLocation(locationData);
-            journal.draftRef.current.location = locationData;
-            journal.saveLocation(locationData);
-          }
-        } catch (e) {
-          console.error("Reverse geocoding failed", e);
-        } finally {
-          setIsDetectingLocation(false);
-        }
-      },
-      () => {
-        setIsDetectingLocation(false);
-      },
-      { timeout: 10000, maximumAge: 5 * 60 * 1000 },
-    );
-  }, [isToday, journal]);
+    detectLocation();
+  }, [detectLocation]);
 
   if (loading) {
     return (
@@ -192,9 +216,23 @@ export default function TasksPageContent() {
   }
 
   const embedUrl = getYoutubeEmbedUrl(journal.draftYoutubeUrl);
+  const isJournalDraftComplete = Boolean(
+    journal.draftEmoji.trim() &&
+    journal.draftTitle.trim() &&
+    journal.draftText.trim() &&
+    journal.draftYoutubeUrl.trim(),
+  );
+  const journalStreakColorClass =
+    (journal.journalCompletionStreak ?? 0) === 0
+      ? "text-muted-foreground"
+      : (journal.journalCompletionStreak ?? 0) <= 5
+        ? "text-yellow-500"
+        : (journal.journalCompletionStreak ?? 0) <= 25
+          ? "text-orange-500"
+          : "text-red-500";
 
   return (
-    <div className="pb-20">
+    <div className="pb-32">
       <JournalYoutubeSection
         canEdit={journal.canEditJournal}
         youtubeUrl={journal.draftYoutubeUrl}
@@ -258,7 +296,7 @@ export default function TasksPageContent() {
         </div>
       </div>
 
-      <div className="px-4 pb-4 pt-3">
+      <div className="px-4 pt-4">
         <div className="max-w-2xl mx-auto space-y-3">
           <JournalTextSection
             canEdit={journal.canEditJournal}
@@ -274,6 +312,35 @@ export default function TasksPageContent() {
             }}
             onBlur={journal.saveDraft}
           />
+
+          <div className="-mt-1 pb-1">
+            {journal.isJournalComplete &&
+            typeof journal.journalCompletionStreak === "number" &&
+            typeof journal.journalEntryNumber === "number" ? (
+              <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+                <span
+                  className={`inline-flex items-center ${journalStreakColorClass}`}
+                >
+                  <Flame className="h-3.5 w-3.5" />
+                  <span className="font-medium pt-0.5">
+                    {journal.journalCompletionStreak}
+                  </span>
+                </span>
+                <span className="inline-flex items-center">
+                  <Hash className="h-3.5 w-3.5" />
+                  <span className="pt-0.5 font-medium">
+                    {journal.journalEntryNumber}
+                  </span>
+                </span>
+              </div>
+            ) : (
+              <p className="text-center text-xs text-muted-foreground/80">
+                {isJournalDraftComplete
+                  ? "Good job!"
+                  : "Keep your journaling streak going!"}
+              </p>
+            )}
+          </div>
 
           {/* Info bar — sits on the section divider */}
           <div className="py-3">
@@ -318,32 +385,48 @@ export default function TasksPageContent() {
                       className="w-28 px-2 py-1 rounded-full bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                     />
                   ) : (
-                    <button
-                      onClick={() => {
-                        setLocationInputVal(
-                          journal.draftLocation?.displayName ?? "",
-                        );
-                        setShowLocationInput(true);
-                      }}
-                      className="flex items-center gap-1 px-3 py-1 rounded-full bg-background text-xs text-muted-foreground hover:text-foreground transition-colors"
-                      title="Set location"
-                    >
-                      {isDetectingLocation || journal.draftLocation ? (
-                        <>
-                          <MapPin className="h-3 w-3 shrink-0" />
-                          <span className="truncate max-w-[80px]">
-                            {isDetectingLocation
-                              ? "Detecting"
-                              : journal.draftLocation?.displayName}
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <MapPinOff className="h-3 w-3 shrink-0" />
-                          <span>None</span>
-                        </>
+                    <div className="flex items-center bg-background rounded-full pr-1">
+                      <button
+                        onClick={() => {
+                          setLocationInputVal(
+                            journal.draftLocation?.displayName ?? "",
+                          );
+                          setShowLocationInput(true);
+                        }}
+                        className="flex items-center gap-1 pl-3 py-1 rounded-full bg-background text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        title="Set location"
+                      >
+                        {isDetectingLocation || journal.draftLocation ? (
+                          <>
+                            <MapPin className="h-3 w-3 shrink-0" />
+                            <span className="truncate max-w-[80px]">
+                              {isDetectingLocation
+                                ? "Detecting"
+                                : journal.draftLocation?.displayName}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <MapPinOff className="h-3 w-3 shrink-0" />
+                            <span>None</span>
+                          </>
+                        )}
+                      </button>
+
+                      {isToday && (
+                        <button
+                          type="button"
+                          onClick={() => detectLocation(true)}
+                          disabled={isDetectingLocation}
+                          className="h-6 w-6 mb-0.5 inline-flex items-center justify-center rounded-full bg-background text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+                          title="Retry location detection"
+                        >
+                          <RotateCw
+                            className={`h-3 w-3 ${isDetectingLocation ? "animate-spin" : ""}`}
+                          />
+                        </button>
                       )}
-                    </button>
+                    </div>
                   )}
                 </div>
 
