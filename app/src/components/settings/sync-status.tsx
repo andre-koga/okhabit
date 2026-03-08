@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Cloud,
   CloudOff,
@@ -15,14 +15,25 @@ import {
 } from "@/lib/supabase";
 
 export default function SyncStatus() {
+  const FADE_OUT_DELAY_MS = 2200;
   const [syncState, setSyncState] = useState(syncEngine.getState());
   const [isAuthed, setIsAuthed] = useState(isAuthenticated());
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isVisible, setIsVisible] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const hideTimerRef = useRef<number | null>(null);
+  const prevIsSyncingRef = useRef(syncState.isSyncing);
+
+  const clearHideTimer = () => {
+    if (hideTimerRef.current !== null) {
+      window.clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+  };
 
   useEffect(() => {
     const unsubscribe = syncEngine.subscribe(setSyncState);
@@ -43,6 +54,7 @@ export default function SyncStatus() {
       : null;
 
     return () => {
+      clearHideTimer();
       unsubscribe();
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
@@ -50,7 +62,32 @@ export default function SyncStatus() {
     };
   }, []);
 
+  useEffect(() => {
+    const wasSyncing = prevIsSyncingRef.current;
+
+    if (syncState.isSyncing) {
+      clearHideTimer();
+      setIsVisible(true);
+      prevIsSyncingRef.current = true;
+      return;
+    }
+
+    const justFinished = wasSyncing && !syncState.isSyncing;
+    const hasResult = Boolean(syncState.lastSyncAt || syncState.lastError);
+    if (justFinished || (syncState.lastError && hasResult)) {
+      setIsVisible(true);
+      clearHideTimer();
+      hideTimerRef.current = window.setTimeout(() => {
+        setIsVisible(false);
+        setShowAuth(false);
+      }, FADE_OUT_DELAY_MS);
+    }
+
+    prevIsSyncingRef.current = syncState.isSyncing;
+  }, [syncState.isSyncing, syncState.lastSyncAt, syncState.lastError]);
+
   const handleManualSync = async () => {
+    setIsVisible(true);
     try {
       await syncEngine.sync();
     } catch (error) {
@@ -118,7 +155,13 @@ export default function SyncStatus() {
     : "Never";
 
   return (
-    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
+    <div
+      className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-opacity duration-500 ${
+        isVisible
+          ? "opacity-100 pointer-events-auto"
+          : "opacity-0 pointer-events-none"
+      }`}
+    >
       {/* Sync status pill */}
       <div className="bg-background border border-border rounded-full shadow-lg">
         <div className="flex items-center gap-2 px-4 py-2">
