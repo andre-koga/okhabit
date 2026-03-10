@@ -72,24 +72,24 @@ export default function DateNavigator({
             {props.children}
             {isBookmarked ? (
               <Heart
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 fill-red-500 text-red-500 opacity-90 pointer-events-none"
+                className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 fill-red-500 text-red-500 opacity-90"
                 style={{ width: 10, height: 10 }}
               />
             ) : hasEntry ? (
-              <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full bg-current opacity-50 pointer-events-none" />
+              <span className="pointer-events-none absolute bottom-0.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-current opacity-50" />
             ) : null}
           </CalendarDayButton>
         );
       },
     }),
-    [entryDates, bookmarkedDates],
+    [entryDates, bookmarkedDates]
   );
 
   return (
-    <div className="flex items-center gap-0.5 bg-background border border-border rounded-full shadow-lg px-1 py-1">
+    <div className="flex items-center gap-0.5 rounded-full border border-border bg-background px-1 py-1 shadow-lg">
       <button
         onClick={() => changeDate(-1)}
-        className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-accent transition-colors"
+        className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-accent"
         aria-label="Previous day"
       >
         <ChevronLeft className="h-4 w-4" />
@@ -98,7 +98,7 @@ export default function DateNavigator({
       <div className="flex items-center gap-1">
         <Popover open={datePopoverOpen} onOpenChange={handlePopoverOpen}>
           <PopoverTrigger asChild>
-            <button className="font-semibold text-sm hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-accent">
+            <button className="rounded-md px-2 py-1 text-sm font-semibold transition-colors hover:bg-accent hover:text-primary">
               {currentDate.toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
@@ -107,7 +107,7 @@ export default function DateNavigator({
             </button>
           </PopoverTrigger>
           <PopoverContent
-            className="w-[calc(100vw-2rem)] max-w-sm p-2 rounded-2xl overflow-hidden"
+            className="w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-2xl p-2"
             align="center"
             sideOffset={16}
           >
@@ -131,7 +131,7 @@ export default function DateNavigator({
         {!isToday && (
           <button
             onClick={() => onDateChange(new Date())}
-            className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             aria-label="Go to today"
             title="Go to today"
           >
@@ -143,7 +143,7 @@ export default function DateNavigator({
       <button
         onClick={() => changeDate(1)}
         disabled={isToday}
-        className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-accent transition-colors disabled:opacity-30"
+        className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-accent disabled:opacity-30"
         aria-label="Next day"
       >
         <ChevronRight className="h-4 w-4" />

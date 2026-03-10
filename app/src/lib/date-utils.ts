@@ -71,10 +71,7 @@ export function startOfDay(date: Date): Date {
 /**
  * Shift HH:MM:SS time string by delta minutes.
  */
-export function shiftTimeByMinutes(
-  time: string,
-  deltaMinutes: number,
-): string {
+export function shiftTimeByMinutes(time: string, deltaMinutes: number): string {
   if (!time) return "";
   const [hours, minutes, seconds = 0] = time.split(":").map(Number);
   if (Number.isNaN(hours) || Number.isNaN(minutes)) return time;

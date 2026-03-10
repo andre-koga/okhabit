@@ -6,7 +6,7 @@ export function AppearanceCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-sm font-medium">
           <Sun className="h-4 w-4" />
           Appearance
         </CardTitle>

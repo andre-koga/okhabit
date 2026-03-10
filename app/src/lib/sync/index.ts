@@ -1,5 +1,9 @@
 import { db, newId } from "@/lib/db";
-import { supabase, getCachedUserId, isSupabaseConfigured } from "@/lib/supabase";
+import {
+  supabase,
+  getCachedUserId,
+  isSupabaseConfigured,
+} from "@/lib/supabase";
 import { loadLastSyncAt, saveLastSyncAt } from "./sync-storage";
 import {
   type SyncTable,
@@ -72,7 +76,7 @@ export class SyncEngine {
   }
 
   private withSuppressedMutationSignals<T>(
-    operation: () => Promise<T>,
+    operation: () => Promise<T>
   ): Promise<T> {
     this.suppressMutationSignals += 1;
     return operation().finally(() => {
@@ -114,7 +118,7 @@ export class SyncEngine {
 
     this.syncInterval = setInterval(
       () => this.runTriggeredSync(),
-      this.periodicIntervalMs,
+      this.periodicIntervalMs
     );
   }
 
@@ -155,7 +159,7 @@ export class SyncEngine {
   private async sanitizeForeignKeyRefsBeforeUpsert(
     table: SyncTable,
     rows: Array<Record<string, unknown>>,
-    userId: string,
+    userId: string
   ): Promise<Array<Record<string, unknown>>> {
     if (rows.length === 0) return rows;
     const supabaseClient = supabase;
@@ -168,13 +172,11 @@ export class SyncEngine {
         .filter((a: any) => !a.deleted_at)
         .primaryKeys();
       const validActivityIds = new Set(
-        activityIdsRaw
-          .map((id) => String(id))
-          .filter((id) => isValidUuid(id)),
+        activityIdsRaw.map((id) => String(id)).filter((id) => isValidUuid(id))
       );
 
       let missingActivityRefCount = 0;
-      let withActivityRefs = rows.map((row) => {
+      const withActivityRefs = rows.map((row) => {
         if (!row.activity_id || !isValidUuid(row.activity_id)) {
           return row;
         }
@@ -187,7 +189,7 @@ export class SyncEngine {
 
       if (missingActivityRefCount > 0) {
         console.warn(
-          `[sync] nulled ${missingActivityRefCount} missing activity_id reference(s) on ${table}`,
+          `[sync] nulled ${missingActivityRefCount} missing activity_id reference(s) on ${table}`
         );
       }
 
@@ -197,8 +199,8 @@ export class SyncEngine {
         new Set(
           rows
             .map((row) => row.activity_id)
-            .filter((id): id is string => isValidUuid(id)),
-        ),
+            .filter((id): id is string => isValidUuid(id))
+        )
       );
 
       if (referencedActivityIds.length > 0) {
@@ -211,7 +213,7 @@ export class SyncEngine {
 
         if (!remoteActivitiesError) {
           const remoteActivityIds = new Set(
-            (remoteActivities ?? []).map((a) => a.id),
+            (remoteActivities ?? []).map((a) => a.id)
           );
 
           let missingRemoteActivityRefCount = 0;
@@ -228,7 +230,7 @@ export class SyncEngine {
 
           if (missingRemoteActivityRefCount > 0) {
             console.warn(
-              `[sync] nulled ${missingRemoteActivityRefCount} non-existent remote activity_id reference(s) on ${table}`,
+              `[sync] nulled ${missingRemoteActivityRefCount} non-existent remote activity_id reference(s) on ${table}`
             );
           }
         }
@@ -242,13 +244,11 @@ export class SyncEngine {
         .filter((d: any) => !d.deleted_at)
         .primaryKeys();
       const validDailyEntryIds = new Set(
-        dailyEntryIdsRaw
-          .map((id) => String(id))
-          .filter((id) => isValidUuid(id)),
+        dailyEntryIdsRaw.map((id) => String(id)).filter((id) => isValidUuid(id))
       );
 
       let missingDailyEntryRefCount = 0;
-      let withDailyEntryRefs = rows.map((row) => {
+      const withDailyEntryRefs = rows.map((row) => {
         if (!row.daily_entry_id || !isValidUuid(row.daily_entry_id)) {
           return row;
         }
@@ -261,7 +261,7 @@ export class SyncEngine {
 
       if (missingDailyEntryRefCount > 0) {
         console.warn(
-          `[sync] nulled ${missingDailyEntryRefCount} missing daily_entry_id reference(s) on ${table}`,
+          `[sync] nulled ${missingDailyEntryRefCount} missing daily_entry_id reference(s) on ${table}`
         );
       }
 
@@ -271,8 +271,8 @@ export class SyncEngine {
         new Set(
           rows
             .map((row) => row.daily_entry_id)
-            .filter((id): id is string => isValidUuid(id)),
-        ),
+            .filter((id): id is string => isValidUuid(id))
+        )
       );
 
       if (referencedDailyEntryIds.length > 0) {
@@ -285,15 +285,12 @@ export class SyncEngine {
 
         if (!remoteDailyEntriesError) {
           const remoteDailyEntryIds = new Set(
-            (remoteDailyEntries ?? []).map((d) => d.id),
+            (remoteDailyEntries ?? []).map((d) => d.id)
           );
 
           let missingRemoteDailyEntryRefCount = 0;
           rows = rows.map((row) => {
-            if (
-              !row.daily_entry_id ||
-              !isValidUuid(row.daily_entry_id)
-            ) {
+            if (!row.daily_entry_id || !isValidUuid(row.daily_entry_id)) {
               return row;
             }
             if (remoteDailyEntryIds.has(row.daily_entry_id)) {
@@ -305,7 +302,7 @@ export class SyncEngine {
 
           if (missingRemoteDailyEntryRefCount > 0) {
             console.warn(
-              `[sync] nulled ${missingRemoteDailyEntryRefCount} non-existent remote daily_entry_id reference(s) on ${table}`,
+              `[sync] nulled ${missingRemoteDailyEntryRefCount} non-existent remote daily_entry_id reference(s) on ${table}`
             );
           }
         }
@@ -318,7 +315,7 @@ export class SyncEngine {
   private async normalizeActivityStreakIdsBeforeUpsert(
     table: SyncTable,
     rows: Array<Record<string, unknown>>,
-    userId: string,
+    userId: string
   ): Promise<Array<Record<string, unknown>>> {
     if (table !== "activity_streaks" || rows.length === 0) return rows;
     const supabaseClient = supabase;
@@ -370,7 +367,7 @@ export class SyncEngine {
         usedIds.has(rowId) ||
         Boolean(
           remoteIdToComposite.get(rowId) &&
-            remoteIdToComposite.get(rowId) !== compositeKey,
+          remoteIdToComposite.get(rowId) !== compositeKey
         );
 
       if (needsFreshId) {
@@ -412,27 +409,26 @@ export class SyncEngine {
       const duplicateCount = rows.length - dedupedRows.length;
       if (duplicateCount > 0) {
         console.warn(
-          `[sync] deduped ${duplicateCount} conflicting row(s) on ${table} before upsert`,
+          `[sync] deduped ${duplicateCount} conflicting row(s) on ${table} before upsert`
         );
       }
 
       const sanitizedRows = await this.sanitizeForeignKeyRefsBeforeUpsert(
         table,
         dedupedRows,
-        userId,
+        userId
       );
 
-      const normalizedRows =
-        await this.normalizeActivityStreakIdsBeforeUpsert(
-          table,
-          sanitizedRows,
-          userId,
-        );
+      const normalizedRows = await this.normalizeActivityStreakIdsBeforeUpsert(
+        table,
+        sanitizedRows,
+        userId
+      );
 
       const skippedCount = records.length - rows.length;
       if (skippedCount > 0) {
         console.warn(
-          `[sync] skipped ${skippedCount} invalid row(s) on ${table} due to non-UUID id`,
+          `[sync] skipped ${skippedCount} invalid row(s) on ${table} due to non-UUID id`
         );
       }
 
@@ -442,18 +438,16 @@ export class SyncEngine {
           await Promise.all(
             records.map((r) =>
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (db[dexieTable] as any).update(r.id, { synced_at: now }),
-            ),
+              (db[dexieTable] as any).update(r.id, { synced_at: now })
+            )
           );
         });
         continue;
       }
 
-      const { error } = await supabase
-        .from(table)
-        .upsert(normalizedRows, {
-          onConflict: UPSERT_CONFLICT_TARGET[table],
-        });
+      const { error } = await supabase.from(table).upsert(normalizedRows, {
+        onConflict: UPSERT_CONFLICT_TARGET[table],
+      });
 
       if (error) {
         throw new Error(`Push error on ${table}: ${error.message}`);
@@ -464,8 +458,8 @@ export class SyncEngine {
         await Promise.all(
           records.map((r) =>
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (db[dexieTable] as any).update(r.id, { synced_at: now }),
-          ),
+            (db[dexieTable] as any).update(r.id, { synced_at: now })
+          )
         );
       });
     }
@@ -494,7 +488,7 @@ export class SyncEngine {
       await this.withSuppressedMutationSignals(async () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (db[dexieTable] as any).bulkPut(
-          data.map((r) => ({ ...r, synced_at: r.updated_at })),
+          data.map((r) => ({ ...r, synced_at: r.updated_at }))
         );
       });
     }
@@ -512,8 +506,7 @@ export class SyncEngine {
       await this.push();
       await this.pull();
     } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : "Unknown sync error";
+      const msg = err instanceof Error ? err.message : "Unknown sync error";
       this.setState({ lastError: msg });
     } finally {
       this.setState({ isSyncing: false });
@@ -562,10 +555,7 @@ export class SyncEngine {
       this.onlineHandler = null;
     }
     if (this.visibilityHandler) {
-      document.removeEventListener(
-        "visibilitychange",
-        this.visibilityHandler,
-      );
+      document.removeEventListener("visibilitychange", this.visibilityHandler);
       this.visibilityHandler = null;
     }
   }

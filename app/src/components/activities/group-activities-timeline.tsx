@@ -79,7 +79,7 @@ export default function GroupActivitiesTimeline({
               p.daily_entry_id === dailyEntry.id &&
               !p.deleted_at &&
               p.end_time !== null &&
-              activityIds.includes(p.activity_id),
+              activityIds.includes(p.activity_id)
           )
           .toArray();
 
@@ -133,7 +133,7 @@ export default function GroupActivitiesTimeline({
 
       return days;
     },
-    [groupId, groupColor],
+    [groupId, groupColor]
   );
 
   const loadInitialData = useCallback(async () => {
@@ -157,7 +157,7 @@ export default function GroupActivitiesTimeline({
     try {
       const newDays = await loadDaysData(
         daysLoaded,
-        daysLoaded + DAYS_PER_PAGE,
+        daysLoaded + DAYS_PER_PAGE
       );
 
       if (newDays.length === 0) {
@@ -185,7 +185,7 @@ export default function GroupActivitiesTimeline({
           loadMoreDays();
         }
       },
-      { threshold: 0.1 },
+      { threshold: 0.1 }
     );
 
     const currentTarget = observerTarget.current;
@@ -204,7 +204,7 @@ export default function GroupActivitiesTimeline({
     (sessionId: string) => {
       navigate(`/activities/${groupId}/sessions/${sessionId}`);
     },
-    [navigate, groupId],
+    [navigate, groupId]
   );
 
   if (loading) {
@@ -218,7 +218,7 @@ export default function GroupActivitiesTimeline({
   if (dayDataList.length === 0) {
     return (
       <div className="px-4 py-8">
-        <p className="text-sm text-muted-foreground text-center">
+        <p className="text-center text-sm text-muted-foreground">
           No activity history yet for this group.
         </p>
       </div>
@@ -227,7 +227,7 @@ export default function GroupActivitiesTimeline({
 
   return (
     <div className="px-4 pb-8">
-      <div className="max-w-2xl mx-auto">
+      <div className="mx-auto max-w-2xl">
         <div className="mb-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Activity History

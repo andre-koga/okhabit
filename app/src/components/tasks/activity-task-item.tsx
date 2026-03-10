@@ -55,7 +55,7 @@ function ActivityTaskItem({
       {isNeverTask ? (
         <div
           onClick={isToday ? () => onIncrement(activity.id, target) : undefined}
-          className={`flex items-center justify-center h-7 w-[2.75rem] rounded-md border border-destructive transition-colors ${
+          className={`flex h-7 w-[2.75rem] items-center justify-center rounded-md border border-destructive transition-colors ${
             isToday ? "cursor-pointer" : "cursor-default opacity-60"
           } ${isComplete ? "bg-destructive" : "bg-transparent"}`}
           role={isToday ? "button" : undefined}
@@ -77,11 +77,11 @@ function ActivityTaskItem({
         <button
           onClick={isToday ? () => onIncrement(activity.id, target) : undefined}
           disabled={!isToday}
-          className={`flex items-center justify-center h-7 w-[2.75rem] rounded-full border transition-colors ${
+          className={`flex h-7 w-[2.75rem] items-center justify-center rounded-full border transition-colors ${
             isComplete
-              ? "bg-primary text-primary-foreground border-primary"
+              ? "border-primary bg-primary text-primary-foreground"
               : "border-muted-foreground text-muted-foreground"
-          } disabled:opacity-60 disabled:cursor-default`}
+          } disabled:cursor-default disabled:opacity-60`}
           title={
             isToday
               ? isComplete
@@ -96,13 +96,13 @@ function ActivityTaskItem({
         <button
           onClick={isToday ? () => onIncrement(activity.id, target) : undefined}
           disabled={!isToday}
-          className={`flex items-center justify-center min-w-[2.75rem] h-7 rounded-full text-xs font-semibold px-2 border transition-colors ${
+          className={`flex h-7 min-w-[2.75rem] items-center justify-center rounded-full border px-2 text-xs font-semibold transition-colors ${
             isComplete
-              ? "bg-primary text-primary-foreground border-primary"
+              ? "border-primary bg-primary text-primary-foreground"
               : count > 0
-                ? "bg-primary/20 text-primary border-primary/40"
+                ? "border-primary/40 bg-primary/20 text-primary"
                 : "border-muted-foreground text-muted-foreground"
-          } disabled:opacity-60 disabled:cursor-default`}
+          } disabled:cursor-default disabled:opacity-60`}
           title={
             isToday
               ? `${count} / ${target} — click to increment`

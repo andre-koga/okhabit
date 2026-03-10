@@ -19,8 +19,10 @@ export function AuthCard() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  // Reset form when user signs in (sync with auth state)
   useEffect(() => {
     if (isAuthed) {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect -- syncing with auth state */
       setShowAuthForm(false);
       setEmail("");
       setPassword("");
@@ -57,13 +59,13 @@ export function AuthCard() {
           <>
             <p className="text-sm text-muted-foreground">
               Signed in as{" "}
-              <span className="text-foreground font-medium">
+              <span className="font-medium text-foreground">
                 {currentUserEmail ?? "Unknown email"}
               </span>
             </p>
             <Button
               variant="outline"
-              className="w-full flex items-center gap-2"
+              className="flex w-full items-center gap-2"
               onClick={signOut}
             >
               <LogOut className="h-4 w-4" />
@@ -74,7 +76,7 @@ export function AuthCard() {
           <>
             <Button
               variant="outline"
-              className="w-full flex items-center gap-2"
+              className="flex w-full items-center gap-2"
               onClick={() => {
                 setShowAuthForm((prev) => !prev);
                 setAuthError(null);
@@ -91,7 +93,7 @@ export function AuthCard() {
                   placeholder="Email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                   required
                 />
                 <input
@@ -99,7 +101,7 @@ export function AuthCard() {
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                   required
                 />
 

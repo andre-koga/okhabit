@@ -34,7 +34,5 @@ export function FloatingBackButton({
     return <Link to={to} {...commonProps} />;
   }
 
-  return (
-    <button type="button" onClick={onClick} {...commonProps} />
-  );
+  return <button type="button" onClick={onClick} {...commonProps} />;
 }

@@ -54,25 +54,25 @@ export default function ActivityGroupsDrawer({
           open ? "translate-y-0" : "translate-y-full"
         }`}
       >
-        <div className="bg-background rounded-t-2xl shadow-xl max-h-[70vh] flex flex-col border-t border-border/50">
+        <div className="flex max-h-[70vh] flex-col rounded-t-2xl border-t border-border/50 bg-background shadow-xl">
           {/* Handle */}
-          <div className="flex justify-center pt-3 pb-1 shrink-0">
-            <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+          <div className="flex shrink-0 justify-center pb-1 pt-3">
+            <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
           </div>
 
           {/* Header */}
-          <div className="px-5 pt-2 pb-3 shrink-0">
-            <h2 className="text-lg font-semibold text-center">Groups</h2>
+          <div className="shrink-0 px-5 pb-3 pt-2">
+            <h2 className="text-center text-lg font-semibold">Groups</h2>
           </div>
 
           {/* New Group button */}
-          <div className="px-4 pb-6 shrink-0 flex justify-center">
+          <div className="flex shrink-0 justify-center px-4 pb-6">
             <button
               onClick={() => {
                 setOpen(false);
                 navigate("/activities/new");
               }}
-              className="flex items-center gap-2 px-4 py-2 rounded-full border border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors text-sm"
+              className="flex items-center gap-2 rounded-full border border-dashed border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               <Plus className="h-4 w-4" />
               New Group
@@ -80,9 +80,9 @@ export default function ActivityGroupsDrawer({
           </div>
 
           {/* Group list */}
-          <div className="overflow-y-auto px-4 pb-12 space-y-2">
+          <div className="space-y-2 overflow-y-auto px-4 pb-12">
             {groups.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">
+              <p className="py-6 text-center text-sm text-muted-foreground">
                 No groups yet.
               </p>
             ) : (
@@ -124,7 +124,7 @@ export default function ActivityGroupsDrawer({
       {/* FAB */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-6 right-6 z-[60] h-10 w-10 rounded-full bg-primary text-primary-foreground shadow-md flex items-center justify-center hover:bg-primary/90 transition-colors"
+        className="fixed bottom-6 right-6 z-[60] flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
       >
         {open ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
       </button>

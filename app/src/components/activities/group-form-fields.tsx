@@ -3,7 +3,11 @@ import { useNavigate } from "react-router-dom";
 import GroupPill from "@/components/activities/group-pill";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import { hexToHsl, hslToHex } from "@/lib/color-utils";
-import { formSectionLabel, formInput, formSubmitButton } from "@/lib/form-styles";
+import {
+  formSectionLabel,
+  formInput,
+  formSubmitButton,
+} from "@/lib/form-styles";
 
 const DEFAULT_COLOR = "#3b82f6"; // blue-500
 
@@ -28,7 +32,7 @@ export default function GroupFormFields({
   const navigate = useNavigate();
   const initialHex = initialData?.color ?? DEFAULT_COLOR;
   const [hsl, setHsl] = useState<[number, number, number]>(() =>
-    hexToHsl(initialHex),
+    hexToHsl(initialHex)
   );
   const [formData, setFormData] = useState<GroupFormData>({
     name: initialData?.name ?? "",
@@ -61,19 +65,19 @@ export default function GroupFormFields({
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex min-h-screen flex-col">
       <form
         id="group-form"
         onSubmit={handleSubmit}
-        className="flex flex-col flex-1 px-4 pt-0 pb-28 gap-8"
+        className="flex flex-1 flex-col gap-8 px-4 pb-28 pt-0"
       >
         {/* Preview — centered in available top space */}
-        <div className="flex-1 flex flex-col justify-center gap-3">
+        <div className="flex flex-1 flex-col justify-center gap-3">
           <p className={formSectionLabel}>Preview</p>
           <GroupPill name={formData.name} color={formData.color} readOnly />
         </div>
 
-        <hr className="border-border -mx-4 -mb-2" />
+        <hr className="-mx-4 -mb-2 border-border" />
 
         {/* Name input */}
         <div className="space-y-3">
@@ -105,9 +109,9 @@ export default function GroupFormFields({
                 <span>Hue</span>
                 <span>{hsl[0]}°</span>
               </div>
-              <div className="relative h-4 flex items-center">
+              <div className="relative flex h-4 items-center">
                 <div
-                  className="absolute inset-y-1 inset-x-0 rounded-full"
+                  className="absolute inset-x-0 inset-y-1 rounded-full"
                   style={{
                     background:
                       "linear-gradient(to right,hsl(0,80%,55%),hsl(30,80%,55%),hsl(60,80%,55%),hsl(90,80%,55%),hsl(120,80%,55%),hsl(150,80%,55%),hsl(180,80%,55%),hsl(210,80%,55%),hsl(240,80%,55%),hsl(270,80%,55%),hsl(300,80%,55%),hsl(330,80%,55%),hsl(360,80%,55%))",
@@ -120,7 +124,7 @@ export default function GroupFormFields({
                   step={5}
                   value={hsl[0]}
                   onChange={(e) => updateHsl(+e.target.value, hsl[1], hsl[2])}
-                  className="relative w-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-black/10 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border [&::-moz-range-thumb]:border-black/10 [&::-moz-range-thumb]:shadow"
+                  className="relative w-full cursor-pointer appearance-none bg-transparent [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border [&::-moz-range-thumb]:border-black/10 [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:shadow [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-black/10 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow"
                 />
               </div>
             </div>
@@ -130,9 +134,9 @@ export default function GroupFormFields({
                 <span>Saturation</span>
                 <span>{hsl[1]}%</span>
               </div>
-              <div className="relative h-4 flex items-center">
+              <div className="relative flex h-4 items-center">
                 <div
-                  className="absolute inset-y-1 inset-x-0 rounded-full"
+                  className="absolute inset-x-0 inset-y-1 rounded-full"
                   style={{
                     background: `linear-gradient(to right, hsl(${hsl[0]},0%,${hsl[2]}%), hsl(${hsl[0]},100%,${hsl[2]}%))`,
                   }}
@@ -144,7 +148,7 @@ export default function GroupFormFields({
                   step={5}
                   value={hsl[1]}
                   onChange={(e) => updateHsl(hsl[0], +e.target.value, hsl[2])}
-                  className="relative w-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-black/10 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border [&::-moz-range-thumb]:border-black/10 [&::-moz-range-thumb]:shadow"
+                  className="relative w-full cursor-pointer appearance-none bg-transparent [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border [&::-moz-range-thumb]:border-black/10 [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:shadow [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-black/10 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow"
                 />
               </div>
             </div>
@@ -154,9 +158,9 @@ export default function GroupFormFields({
                 <span>Lightness</span>
                 <span>{hsl[2]}%</span>
               </div>
-              <div className="relative h-4 flex items-center">
+              <div className="relative flex h-4 items-center">
                 <div
-                  className="absolute inset-y-1 inset-x-0 rounded-full"
+                  className="absolute inset-x-0 inset-y-1 rounded-full"
                   style={{
                     background: `linear-gradient(to right, hsl(${hsl[0]},${hsl[1]}%,0%), hsl(${hsl[0]},${hsl[1]}%,50%), hsl(${hsl[0]},${hsl[1]}%,100%))`,
                   }}
@@ -168,7 +172,7 @@ export default function GroupFormFields({
                   step={5}
                   value={hsl[2]}
                   onChange={(e) => updateHsl(hsl[0], hsl[1], +e.target.value)}
-                  className="relative w-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-black/10 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border [&::-moz-range-thumb]:border-black/10 [&::-moz-range-thumb]:shadow"
+                  className="relative w-full cursor-pointer appearance-none bg-transparent [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border [&::-moz-range-thumb]:border-black/10 [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:shadow [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-black/10 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow"
                 />
               </div>
             </div>
@@ -181,7 +185,7 @@ export default function GroupFormFields({
       {/* Fixed bottom — home button left, submit pill center */}
       <FloatingBackButton onClick={() => navigate(backPath)} title="Back" />
 
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+      <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
         <button
           type="submit"
           form="group-form"

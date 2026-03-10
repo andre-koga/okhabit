@@ -54,7 +54,7 @@ export default function DailyTasksList({
       />
 
       {oneTimeTasks.length > 0 && (
-        <div className="space-y-2 mb-4">
+        <div className="mb-4 space-y-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Memos
           </p>
@@ -70,12 +70,12 @@ export default function DailyTasksList({
         </div>
       )}
 
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         For Today
       </p>
 
       {dailyActivities.length > 0 && (
-        <div className="flex items-center justify-between ml-1 mr-1.5 text-xs text-muted-foreground mb-2">
+        <div className="mb-2 ml-1 mr-1.5 flex items-center justify-between text-xs text-muted-foreground">
           <span>
             {completedCount} / {nonNeverCount} ({completionRate}%)
           </span>
@@ -83,14 +83,14 @@ export default function DailyTasksList({
         </div>
       )}
 
-      <div className="space-y-2 flex-1">
+      <div className="flex-1 space-y-2">
         {loading && (
-          <p className="text-sm text-muted-foreground text-center py-4">
+          <p className="py-4 text-center text-sm text-muted-foreground">
             Loading...
           </p>
         )}
         {!loading && dailyActivities.length === 0 && (
-          <p className="text-sm text-muted-foreground text-center py-4">
+          <p className="py-4 text-center text-sm text-muted-foreground">
             No daily activities yet. Create some activities to track!
           </p>
         )}
@@ -114,7 +114,7 @@ export default function DailyTasksList({
 
       {(currentActivityId || timelineSessions.length > 0) && (
         <div className="mt-6 space-y-2">
-          <div className="flex items-center justify-between ml-1 mr-1.5">
+          <div className="ml-1 mr-1.5 flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Timeline
             </p>
@@ -122,11 +122,11 @@ export default function DailyTasksList({
               {formatTimerDisplay(
                 timelineSessions.reduce(
                   (total, session) => total + session.intervalMs,
-                  0,
+                  0
                 ) +
                   (currentActivityId
                     ? calculateActivityTime(currentActivityId)
-                    : 0),
+                    : 0)
               )}
             </span>
           </div>

@@ -96,14 +96,14 @@ export function useSessionDetails() {
         entry,
       });
       setGroupActivities(
-        activities.filter((item) => !isHiddenGroupDefaultActivity(item)),
+        activities.filter((item) => !isHiddenGroupDefaultActivity(item))
       );
       setSelectedActivityId(
         activity &&
           !activity.deleted_at &&
           !isHiddenGroupDefaultActivity(activity)
           ? activity.id
-          : NONE_ACTIVITY_VALUE,
+          : NONE_ACTIVITY_VALUE
       );
       setSelectedDate(initialDate);
       setStartTime(formatTimeInput(period.start_time));

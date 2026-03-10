@@ -42,10 +42,10 @@ export default function AddTaskModal({
           onClick={() => setShowModal(false)}
         >
           <div
-            className="bg-background border rounded-xl shadow-2xl shadow-black p-4 mx-4 w-full max-w-md"
+            className="mx-4 w-full max-w-md rounded-xl border bg-background p-4 shadow-2xl shadow-black"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="text-sm font-semibold mb-3">New one-time task</p>
+            <p className="mb-3 text-sm font-semibold">New one-time task</p>
             <div className="flex gap-2">
               <input
                 autoFocus
@@ -57,7 +57,7 @@ export default function AddTaskModal({
                   if (e.key === "Escape") setShowModal(false);
                 }}
                 placeholder="Task title…"
-                className="flex-1 px-3 py-2 text-sm border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                className="flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
               <Button
                 size="sm"
@@ -77,7 +77,7 @@ export default function AddTaskModal({
         title={triggerTitle}
         className={
           triggerClassName ||
-          "fixed bottom-6 right-6 z-50 h-10 w-10 rounded-full bg-primary text-primary-foreground shadow-md flex items-center justify-center hover:bg-primary/90 transition-colors"
+          "fixed bottom-6 right-6 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
         }
       >
         {showModal ? <X className="h-4 w-4" /> : <Icon className="h-4 w-4" />}

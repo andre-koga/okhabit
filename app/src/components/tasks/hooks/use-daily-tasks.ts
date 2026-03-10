@@ -54,7 +54,7 @@ export function useDailyTasks({
     dateString,
     currentActivityId,
     setCurrentActivityId,
-    getOrCreateDailyEntry,
+    getOrCreateDailyEntry
   );
 
   useEffect(() => {
@@ -67,7 +67,7 @@ export function useDailyTasks({
     let cancelled = false;
 
     const visibleActivities = activities.filter((activity) =>
-      shouldShowActivity(activity, currentDate),
+      shouldShowActivity(activity, currentDate)
     );
 
     void getOrComputeActivityStreaksForDate(visibleActivities, currentDate, {
@@ -85,23 +85,23 @@ export function useDailyTasks({
 
   const dailyActivities = useMemo(
     () => activities.filter((a) => shouldShowActivity(a, currentDate)),
-    [activities, currentDate],
+    [activities, currentDate]
   );
 
   const getGroup = useCallback(
     (activity: Activity): ActivityGroup | undefined =>
       groups.find((g) => g.id === activity.group_id),
-    [groups],
+    [groups]
   );
 
   const { nonNeverCount, completedCount, completionRate } = useMemo(() => {
     const nonNever = dailyActivities.filter(
-      (a) => a.routine !== "never",
+      (a) => a.routine !== "never"
     ).length;
     const completed = dailyActivities.filter(
       (a) =>
         a.routine !== "never" &&
-        (taskCounts[a.id] || 0) >= (a.completion_target ?? 1),
+        (taskCounts[a.id] || 0) >= (a.completion_target ?? 1)
     ).length;
     const rate = nonNever === 0 ? 0 : Math.round((completed / nonNever) * 100);
     return {
@@ -115,9 +115,9 @@ export function useDailyTasks({
     () =>
       dailyActivities.reduce(
         (total, activity) => total + calculateActivityTime(activity.id),
-        0,
+        0
       ),
-    [dailyActivities, calculateActivityTime],
+    [dailyActivities, calculateActivityTime]
   );
 
   const timelineSessions = useMemo(
@@ -128,7 +128,7 @@ export function useDailyTasks({
         .sort(
           (left, right) =>
             new Date(right.start_time).getTime() -
-            new Date(left.start_time).getTime(),
+            new Date(left.start_time).getTime()
         )
         .map((period) => {
           const activity = activities.find((a) => a.id === period.activity_id);
@@ -148,7 +148,7 @@ export function useDailyTasks({
             intervalMs: Math.max(0, endTime - startTime),
           };
         }),
-    [activityPeriods, activities, groups],
+    [activityPeriods, activities, groups]
   );
 
   const handleTimelineClick = useCallback(
@@ -157,7 +157,7 @@ export function useDailyTasks({
         navigate(`/activities/${groupId}/sessions/${sessionId}`);
       }
     },
-    [navigate],
+    [navigate]
   );
 
   return {

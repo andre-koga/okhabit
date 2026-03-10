@@ -33,6 +33,6 @@ export async function closeOpenPeriods(entryId: string): Promise<void> {
         end_time: n,
         updated_at: n,
       });
-    }),
+    })
   );
 }

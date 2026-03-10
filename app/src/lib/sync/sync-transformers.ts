@@ -26,7 +26,7 @@ export function isValidUuid(value: unknown): value is string {
 
 export function sanitizeUuidReferences(
   table: SyncTable,
-  row: Record<string, unknown>,
+  row: Record<string, unknown>
 ): Record<string, unknown> {
   const sanitized = { ...row };
 
@@ -50,10 +50,7 @@ export function sanitizeUuidReferences(
     }
   }
 
-  if (
-    table === "activity_streaks" &&
-    !isValidUuid(sanitized.activity_id)
-  ) {
+  if (table === "activity_streaks" && !isValidUuid(sanitized.activity_id)) {
     sanitized.activity_id = null;
   }
 
@@ -63,7 +60,7 @@ export function sanitizeUuidReferences(
 export function toRemoteRow<T extends Record<string, unknown>>(
   table: SyncTable,
   record: T,
-  userId: string,
+  userId: string
 ): (Omit<T, "synced_at"> & { user_id: string }) | null {
   const remoteRecord = {
     ...(record as T & { synced_at?: unknown }),
@@ -88,7 +85,7 @@ export function parseTimestamp(value: unknown): number {
 
 export function dedupeRowsForUpsert<T extends Record<string, unknown>>(
   table: SyncTable,
-  rows: T[],
+  rows: T[]
 ): T[] {
   const conflictCols = UPSERT_CONFLICT_TARGET[table]
     .split(",")

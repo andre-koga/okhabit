@@ -7,20 +7,17 @@ export function ArchiveCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-sm font-medium">
           <Archive className="h-4 w-4" />
           Archive
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground mb-4">
+        <p className="mb-4 text-sm text-muted-foreground">
           View and manage your archived activity groups and activities.
         </p>
         <Link to="/settings/archived">
-          <Button
-            variant="outline"
-            className="w-full flex items-center gap-2"
-          >
+          <Button variant="outline" className="flex w-full items-center gap-2">
             <Archive className="h-4 w-4" />
             View Archived Items
           </Button>
@@ -34,20 +31,17 @@ export function TaskOrderCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-sm font-medium">
           <ArrowUpDown className="h-4 w-4" />
           Task Order
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground mb-4">
+        <p className="mb-4 text-sm text-muted-foreground">
           Choose the display order for scheduled tasks shown on the home page.
         </p>
         <Link to="/settings/task-order">
-          <Button
-            variant="outline"
-            className="w-full flex items-center gap-2"
-          >
+          <Button variant="outline" className="flex w-full items-center gap-2">
             <ArrowUpDown className="h-4 w-4" />
             Reorder Daily Tasks
           </Button>

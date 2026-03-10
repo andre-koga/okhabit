@@ -6,7 +6,7 @@ import type { DailyEntry } from "@/lib/db/types";
  * Returns the existing entry if found, otherwise creates a new one.
  */
 export async function getOrCreateDailyEntry(
-  dateString: string,
+  dateString: string
 ): Promise<DailyEntry> {
   const existing = await db.dailyEntries
     .where("date")

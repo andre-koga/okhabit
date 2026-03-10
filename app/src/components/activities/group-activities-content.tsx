@@ -51,7 +51,7 @@ export default function GroupActivitiesContent({
             a.group_id === group.id &&
             !a.is_archived &&
             !a.deleted_at &&
-            !isHiddenGroupDefaultActivity(a),
+            !isHiddenGroupDefaultActivity(a)
         )
         .sortBy("created_at");
       setActivities(data);
@@ -111,7 +111,7 @@ export default function GroupActivitiesContent({
   }
 
   return (
-    <div className="pb-20 overflow-y-scroll">
+    <div className="overflow-y-scroll pb-20">
       <GroupActivitiesHeader
         group={group}
         isArchived={isArchived}
@@ -123,10 +123,10 @@ export default function GroupActivitiesContent({
       <div className="mb-6" />
 
       <div className="px-4">
-        <div className="flex justify-center mb-6">
+        <div className="mb-6 flex justify-center">
           <button
             onClick={() => navigate(`/activities/${group.id}/new`)}
-            className="flex items-center gap-2 px-4 py-2 rounded-full border border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors text-sm"
+            className="flex items-center gap-2 rounded-full border border-dashed border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <Plus className="h-4 w-4" />
             New Activity

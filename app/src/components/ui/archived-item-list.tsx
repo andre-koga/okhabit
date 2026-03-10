@@ -24,7 +24,7 @@ export function ArchivedItemList<T>({
 }: ArchivedItemListProps<T>) {
   if (items.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground text-center py-4">
+      <p className="py-4 text-center text-sm text-muted-foreground">
         {emptyMessage}
       </p>
     );
@@ -37,7 +37,7 @@ export function ArchivedItemList<T>({
         return (
           <div
             key={id}
-            className="flex items-center justify-between p-3 border rounded-md"
+            className="flex items-center justify-between rounded-md border p-3"
           >
             <div className="flex-1">{renderItemContent(item)}</div>
             <div className="flex gap-2">

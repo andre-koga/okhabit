@@ -41,22 +41,22 @@ function Pill({
     <>
       <span
         className={
-          "flex-1 text-left font-medium truncate px-4 text-sm " + nameClassName
+          "flex-1 truncate px-4 text-left text-sm font-medium " + nameClassName
         }
       >
         {name || (
-          <span className="text-muted-foreground/50 font-normal">Name…</span>
+          <span className="font-normal text-muted-foreground/50">Name…</span>
         )}
       </span>
       {/* Gradient fade from button colour to transparent */}
       <div
-        className="absolute inset-y-0 right-0.5 w-full my-0.5 pointer-events-none rounded-r-full"
+        className="pointer-events-none absolute inset-y-0 right-0.5 my-0.5 w-full rounded-r-full"
         style={{
           background: `linear-gradient(to left, ${color}, transparent 35%)`,
         }}
       />
       <div
-        className="h-9 flex items-center justify-center flex-shrink-0 mr-0.5 relative rounded-full px-3 gap-2"
+        className="relative mr-0.5 flex h-9 flex-shrink-0 items-center justify-center gap-2 rounded-full px-3"
         style={{ backgroundColor: color }}
       >
         {isRunning ? (
@@ -66,12 +66,12 @@ function Pill({
           />
         ) : (
           <Play
-            className="h-3 w-3 translate-x-px flex-shrink-0"
+            className="h-3 w-3 flex-shrink-0 translate-x-px"
             style={{ color: textColor, fill: textColor }}
           />
         )}
         <span
-          className="text-xs flex-shrink-0"
+          className="flex-shrink-0 text-xs"
           style={{ color: textColor, fontFamily: "JetBrains Mono, monospace" }}
         >
           {formatTimerDisplay(elapsedMs)}

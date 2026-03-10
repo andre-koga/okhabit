@@ -65,8 +65,8 @@ export default function ArchivedItems() {
         .toArray();
       await Promise.all(
         activities.map((a) =>
-          db.activities.update(a.id, { is_archived: false, updated_at: n }),
-        ),
+          db.activities.update(a.id, { is_archived: false, updated_at: n })
+        )
       );
       loadArchivedItems();
     } catch (error) {
@@ -156,7 +156,10 @@ export default function ArchivedItems() {
       </Card>
 
       {/* Fixed floating back button */}
-      <FloatingBackButton onClick={() => navigate("/settings")} title="Back to settings" />
+      <FloatingBackButton
+        onClick={() => navigate("/settings")}
+        title="Back to settings"
+      />
 
       <AlertDialog
         open={deleteDialog.open}

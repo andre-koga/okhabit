@@ -47,7 +47,7 @@ export default function ArchivedActivitiesList({
               {getGroupName(allGroups, activity.group_id)}
             </Badge>
           </div>
-          <div className="text-xs text-muted-foreground mt-1">
+          <div className="mt-1 text-xs text-muted-foreground">
             Routine: {formatRoutineDisplay(activity.routine)}
           </div>
         </>

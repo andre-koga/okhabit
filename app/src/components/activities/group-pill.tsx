@@ -40,13 +40,13 @@ export default function GroupPill({
   if (readOnly) {
     return (
       <div className={base}>
-        <span className="flex-1 text-left font-medium truncate px-4 text-sm">
+        <span className="flex-1 truncate px-4 text-left text-sm font-medium">
           {name || (
-            <span className="text-muted-foreground/50 font-normal">Name…</span>
+            <span className="font-normal text-muted-foreground/50">Name…</span>
           )}
         </span>
         <div
-          className="h-9 flex items-center justify-center flex-shrink-0 mr-0.5 relative rounded-full px-4 text-xs font-semibold"
+          className="relative mr-0.5 flex h-9 flex-shrink-0 items-center justify-center rounded-full px-4 text-xs font-semibold"
           style={{ backgroundColor: color, color: textColor }}
         >
           Start
@@ -60,22 +60,22 @@ export default function GroupPill({
       <button
         type="button"
         onClick={onNameClick}
-        className="flex-1 text-left font-medium truncate px-4 text-sm"
+        className="flex-1 truncate px-4 text-left text-sm font-medium"
       >
         {name || (
-          <span className="text-muted-foreground/50 font-normal">Name…</span>
+          <span className="font-normal text-muted-foreground/50">Name…</span>
         )}
       </button>
       <button
         type="button"
         onClick={onActionClick}
-        className="h-9 flex items-center justify-center flex-shrink-0 mr-0.5 relative rounded-full px-4 text-xs font-semibold gap-1.5"
+        className="relative mr-0.5 flex h-9 flex-shrink-0 items-center justify-center gap-1.5 rounded-full px-4 text-xs font-semibold"
         style={{ backgroundColor: color, color: textColor }}
       >
         {isRunning ? (
           <Square className="h-3 w-3 flex-shrink-0" />
         ) : (
-          <Play className="h-3 w-3 translate-x-px flex-shrink-0" />
+          <Play className="h-3 w-3 flex-shrink-0 translate-x-px" />
         )}
         {actionLabel}
       </button>

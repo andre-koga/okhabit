@@ -7,9 +7,7 @@ import {
 import { syncEngine } from "@/lib/sync";
 
 export function useAuth() {
-  const [isAuthed, setIsAuthed] = useState(
-    () => Boolean(getCachedSession()),
-  );
+  const [isAuthed, setIsAuthed] = useState(() => Boolean(getCachedSession()));
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -45,9 +43,7 @@ export function useAuth() {
       });
       if (error) throw error;
     } catch (error) {
-      setAuthError(
-        error instanceof Error ? error.message : "Sign in failed",
-      );
+      setAuthError(error instanceof Error ? error.message : "Sign in failed");
       throw error;
     } finally {
       setAuthLoading(false);
@@ -63,9 +59,7 @@ export function useAuth() {
       if (error) throw error;
       setAuthError("Check your email to confirm your account!");
     } catch (error) {
-      setAuthError(
-        error instanceof Error ? error.message : "Sign up failed",
-      );
+      setAuthError(error instanceof Error ? error.message : "Sign up failed");
       throw error;
     } finally {
       setAuthLoading(false);

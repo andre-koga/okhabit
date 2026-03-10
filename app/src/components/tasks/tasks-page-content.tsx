@@ -1,14 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Link } from "react-router-dom";
-import {
-  Settings,
-  Heart,
-  MapPin,
-  MapPinOff,
-  Flame,
-  Hash,
-  RotateCw,
-} from "lucide-react";
+import { Heart, MapPin, MapPinOff, Flame, Hash, RotateCw } from "lucide-react";
 import { db, toDateStr } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
@@ -26,7 +17,7 @@ export default function TasksPageContent() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [entryDates, setEntryDates] = useState<Set<string>>(new Set());
   const [bookmarkedDates, setBookmarkedDates] = useState<Set<string>>(
-    new Set(),
+    new Set()
   );
   const [showLocationInput, setShowLocationInput] = useState(false);
   const [locationInputVal, setLocationInputVal] = useState("");
@@ -85,9 +76,7 @@ export default function TasksPageContent() {
         .toArray();
       setEntryDates(new Set(entries.map((e) => e.entry_date)));
       setBookmarkedDates(
-        new Set(
-          entries.filter((e) => e.is_bookmarked).map((e) => e.entry_date),
-        ),
+        new Set(entries.filter((e) => e.is_bookmarked).map((e) => e.entry_date))
       );
     } catch (err) {
       console.error("Error loading journal meta:", err);
@@ -135,7 +124,7 @@ export default function TasksPageContent() {
           try {
             const { latitude, longitude } = pos.coords;
             const res = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
             );
             const data = (await res.json()) as {
               address: {
@@ -177,10 +166,10 @@ export default function TasksPageContent() {
         () => {
           setIsDetectingLocation(false);
         },
-        { timeout: 10000, maximumAge: 5 * 60 * 1000 },
+        { timeout: 10000, maximumAge: 5 * 60 * 1000 }
       );
     },
-    [isToday, isDetectingLocation, isJournalLoaded, journal],
+    [isToday, isDetectingLocation, isJournalLoaded, journal]
   );
 
   // Auto-detect location for today if not already set
@@ -201,7 +190,7 @@ export default function TasksPageContent() {
     journal.draftEmoji.trim() &&
     journal.draftTitle.trim() &&
     journal.draftText.trim() &&
-    journal.draftYoutubeUrl.trim(),
+    journal.draftYoutubeUrl.trim()
   );
   const journalStreakColorClass =
     (journal.journalCompletionStreak ?? 0) === 0
@@ -226,8 +215,8 @@ export default function TasksPageContent() {
       />
 
       {/* Emoji — centered, overlaps the bottom of the video */}
-      <div className="flex justify-center -mt-10 relative z-10 pointer-events-none">
-        <div className="relative pointer-events-auto">
+      <div className="pointer-events-none relative z-10 -mt-10 flex justify-center">
+        <div className="pointer-events-auto relative">
           {journal.canEditJournal ? (
             journal.showEmojiInput ? (
               <input
@@ -250,12 +239,12 @@ export default function TasksPageContent() {
                     e.currentTarget.blur();
                 }}
                 placeholder=""
-                className="w-20 h-20 text-center text-5xl placeholder:text-xl placeholder:text-muted-foreground rounded-full bg-background shadow-md focus:outline-none focus:ring-2 focus:ring-primary"
+                className="h-20 w-20 rounded-full bg-background text-center text-5xl shadow-md placeholder:text-xl placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               />
             ) : (
               <button
                 onClick={() => journal.setShowEmojiInput(true)}
-                className="text-5xl w-20 h-20 flex items-center justify-center rounded-full bg-background shadow-md"
+                className="flex h-20 w-20 items-center justify-center rounded-full bg-background text-5xl shadow-md"
                 title="Set day emoji"
               >
                 {journal.draftEmoji || (
@@ -266,11 +255,11 @@ export default function TasksPageContent() {
               </button>
             )
           ) : journal.draftEmoji ? (
-            <span className="text-5xl w-20 h-20 flex items-center justify-center rounded-full bg-background shadow-md">
+            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-background text-5xl shadow-md">
               {journal.draftEmoji}
             </span>
           ) : (
-            <span className="w-20 h-20 flex items-center justify-center rounded-full bg-background shadow-md" />
+            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-background shadow-md" />
           )}
 
           {/* Bookmark badge — top-right of emoji */}
@@ -278,7 +267,7 @@ export default function TasksPageContent() {
       </div>
 
       <div className="px-4 pt-4">
-        <div className="max-w-2xl mx-auto space-y-3">
+        <div className="mx-auto max-w-2xl space-y-3">
           <JournalTextSection
             canEdit={journal.canEditJournal}
             title={journal.draftTitle}
@@ -303,7 +292,7 @@ export default function TasksPageContent() {
                   className={`inline-flex items-center ${journalStreakColorClass}`}
                 >
                   <Flame className="h-3.5 w-3.5" />
-                  <span className="font-medium pt-0.5">
+                  <span className="pt-0.5 font-medium">
                     {journal.journalCompletionStreak}
                   </span>
                 </span>
@@ -336,8 +325,8 @@ export default function TasksPageContent() {
                       onChange={(e) =>
                         setLocationInputVal(
                           e.target.value.replace(/\b\w/g, (c) =>
-                            c.toUpperCase(),
-                          ),
+                            c.toUpperCase()
+                          )
                         )
                       }
                       onBlur={() => {
@@ -363,24 +352,24 @@ export default function TasksPageContent() {
                           e.currentTarget.blur();
                       }}
                       placeholder="City, State"
-                      className="w-28 px-2 py-1 rounded-full bg-background border border-border text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                      className="w-28 rounded-full border border-border bg-background px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                     />
                   ) : (
-                    <div className="flex items-center bg-background rounded-full pr-1">
+                    <div className="flex items-center rounded-full bg-background pr-1">
                       <button
                         onClick={() => {
                           setLocationInputVal(
-                            journal.draftLocation?.displayName ?? "",
+                            journal.draftLocation?.displayName ?? ""
                           );
                           setShowLocationInput(true);
                         }}
-                        className="flex items-center gap-1 pl-3 py-1 rounded-full bg-background text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        className="flex items-center gap-1 rounded-full bg-background py-1 pl-3 text-xs text-muted-foreground transition-colors hover:text-foreground"
                         title="Set location"
                       >
                         {isDetectingLocation || journal.draftLocation ? (
                           <>
                             <MapPin className="h-3 w-3 shrink-0" />
-                            <span className="truncate max-w-[80px]">
+                            <span className="max-w-[80px] truncate">
                               {isDetectingLocation
                                 ? "Detecting"
                                 : journal.draftLocation?.displayName}
@@ -399,7 +388,7 @@ export default function TasksPageContent() {
                           type="button"
                           onClick={() => detectLocation(true)}
                           disabled={isDetectingLocation}
-                          className="h-6 w-6 mb-0.5 inline-flex items-center justify-center rounded-full bg-background text-muted-foreground hover:text-foreground transition-colors disabled:opacity-40"
+                          className="mb-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-background text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
                           title="Retry location detection"
                         >
                           <RotateCw
@@ -413,7 +402,7 @@ export default function TasksPageContent() {
 
                 {/* Date — center */}
                 <div className="flex justify-center">
-                  <span className="font-crimson text-xl uppercase tracking-widest text-muted-foreground/70 bg-background px-2">
+                  <span className="bg-background px-2 font-crimson text-xl uppercase tracking-widest text-muted-foreground/70">
                     {currentDate.toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
@@ -430,7 +419,7 @@ export default function TasksPageContent() {
                       journal.draftRef.current.bookmarked = next;
                       journal.saveBookmark(next);
                     }}
-                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full bg-background text-xs text-muted-foreground transition-colors ${
+                    className={`flex items-center gap-1.5 rounded-full bg-background px-3 py-1 text-xs text-muted-foreground transition-colors ${
                       journal.draftBookmarked ? "" : "hover:text-foreground"
                     }`}
                     title={
@@ -466,7 +455,7 @@ export default function TasksPageContent() {
       <FloatingBackButton to="/settings" title="Settings" icon="settings" />
 
       {/* Date pill — centered */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+      <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
         <DateNavigator
           currentDate={currentDate}
           onDateChange={setCurrentDate}

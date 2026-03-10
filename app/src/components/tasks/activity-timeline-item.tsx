@@ -36,14 +36,14 @@ function ActivityTimelineItem({
             }
           : undefined
       }
-      className={`flex items-center justify-between gap-3 px-1.5 py-1.5 ${onClick ? "cursor-pointer rounded-md hover:bg-accent/50 transition-colors" : ""} ${className}`}
+      className={`flex items-center justify-between gap-3 px-1.5 py-1.5 ${onClick ? "cursor-pointer rounded-md transition-colors hover:bg-accent/50" : ""} ${className}`}
     >
-      <div className="flex items-center gap-2 min-w-0">
+      <div className="flex min-w-0 items-center gap-2">
         <div
-          className="w-2 h-2 rounded-full shrink-0"
+          className="h-2 w-2 shrink-0 rounded-full"
           style={{ backgroundColor: groupColor }}
         />
-        <span className="text-sm truncate">{activityName}</span>
+        <span className="truncate text-sm">{activityName}</span>
       </div>
       {onStartActivity ? (
         <button
@@ -51,7 +51,7 @@ function ActivityTimelineItem({
             event.stopPropagation();
             onStartActivity(activityId);
           }}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0 border border-border rounded-full px-2 py-0.5 transition-colors"
+          className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors"
           style={{ fontFamily: "JetBrains Mono, monospace" }}
           title="Start this activity"
         >
@@ -60,7 +60,7 @@ function ActivityTimelineItem({
         </button>
       ) : (
         <span
-          className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0 border border-border rounded-full px-2 py-0.5"
+          className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground"
           style={{ fontFamily: "JetBrains Mono, monospace" }}
         >
           <Play className="h-2.5 w-2.5" />

@@ -4,7 +4,11 @@ import RoutineSelector from "@/components/activities/routine-selector";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import ActivityPill from "@/components/activities/activity-pill";
 import { parseRoutine } from "@/lib/activity-utils";
-import { formSectionLabel, formInput, formSubmitButton } from "@/lib/form-styles";
+import {
+  formSectionLabel,
+  formInput,
+  formSubmitButton,
+} from "@/lib/form-styles";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 
 interface ActivityFormFieldsProps {
@@ -114,20 +118,20 @@ export default function ActivityFormFields({
       routine: routineConfig,
       completion_target: Math.max(
         1,
-        parseInt(String(formData.completion_target)) || 1,
+        parseInt(String(formData.completion_target)) || 1
       ),
     });
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="flex min-h-screen flex-col">
       <form
         id="activity-form"
         onSubmit={handleSubmit}
-        className="flex flex-col flex-1 px-4 pt-0 pb-28 gap-8"
+        className="flex flex-1 flex-col gap-8 px-4 pb-28 pt-0"
       >
         {/* Preview — centered in available top space */}
-        <div className="flex-1 flex flex-col justify-center gap-3">
+        <div className="flex flex-1 flex-col justify-center gap-3">
           <p className={formSectionLabel}>Preview</p>
           <ActivityPill
             name={formData.name}
@@ -136,11 +140,11 @@ export default function ActivityFormFields({
           />
         </div>
 
-        <hr className="border-border -mx-4 -mb-2" />
+        <hr className="-mx-4 -mb-2 border-border" />
 
         {/* Activity name */}
         <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
+          <p className="text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Activity Name
           </p>
           <input
@@ -191,7 +195,7 @@ export default function ActivityFormFields({
         {formData.routine !== "anytime" && formData.routine !== "never" && (
           <div className="space-y-3">
             <p className={formSectionLabel}>Completion Target</p>
-            <p className="text-xs text-muted-foreground text-center">
+            <p className="text-center text-xs text-muted-foreground">
               How many times you need to do this per day. 1 = simple checkbox.
             </p>
             <input
@@ -207,7 +211,7 @@ export default function ActivityFormFields({
                     e.target.value === "" ? "" : parseInt(e.target.value),
                 })
               }
-              className="mx-auto block h-10 bg-muted/40 border border-border rounded-full px-4 text-base focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors placeholder:text-muted-foreground/50 w-24"
+              className="mx-auto block h-10 w-24 rounded-full border border-border bg-muted/40 px-4 text-base transition-colors placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
           </div>
         )}
@@ -216,9 +220,12 @@ export default function ActivityFormFields({
       </form>
 
       {/* Fixed bottom — back button left, submit pill center */}
-      <FloatingBackButton onClick={() => navigate(backPath || "/")} title="Back" />
+      <FloatingBackButton
+        onClick={() => navigate(backPath || "/")}
+        title="Back"
+      />
 
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+      <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
         <button
           type="submit"
           form="activity-form"

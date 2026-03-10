@@ -54,7 +54,10 @@ export default function SyncStatus() {
   }, []);
 
   useEffect(() => {
-    if (isAuthed) setShowAuth(false);
+    if (isAuthed) {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect -- syncing with auth state */
+      setShowAuth(false);
+    }
   }, [isAuthed]);
 
   useEffect(() => {
@@ -62,6 +65,7 @@ export default function SyncStatus() {
 
     if (syncState.isSyncing) {
       clearHideTimer();
+      /* eslint-disable-next-line react-hooks/set-state-in-effect -- syncing with external sync engine */
       setIsVisible(true);
       prevIsSyncingRef.current = true;
       return;
@@ -123,19 +127,19 @@ export default function SyncStatus() {
 
   return (
     <div
-      className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 transition-opacity duration-500 ${
+      className={`fixed left-1/2 top-4 z-50 -translate-x-1/2 transition-opacity duration-500 ${
         isVisible
-          ? "opacity-100 pointer-events-auto"
-          : "opacity-0 pointer-events-none"
+          ? "pointer-events-auto opacity-100"
+          : "pointer-events-none opacity-0"
       }`}
     >
       {/* Sync status pill */}
-      <div className="bg-background border border-border rounded-full shadow-lg">
+      <div className="rounded-full border border-border bg-background shadow-lg">
         <div className="flex items-center gap-2 px-4 py-2">
           <button
             onClick={handleManualSync}
             disabled={syncState.isSyncing || !canSync}
-            className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
             title={
               !isOnline
                 ? "Offline"
@@ -175,7 +179,7 @@ export default function SyncStatus() {
           {isAuthed ? (
             <button
               onClick={signOut}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
               title="Sign out"
             >
               <LogOut className="h-3 w-3" />
@@ -183,7 +187,7 @@ export default function SyncStatus() {
           ) : (
             <button
               onClick={() => setShowAuth(!showAuth)}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
               title="Sign in to sync"
             >
               <LogIn className="h-3 w-3" />
@@ -194,15 +198,15 @@ export default function SyncStatus() {
 
       {/* Auth form popup */}
       {showAuth && !isAuthed && (
-        <div className="absolute top-14 left-1/2 -translate-x-1/2 bg-background border border-border rounded-lg shadow-xl p-4 w-72">
-          <h3 className="text-sm font-semibold mb-3">Sign In to Sync</h3>
+        <div className="absolute left-1/2 top-14 w-72 -translate-x-1/2 rounded-lg border border-border bg-background p-4 shadow-xl">
+          <h3 className="mb-3 text-sm font-semibold">Sign In to Sync</h3>
           <form onSubmit={handleSignIn} className="space-y-3">
             <input
               type="email"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
               required
             />
             <input
@@ -210,7 +214,7 @@ export default function SyncStatus() {
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
               required
             />
             {authError && (
@@ -224,7 +228,7 @@ export default function SyncStatus() {
               <button
                 type="submit"
                 disabled={authLoading}
-                className="flex-1 px-3 py-2 text-xs font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50"
+                className="flex-1 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
               >
                 {authLoading ? "..." : "Sign In"}
               </button>
@@ -232,7 +236,7 @@ export default function SyncStatus() {
                 type="button"
                 onClick={handleSignUp}
                 disabled={authLoading}
-                className="flex-1 px-3 py-2 text-xs font-medium border border-border rounded-md hover:bg-accent transition-colors disabled:opacity-50"
+                className="flex-1 rounded-md border border-border px-3 py-2 text-xs font-medium transition-colors hover:bg-accent disabled:opacity-50"
               >
                 {authLoading ? "..." : "Sign Up"}
               </button>
@@ -243,11 +247,11 @@ export default function SyncStatus() {
 
       {/* Error details */}
       {syncState.lastError && (
-        <div className="absolute top-14 left-1/2 -translate-x-1/2 bg-background border border-red-500/50 rounded-lg shadow-xl p-3 w-72">
+        <div className="absolute left-1/2 top-14 w-72 -translate-x-1/2 rounded-lg border border-red-500/50 bg-background p-3 shadow-xl">
           <div className="flex items-start gap-2">
-            <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
             <div className="flex-1">
-              <p className="text-xs font-semibold text-red-500 mb-1">
+              <p className="mb-1 text-xs font-semibold text-red-500">
                 Sync Error
               </p>
               <p className="text-xs text-muted-foreground">

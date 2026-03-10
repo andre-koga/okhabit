@@ -94,26 +94,26 @@ export default function SessionDetailsPage() {
   if (!details) return null;
 
   return (
-    <div className="px-4 pt-8 pb-24">
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+    <div className="px-4 pb-24 pt-8">
+      <div className="mx-auto max-w-2xl">
+        <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Session Details</h1>
           <button
             onClick={handleDelete}
-            className="h-8 px-2 gap-1 flex items-center justify-center rounded-full bg-background border hover:bg-destructive/20 border-destructive hover:text-destructive-foreground transition-colors"
+            className="flex h-8 items-center justify-center gap-1 rounded-full border border-destructive bg-background px-2 transition-colors hover:bg-destructive/20 hover:text-destructive-foreground"
             title="Delete session"
           >
             <Trash2 className="h-3.5 w-3.5" />
-            <span className="text-xs pt-0.5">Delete</span>
+            <span className="pt-0.5 text-xs">Delete</span>
           </button>
         </div>
 
-        <div className="rounded-2xl border border-border bg-background overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div className="overflow-hidden rounded-2xl border border-border bg-background">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <span className="text-sm text-muted-foreground">Group</span>
             <span className="text-sm font-medium">{details.group.name}</span>
           </div>
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <span className="text-sm text-muted-foreground">Activity</span>
             <Select
               value={selectedActivityId}
@@ -132,7 +132,7 @@ export default function SessionDetailsPage() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <span className="text-sm text-muted-foreground">Date</span>
             <div className="flex items-center gap-1">
               <Button
@@ -148,11 +148,11 @@ export default function SessionDetailsPage() {
               </Button>
               <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                 <PopoverTrigger asChild>
-                  <button className="px-2 py-1 w-36 rounded-md hover:bg-accent transition-colors">
+                  <button className="w-36 rounded-md px-2 py-1 transition-colors hover:bg-accent">
                     {formatDate(selectedDate)}
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 p-2 rounded-2xl overflow-hidden data-[side=bottom]:translate-y-0 data-[side=top]:translate-y-0 data-[side=left]:translate-x-0 data-[side=right]:translate-x-0">
+                <PopoverContent className="fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl p-2 data-[side=bottom]:translate-y-0 data-[side=left]:translate-x-0 data-[side=right]:translate-x-0 data-[side=top]:translate-y-0">
                   <Calendar
                     mode="single"
                     selected={selectedDate}
@@ -182,7 +182,7 @@ export default function SessionDetailsPage() {
               </Button>
             </div>
           </div>
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <span className="text-sm text-muted-foreground">Start Time</span>
             <div className="flex items-center gap-1">
               <Button
@@ -199,7 +199,7 @@ export default function SessionDetailsPage() {
                 step={1}
                 value={startTime}
                 onChange={(e) => handleStartTimeChange(e.target.value)}
-                className="h-9 border-0 shadow-none w-36 bg-transparent mx-0 px-0 focus-visible:ring-0 focus-visible:outline-none"
+                className="mx-0 h-9 w-36 border-0 bg-transparent px-0 shadow-none focus-visible:outline-none focus-visible:ring-0"
               />
               <Button
                 type="button"
@@ -229,7 +229,7 @@ export default function SessionDetailsPage() {
                 step={1}
                 value={endTime}
                 onChange={(e) => handleEndTimeChange(e.target.value)}
-                className="h-9 border-0 mx-0 px-0 w-36 shadow-none bg-transparent focus-visible:ring-0 focus-visible:outline-none"
+                className="mx-0 h-9 w-36 border-0 bg-transparent px-0 shadow-none focus-visible:outline-none focus-visible:ring-0"
               />
               <Button
                 type="button"
@@ -243,17 +243,17 @@ export default function SessionDetailsPage() {
             </div>
           </div>
         </div>
-        {error && <p className="text-sm text-destructive mt-3">{error}</p>}
+        {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
       </div>
 
       <FloatingBackButton onClick={() => navigate(backPath)} title="Back" />
 
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+      <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
         <button
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-1.5 bg-primary text-primary-foreground rounded-full shadow-lg px-5 py-2.5 font-semibold text-sm hover:bg-primary/90 transition-colors"
+          className="flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
         >
           {saving ? "Saving…" : "Save"}
         </button>

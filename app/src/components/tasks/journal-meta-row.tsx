@@ -18,10 +18,10 @@ export default function JournalMetaRow({
       {/* Bookmark */}
       <button
         onClick={onBookmarkToggle}
-        className={`h-9 w-9 flex items-center justify-center rounded-md transition-colors ${
+        className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
           bookmarked
-            ? "text-primary bg-primary/10"
-            : "text-muted-foreground hover:text-foreground hover:bg-accent"
+            ? "bg-primary/10 text-primary"
+            : "text-muted-foreground hover:bg-accent hover:text-foreground"
         }`}
         title={bookmarked ? "Remove bookmark" : "Bookmark this day"}
       >

@@ -49,7 +49,7 @@ export default function JournalTextSection({
                 onBlur();
               }}
               placeholder="Give this day a title…"
-              className="w-full text-3xl font-bold text-center bg-transparent focus:outline-none placeholder:text-muted-foreground/50 font-crimson"
+              className="w-full bg-transparent text-center font-crimson text-3xl font-bold placeholder:text-muted-foreground/50 focus:outline-none"
             />
             {titleFocused && (
               <p className="absolute bottom-0 right-0 text-xs text-muted-foreground">
@@ -60,7 +60,7 @@ export default function JournalTextSection({
         ) : (
           <div className="pb-2">
             <p
-              className={`text-3xl font-bold text-center font-crimson ${
+              className={`text-center font-crimson text-3xl font-bold ${
                 title ? "" : "text-muted-foreground/30"
               }`}
             >
@@ -87,7 +87,7 @@ export default function JournalTextSection({
                 onBlur();
               }}
               placeholder="Write your thoughts for the day…"
-              className="w-full resize-none bg-transparent focus:outline-none text-base leading-relaxed text-muted-foreground placeholder:text-muted-foreground/50 text-center font-crimson"
+              className="w-full resize-none bg-transparent text-center font-crimson text-base leading-relaxed text-muted-foreground placeholder:text-muted-foreground/50 focus:outline-none"
             />
             {textFocused && (
               <p className="absolute bottom-0 right-0 text-xs text-muted-foreground">
@@ -104,7 +104,7 @@ export default function JournalTextSection({
               rows={1}
               readOnly
               placeholder="No reflection written."
-              className="w-full resize-none bg-transparent focus:outline-none text-base leading-relaxed text-muted-foreground text-center font-crimson placeholder:text-muted-foreground/30 placeholder:italic cursor-default"
+              className="w-full cursor-default resize-none bg-transparent text-center font-crimson text-base leading-relaxed text-muted-foreground placeholder:italic placeholder:text-muted-foreground/30 focus:outline-none"
             />
           </div>
         )}

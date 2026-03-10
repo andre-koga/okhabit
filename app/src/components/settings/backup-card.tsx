@@ -16,20 +16,19 @@ export function BackupCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-sm font-medium">
           <Download className="h-4 w-4" />
           Data Backup
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          Export all your data as a JSON file or restore from a previous
-          backup.
+          Export all your data as a JSON file or restore from a previous backup.
         </p>
 
         <Button
           variant="outline"
-          className="w-full flex items-center gap-2"
+          className="flex w-full items-center gap-2"
           onClick={handleExport}
         >
           {exportStatus === "success" ? (
@@ -57,7 +56,7 @@ export function BackupCard() {
           />
           <Button
             variant="outline"
-            className="w-full flex items-center gap-2"
+            className="flex w-full items-center gap-2"
             onClick={() => fileInputRef.current?.click()}
           >
             {importStatus === "success" ? (
@@ -75,10 +74,8 @@ export function BackupCard() {
           </Button>
           {importMessage && (
             <p
-              className={`text-xs mt-1 text-center ${
-                importStatus === "error"
-                  ? "text-destructive"
-                  : "text-green-600"
+              className={`mt-1 text-center text-xs ${
+                importStatus === "error" ? "text-destructive" : "text-green-600"
               }`}
             >
               {importMessage}

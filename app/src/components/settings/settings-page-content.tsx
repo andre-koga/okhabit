@@ -23,7 +23,7 @@ export default function SettingsPageContent() {
       <TaskOrderCard />
       <BackupCard />
 
-      <div className="text-center text-xs text-muted-foreground pt-4">
+      <div className="pt-4 text-center text-xs text-muted-foreground">
         <p>Upwards — local-first habit tracker</p>
       </div>
 

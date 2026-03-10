@@ -55,10 +55,10 @@ function ActiveActivityPill({
   const [tick, setTick] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [resolvedActivity, setResolvedActivity] = useState<Activity | null>(
-    null,
+    null
   );
   const [resolvedGroup, setResolvedGroup] = useState<ActivityGroup | null>(
-    null,
+    null
   );
 
   // Drive per-second re-renders
@@ -71,11 +71,13 @@ function ActiveActivityPill({
   // Recalculate elapsed time on every tick
   useEffect(() => {
     if (!currentActivityId) return;
+    /* eslint-disable-next-line react-hooks/set-state-in-effect -- syncing elapsed time with timer tick */
     setElapsedMs(calculateActivityTime(currentActivityId));
   }, [currentActivityId, calculateActivityTime, tick]);
 
   useEffect(() => {
     if (!currentActivityId) {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect -- clearing when activity stops */
       setResolvedActivity(null);
       setResolvedGroup(null);
       return;
@@ -125,7 +127,7 @@ function ActiveActivityPill({
   const boxShadow = useMemo(
     () =>
       `0 0 16px ${hexToRgba(color, 0.4)}, 0 0 34px ${hexToRgba(color, 0.28)}`,
-    [color],
+    [color]
   );
 
   if (!currentActivityId) {
@@ -148,16 +150,16 @@ function ActiveActivityPill({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           {group?.name && (
-            <p className="text-xs uppercase tracking-wide opacity-80 mb-0.5 truncate">
+            <p className="mb-0.5 truncate text-xs uppercase tracking-wide opacity-80">
               {group.name}
             </p>
           )}
-          <p className="text-lg font-semibold leading-tight truncate">
+          <p className="truncate text-lg font-semibold leading-tight">
             {activity.name}
           </p>
         </div>
         <span
-          className="text-sm shrink-0"
+          className="shrink-0 text-sm"
           style={{ fontFamily: "JetBrains Mono, monospace" }}
         >
           {formatTimerDisplay(elapsedMs)}

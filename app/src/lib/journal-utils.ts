@@ -45,9 +45,9 @@ function addDays(date: Date, days: number): Date {
 function hasRequiredJournalFields(fields: JournalFields): boolean {
   return Boolean(
     fields.day_emoji?.trim() &&
-      fields.title?.trim() &&
-      fields.text_content?.trim() &&
-      fields.youtube_url?.trim(),
+    fields.title?.trim() &&
+    fields.text_content?.trim() &&
+    fields.youtube_url?.trim()
   );
 }
 
@@ -58,7 +58,7 @@ export async function getCompletionMetadata(
   dateStr: string,
   fields: JournalFields,
   existing: JournalEntry | undefined,
-  timestamp: string,
+  timestamp: string
 ): Promise<JournalCompletionMetadata> {
   const existingIsComplete = !!existing?.is_journal_complete;
 
@@ -96,13 +96,13 @@ export async function getCompletionMetadata(
       (entry) =>
         !entry.deleted_at &&
         !!entry.is_journal_complete &&
-        typeof entry.journal_entry_number === "number",
+        typeof entry.journal_entry_number === "number"
     )
     .toArray();
 
   const maxEntryNumber = completedEntries.reduce(
     (max, entry) => Math.max(max, entry.journal_entry_number ?? 0),
-    0,
+    0
   );
 
   return {

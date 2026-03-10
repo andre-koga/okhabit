@@ -53,7 +53,7 @@ export default function ActivityFormPage({
                   !item.is_archived &&
                   !item.deleted_at &&
                   item.routine !== "anytime" &&
-                  item.routine !== "never",
+                  item.routine !== "never"
               )
               .toArray();
 
@@ -62,7 +62,7 @@ export default function ActivityFormPage({
                 typeof item.order_index === "number"
                   ? Math.max(max, item.order_index)
                   : max,
-              -1,
+              -1
             );
             nextOrderIndex = maxOrderIndex + 1;
           }
