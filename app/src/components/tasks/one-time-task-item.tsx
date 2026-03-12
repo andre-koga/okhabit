@@ -19,7 +19,7 @@ function OneTimeTaskItem({
   return (
     <div className="flex items-center gap-2">
       <TaskCheckbox
-        isComplete={task.is_completed}
+        isComplete={!!task.is_completed}
         isToday={isToday}
         onClick={() => onToggle(task)}
         size="sm"
