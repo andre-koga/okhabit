@@ -15,7 +15,7 @@ When creating a new Supabase migration:
 
 2. **Then create the migration** using that timestamp in the filename, or run:
    ```bash
-   supabase migration new <descriptive_name>
+   pnpm supabase migration new <descriptive_name>
    ```
 
-The migration filename format is `YYYYMMDDHHMMSS_<name>.sql`. Prefer `supabase migration new` when available; if creating the file manually, use the timestamp from step 1.
+The migration filename format is `YYYYMMDDHHMMSS_<name>.sql`. Prefer `pnpm supabase migration new` when available; if creating the file manually, use the timestamp from step 1.

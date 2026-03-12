@@ -1,0 +1,16 @@
+{
+  "name": "okhabit",
+  "private": true,
+  "scripts": {
+    "supabase": "supabase",
+    "supabase:start": "supabase start",
+    "supabase:stop": "supabase stop",
+    "supabase:reset": "supabase db reset",
+    "supabase:push": "supabase db push",
+    "supabase:pull": "supabase db pull",
+    "supabase:status": "supabase status"
+  },
+  "devDependencies": {
+    "supabase": "^2.9.0"
+  }
+}
