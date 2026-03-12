@@ -6,7 +6,8 @@ import Pill from "@/components/ui/pill";
 import { MemoEditDialog } from "@/components/tasks/memo-edit-dialog";
 import { formatDateShort, fromDateString } from "@/lib/date-utils";
 
-const MEMO_PILL_COLOR = "#6b7280";
+const MEMO_PILL_COLOR = "var(--memo-pill-color)";
+const MEMO_PILL_TEXT = "var(--memo-pill-text)";
 
 interface OneTimeTaskItemProps {
   task: OneTimeTask;
@@ -117,6 +118,7 @@ function OneTimeTaskItem({
                   : task.title
               }
               color={MEMO_PILL_COLOR}
+              textColor={MEMO_PILL_TEXT}
               elapsedMs={timeSpent}
               isRunning={isCurrentMemo}
               onPlayStop={

@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react";
+import { memo } from "react";
 import { Play, Square } from "lucide-react";
 import { formatTimerDisplay } from "@/lib/activity-utils";
 import { getContrastColor } from "@/lib/color-utils";
@@ -6,6 +6,7 @@ import { getContrastColor } from "@/lib/color-utils";
 export interface PillProps {
   name: string;
   color?: string;
+  textColor?: string;
   elapsedMs?: number;
   isRunning?: boolean;
   onPlayStop?: () => void;
@@ -21,6 +22,7 @@ export interface PillProps {
 function Pill({
   name,
   color = "#3b82f6",
+  textColor = "#ffffff",
   elapsedMs = 0,
   isRunning = false,
   onPlayStop,
@@ -30,7 +32,9 @@ function Pill({
   size = "default",
   className = "",
 }: PillProps) {
-  const textColor = useMemo(() => getContrastColor(color), [color]);
+  if (!textColor) {
+    textColor = getContrastColor(color);
+  }
   const isSm = size === "sm";
 
   const playTimerButton = (
