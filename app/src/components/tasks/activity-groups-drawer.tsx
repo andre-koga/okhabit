@@ -128,7 +128,7 @@ export default function ActivityGroupsDrawer({
       {/* FAB */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className="fixed bottom-6 right-6 z-[60] flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
+        className="fixed bottom-3 right-4 z-[60] flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
       >
         {open ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
       </button>

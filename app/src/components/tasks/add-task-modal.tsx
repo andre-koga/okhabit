@@ -77,10 +77,10 @@ export default function AddTaskModal({
         title={triggerTitle}
         className={
           triggerClassName ||
-          "fixed bottom-6 right-6 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
+          "fixed bottom-3 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
         }
       >
-        {open ? <X className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
+        {open ? <X className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
       </button>
     </>
   );

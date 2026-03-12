@@ -43,7 +43,7 @@ export default function FormPageLayout({
         title={backTitle}
       />
 
-      <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
+      <div className="fixed bottom-3 left-1/2 z-50 -translate-x-1/2">
         <button
           type="submit"
           form={formId}

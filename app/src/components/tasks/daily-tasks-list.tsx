@@ -67,7 +67,7 @@ export default function DailyTasksList({
         onAdd={createOneTimeTask}
         icon={CircleCheckBig}
         triggerTitle="Add quick task"
-        triggerClassName="fixed bottom-[4.5rem] right-6 z-[60] h-10 w-10 rounded-full bg-primary text-primary-foreground shadow-md flex items-center justify-center hover:bg-primary/90 transition-colors"
+        triggerClassName="fixed bottom-16 right-4 z-[60] h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-md flex items-center justify-center hover:bg-primary/90 transition-colors"
       />
 
       {oneTimeTasks.length > 0 && (

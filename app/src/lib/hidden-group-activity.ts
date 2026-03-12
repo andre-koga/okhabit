@@ -23,7 +23,7 @@ export async function getOrCreateHiddenGroupDefaultActivity(
         (activity.name === null ||
           activity.routine === LEGACY_GROUP_DEFAULT_ROUTINE ||
           (activity as { pattern?: string }).pattern ===
-          LEGACY_GROUP_DEFAULT_ROUTINE)
+            LEGACY_GROUP_DEFAULT_ROUTINE)
     )
     .first();
 

@@ -22,6 +22,17 @@ export default function DateNavigator({
 }: DateNavigatorProps) {
   const today = new Date();
   const isToday = toDateStr(currentDate) === toDateStr(today);
+  const isCurrentYear = currentDate.getFullYear() === today.getFullYear();
+  const dateLabel = isCurrentYear
+    ? currentDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })
+    : currentDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
 
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(currentDate);
@@ -82,26 +93,22 @@ export default function DateNavigator({
   );
 
   return (
-    <div className="flex items-center gap-0.5 rounded-full border border-border bg-background px-1 py-1 shadow-lg">
+    <div className="flex h-12 items-center gap-1 rounded-full border border-border bg-background px-1 py-1 shadow-lg">
       <button
         onClick={() => changeDate(-1)}
-        className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-accent"
+        className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-accent"
         aria-label="Previous day"
       >
-        <ChevronLeft className="h-4 w-4" />
+        <ChevronLeft className="h-5 w-5" />
       </button>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         <Dialog open={datePopoverOpen} onOpenChange={handlePopoverOpen}>
           <button
-            className="rounded-md px-2 py-1 text-sm font-semibold transition-colors hover:bg-accent hover:text-primary"
+            className="whitespace-nowrap rounded-md px-3 py-1.5 text-base font-semibold transition-colors hover:bg-accent hover:text-primary"
             onClick={() => handlePopoverOpen(true)}
           >
-            {currentDate.toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-            })}
+            {dateLabel}
           </button>
           <DialogContent
             size="sm"
@@ -127,11 +134,11 @@ export default function DateNavigator({
         {!isToday && (
           <button
             onClick={() => onDateChange(new Date())}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             aria-label="Go to today"
             title="Go to today"
           >
-            <RotateCcw className="h-3.5 w-3.5" />
+            <RotateCcw className="h-4 w-4" />
           </button>
         )}
       </div>
@@ -139,10 +146,10 @@ export default function DateNavigator({
       <button
         onClick={() => changeDate(1)}
         disabled={isToday}
-        className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-accent disabled:opacity-30"
+        className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-accent disabled:opacity-30"
         aria-label="Next day"
       >
-        <ChevronRight className="h-4 w-4" />
+        <ChevronRight className="h-5 w-5" />
       </button>
     </div>
   );

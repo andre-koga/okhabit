@@ -3,7 +3,7 @@ import { X, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const FLOATING_BACK_BUTTON_CLASSES =
-  "fixed bottom-6 left-6 z-50 h-10 w-10 border border-border flex items-center justify-center rounded-full bg-background shadow-md text-muted-foreground hover:text-foreground transition-colors";
+  "fixed bottom-3 left-4 z-50 h-12 w-12 border border-border flex items-center justify-center rounded-full bg-background shadow-md text-muted-foreground hover:text-foreground transition-colors";
 
 interface FloatingBackButtonProps {
   to?: string;
@@ -27,7 +27,7 @@ export function FloatingBackButton({
     title,
     "aria-label": ariaLabel ?? title,
     className: cn(FLOATING_BACK_BUTTON_CLASSES, className),
-    children: <Icon className="h-3.5 w-3.5" />,
+    children: <Icon className="h-5 w-5" />,
   };
 
   if (to !== undefined) {
