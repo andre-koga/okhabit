@@ -2,19 +2,8 @@ import { useEffect, useState, memo, useMemo } from "react";
 import { db } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { Square } from "lucide-react";
-import { formatTimerDisplay } from "@/lib/activity-utils";
-
-// Memoize expensive color calculations
-function getContrastColor(hex: string): "#000000" | "#ffffff" {
-  const r = parseInt(hex.slice(1, 3), 16) / 255;
-  const g = parseInt(hex.slice(3, 5), 16) / 255;
-  const b = parseInt(hex.slice(5, 7), 16) / 255;
-  const toLinear = (channel: number) =>
-    channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
-  const luminance =
-    0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
-  return luminance > 0.179 ? "#000000" : "#ffffff";
-}
+import { formatTimerDisplay, getGroup } from "@/lib/activity-utils";
+import { getContrastColor } from "@/lib/color-utils";
 
 function hexToRgba(hex: string, alpha: number): string {
   const normalized = hex.replace("#", "");
@@ -55,10 +44,10 @@ function ActiveActivityPill({
   const [tick, setTick] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
   const [resolvedActivity, setResolvedActivity] = useState<Activity | null>(
-    null,
+    null
   );
   const [resolvedGroup, setResolvedGroup] = useState<ActivityGroup | null>(
-    null,
+    null
   );
 
   // Drive per-second re-renders
@@ -71,11 +60,13 @@ function ActiveActivityPill({
   // Recalculate elapsed time on every tick
   useEffect(() => {
     if (!currentActivityId) return;
+    /* eslint-disable-next-line react-hooks/set-state-in-effect -- syncing elapsed time with timer tick */
     setElapsedMs(calculateActivityTime(currentActivityId));
   }, [currentActivityId, calculateActivityTime, tick]);
 
   useEffect(() => {
     if (!currentActivityId) {
+      /* eslint-disable-next-line react-hooks/set-state-in-effect -- clearing when activity stops */
       setResolvedActivity(null);
       setResolvedGroup(null);
       return;
@@ -84,7 +75,7 @@ function ActiveActivityPill({
     const fromProps = activities.find((a) => a.id === currentActivityId);
     if (fromProps) {
       setResolvedActivity(fromProps);
-      setResolvedGroup(groups.find((g) => g.id === fromProps.group_id) || null);
+      setResolvedGroup(getGroup(groups, fromProps.group_id) ?? null);
       return;
     }
 
@@ -95,7 +86,7 @@ function ActiveActivityPill({
         const activity = await db.activities.get(currentActivityId);
         if (!activity || cancelled) return;
 
-        const groupFromProps = groups.find((g) => g.id === activity.group_id);
+        const groupFromProps = getGroup(groups, activity.group_id);
         const group =
           groupFromProps ||
           (await db.activityGroups.get(activity.group_id)) ||
@@ -125,7 +116,7 @@ function ActiveActivityPill({
   const boxShadow = useMemo(
     () =>
       `0 0 16px ${hexToRgba(color, 0.4)}, 0 0 34px ${hexToRgba(color, 0.28)}`,
-    [color],
+    [color]
   );
 
   if (!currentActivityId) {
@@ -148,16 +139,16 @@ function ActiveActivityPill({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           {group?.name && (
-            <p className="text-xs uppercase tracking-wide opacity-80 mb-0.5 truncate">
+            <p className="mb-0.5 truncate text-xs uppercase tracking-wide opacity-80">
               {group.name}
             </p>
           )}
-          <p className="text-lg font-semibold leading-tight truncate">
+          <p className="truncate text-lg font-semibold leading-tight">
             {activity.name}
           </p>
         </div>
         <span
-          className="text-sm shrink-0"
+          className="shrink-0 text-sm"
           style={{ fontFamily: "JetBrains Mono, monospace" }}
         >
           {formatTimerDisplay(elapsedMs)}

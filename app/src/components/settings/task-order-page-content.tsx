@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { ChevronDown, ChevronUp, GripVertical, X } from "lucide-react";
+import { ChevronDown, ChevronUp, GripVertical } from "lucide-react";
 import { db, now } from "@/lib/db";
 import type { Activity } from "@/lib/db/types";
+import { isActiveActivity, isScheduledRoutine } from "@/lib/activity-utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FloatingBackButton } from "@/components/ui/floating-back-button";
 
 function compareActivities(left: Activity, right: Activity): number {
   const leftOrder =
@@ -34,14 +35,11 @@ export default function TaskOrderPageContent() {
     try {
       setLoading(true);
       const all = await db.activities
-        .filter((activity) => !activity.is_archived && !activity.deleted_at)
+        .filter((activity) => isActiveActivity(activity))
         .toArray();
 
       const reorderable = all
-        .filter(
-          (activity) =>
-            activity.routine !== "anytime" && activity.routine !== "never",
-        )
+        .filter((activity) => isScheduledRoutine(activity.routine ?? ""))
         .sort(compareActivities);
 
       setActivities(reorderable);
@@ -61,7 +59,7 @@ export default function TaskOrderPageContent() {
       hasItems: activities.length > 0,
       isBusy: loading || saving,
     }),
-    [activities.length, loading, saving],
+    [activities.length, loading, saving]
   );
 
   const persistOrder = useCallback(async (nextActivities: Activity[]) => {
@@ -73,8 +71,8 @@ export default function TaskOrderPageContent() {
           db.activities.update(activity.id, {
             order_index: index,
             updated_at: updatedAt,
-          }),
-        ),
+          })
+        )
       );
     });
   }, []);
@@ -102,13 +100,7 @@ export default function TaskOrderPageContent() {
         setSaving(false);
       }
     },
-    [
-      activities,
-      canMove.hasItems,
-      canMove.isBusy,
-      loadActivities,
-      persistOrder,
-    ],
+    [activities, canMove.hasItems, canMove.isBusy, loadActivities, persistOrder]
   );
 
   return (
@@ -145,12 +137,12 @@ export default function TaskOrderPageContent() {
                 key={activity.id}
                 className="flex items-center justify-between gap-2 rounded-md border border-border px-2 py-1"
               >
-                <div className="flex items-center gap-2 min-w-0">
-                  <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <span className="text-sm truncate">{activity.name}</span>
+                <div className="flex min-w-0 items-center gap-2">
+                  <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="truncate text-sm">{activity.name}</span>
                 </div>
 
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex shrink-0 items-center gap-1">
                   <Button
                     type="button"
                     variant="ghost"
@@ -183,13 +175,7 @@ export default function TaskOrderPageContent() {
         </CardContent>
       </Card>
 
-      <Link
-        to="/settings"
-        className="fixed bottom-6 left-6 z-50 h-10 w-10 flex items-center justify-center rounded-full bg-background border border-border shadow-md text-muted-foreground hover:text-foreground transition-colors"
-        title="Back to Settings"
-      >
-        <X className="h-3.5 w-3.5" />
-      </Link>
+      <FloatingBackButton to="/settings" title="Back to Settings" />
     </div>
   );
 }

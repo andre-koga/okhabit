@@ -37,14 +37,14 @@ export default function RoutineSelector({
     onWeeklyDaysChange(
       weeklyDays.includes(day)
         ? weeklyDays.filter((d) => d !== day)
-        : [...weeklyDays, day],
+        : [...weeklyDays, day]
     );
   };
 
   return (
     <div className="space-y-0">
       <Select value={routine} onValueChange={onRoutineChange}>
-        <SelectTrigger className="w-full rounded-full !h-10 px-4 text-base border-border bg-muted/40">
+        <SelectTrigger className="!h-10 w-full rounded-full border-border bg-muted/40 px-4 text-base">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -65,10 +65,10 @@ export default function RoutineSelector({
                 key={day}
                 type="button"
                 onClick={() => toggleWeekday(index)}
-                className={`flex-1 rounded-full px-3 py-2 text-xs font-medium transition-colors border ${
+                className={`flex-1 rounded-full border px-3 py-2 text-xs font-medium transition-colors ${
                   weeklyDays.includes(index)
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background border-input hover:bg-accent hover:text-accent-foreground"
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
                 }`}
               >
                 {day}
@@ -95,21 +95,21 @@ export default function RoutineSelector({
 
       {routine === "custom" && (
         <div className="pt-3">
-          <div className="flex gap-2 items-center">
-            <span className="text-base pl-2">Every</span>
+          <div className="flex items-center gap-2">
+            <span className="pl-2 text-base">Every</span>
             <input
               type="number"
               min="1"
               value={customInterval}
               onChange={(e) =>
                 onCustomIntervalChange(
-                  e.target.value === "" ? "" : parseInt(e.target.value),
+                  e.target.value === "" ? "" : parseInt(e.target.value)
                 )
               }
-              className="w-20 h-10 bg-muted/40 border border-border rounded-full px-4 text-base focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors"
+              className="h-10 w-20 rounded-full border border-border bg-muted/40 px-4 text-base transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
             <Select value={customUnit} onValueChange={onCustomUnitChange}>
-              <SelectTrigger className="flex-1 rounded-full !h-10 px-4 border-border bg-muted/40">
+              <SelectTrigger className="!h-10 flex-1 rounded-full border-border bg-muted/40 px-4">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

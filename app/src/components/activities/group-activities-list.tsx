@@ -28,7 +28,7 @@ export default function GroupActivitiesList({
     <div className="space-y-2">
       {activities.map((activity) => (
         <div key={activity.id} className="flex items-center gap-2">
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0 flex-1">
             <ActivityPill
               name={activity.name}
               color={groupColor}
@@ -37,7 +37,7 @@ export default function GroupActivitiesList({
               onClick={() => onToggleActivity(activity.id)}
             />
           </div>
-          <div className="flex gap-1 shrink-0">
+          <div className="flex shrink-0 gap-1">
             <Button
               variant="ghost"
               size="icon"

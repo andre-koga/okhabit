@@ -2,27 +2,17 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { db, now, newId } from "@/lib/db";
 import type { ActivityGroup, Activity } from "@/lib/db/types";
+import {
+  validateActivityData,
+  type ActivitySubmitData,
+} from "@/lib/activity-validation";
+import { isActiveActivity, isScheduledRoutine } from "@/lib/activity-utils";
+import { ERROR_MESSAGES } from "@/lib/error-utils";
 import ActivityFormFields from "@/components/activities/activity-form-fields";
-
-interface ActivitySubmitData {
-  name: string;
-  routine: string;
-  completion_target: number;
-}
 
 interface ActivityFormPageProps {
   group: ActivityGroup;
   activity?: Activity; // present → edit mode, absent → create mode
-}
-
-function validateActivityData(data: ActivitySubmitData): string | null {
-  if (!data.name.trim()) return "Activity name is required";
-  if (data.routine.startsWith("weekly:")) {
-    const days = data.routine.split(":")[1];
-    if (!days || days.split(",").length === 0)
-      return "Please select at least one day for weekly routine";
-  }
-  return null;
 }
 
 export default function ActivityFormPage({
@@ -54,18 +44,15 @@ export default function ActivityFormPage({
       } else {
         const n = now();
         await db.transaction("rw", db.activities, async () => {
-          const shouldAssignOrderIndex =
-            data.routine !== "anytime" && data.routine !== "never";
+          const shouldAssignOrderIndex = isScheduledRoutine(data.routine);
 
           let nextOrderIndex: number | null = null;
           if (shouldAssignOrderIndex) {
             const scheduledActivities = await db.activities
               .filter(
                 (item) =>
-                  !item.is_archived &&
-                  !item.deleted_at &&
-                  item.routine !== "anytime" &&
-                  item.routine !== "never",
+                  isActiveActivity(item) &&
+                  isScheduledRoutine(item.routine ?? "")
               )
               .toArray();
 
@@ -74,7 +61,7 @@ export default function ActivityFormPage({
                 typeof item.order_index === "number"
                   ? Math.max(max, item.order_index)
                   : max,
-              -1,
+              -1
             );
             nextOrderIndex = maxOrderIndex + 1;
           }
@@ -99,7 +86,7 @@ export default function ActivityFormPage({
       navigate(`/activities/${group.id}`);
     } catch (err) {
       console.error("Error saving activity:", err);
-      setError("Failed to save activity. Please try again.");
+      setError(ERROR_MESSAGES.SAVE_ACTIVITY);
     } finally {
       setIsSubmitting(false);
     }

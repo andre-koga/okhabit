@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Pencil, X } from "lucide-react";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface JournalYoutubeSectionProps {
   canEdit: boolean;
@@ -60,7 +61,7 @@ export default function JournalYoutubeSection({
       {videoId ? (
         playing ? (
           <iframe
-            className="absolute inset-0 w-full h-full"
+            className="absolute inset-0 h-full w-full"
             src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`}
             title="Daily vlog"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -70,7 +71,7 @@ export default function JournalYoutubeSection({
           /* Thumbnail facade — shows only the thumbnail + play button */
           <button
             onClick={() => setPlaying(true)}
-            className="absolute inset-0 w-full h-full group"
+            className="group absolute inset-0 h-full w-full"
             title="Play video"
           >
             <img
@@ -81,12 +82,12 @@ export default function JournalYoutubeSection({
                   `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
               }}
               alt="Video thumbnail"
-              className="absolute inset-0 w-full h-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover"
             />
             {/* Play button */}
             <span className="absolute inset-0 flex items-center justify-center">
-              <span className="flex items-center justify-center w-14 h-14 rounded-full bg-black/60 group-hover:bg-black/80 transition-colors">
-                <svg viewBox="0 0 24 24" fill="white" className="w-7 h-7">
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black/60 transition-colors group-hover:bg-black/80">
+                <svg viewBox="0 0 24 24" fill="white" className="h-7 w-7">
                   <path d="M8 5v14l11-7z" />
                 </svg>
               </span>
@@ -95,28 +96,29 @@ export default function JournalYoutubeSection({
         )
       ) : (
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-muted-foreground/40 text-sm select-none">
+          <span className="select-none text-sm text-muted-foreground/40">
             No video
           </span>
         </div>
       )}
 
       {/* Bottom fade into background */}
-      <div className="absolute bottom-0 left-0 right-0 h-1/5 bg-gradient-to-b from-transparent to-background pointer-events-none z-10" />
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 h-1/5 bg-gradient-to-b from-transparent to-background" />
 
       {canEdit && (
         <div className="absolute -bottom-4 right-3 z-20">
-          <Popover open={open} onOpenChange={handleOpen}>
-            <PopoverTrigger asChild>
-              <button
-                className="h-7 w-7 flex items-center border border-muted justify-center rounded-full bg-background/80 backdrop-blur-sm shadow-sm hover:bg-background transition-colors"
-                title="Set video URL"
-              >
-                <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80 p-3" align="end">
-              <p className="text-sm font-medium mb-2">YouTube URL</p>
+          <Dialog open={open} onOpenChange={handleOpen}>
+            <button
+              onClick={() => handleOpen(true)}
+              className="flex h-7 w-7 items-center justify-center rounded-full border border-muted bg-background/80 shadow-sm backdrop-blur-sm transition-colors hover:bg-background"
+              title="Set video URL"
+            >
+              <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+            <DialogContent size="sm" className="w-80 p-4">
+              <DialogHeader>
+                <DialogTitle>YouTube URL</DialogTitle>
+              </DialogHeader>
               <input
                 autoFocus
                 type="url"
@@ -124,16 +126,16 @@ export default function JournalYoutubeSection({
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSave();
-                  if (e.key === "Escape") setOpen(false);
+                  if (e.key === "Escape") handleOpen(false);
                 }}
                 placeholder="https://youtu.be/…"
-                className="w-full px-3 py-1.5 text-sm border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-md border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               />
-              <div className="flex gap-2 mt-2 justify-end">
+              <div className="flex justify-end gap-2">
                 {youtubeUrl && (
                   <button
                     onClick={handleClear}
-                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive transition-colors"
+                    className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-destructive"
                   >
                     <X className="h-3 w-3" />
                     Clear
@@ -141,13 +143,13 @@ export default function JournalYoutubeSection({
                 )}
                 <button
                   onClick={handleSave}
-                  className="px-3 py-1 text-xs rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                  className="rounded-md bg-primary px-3 py-1 text-xs text-primary-foreground transition-colors hover:bg-primary/90"
                 >
                   Save
                 </button>
               </div>
-            </PopoverContent>
-          </Popover>
+            </DialogContent>
+          </Dialog>
         </div>
       )}
     </div>

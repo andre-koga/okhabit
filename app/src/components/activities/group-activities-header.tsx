@@ -1,4 +1,5 @@
 import type { ActivityGroup } from "@/lib/db/types";
+import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import { Pencil, Archive, ArchiveRestore } from "lucide-react";
 
 interface GroupActivitiesHeaderProps {
@@ -17,23 +18,23 @@ export default function GroupActivitiesHeader({
   onToggleArchiveGroup,
 }: GroupActivitiesHeaderProps) {
   return (
-    <div className="relative w-full h-40">
+    <div className="relative h-40 w-full">
       <div
         className="absolute inset-0"
         style={{
-          background: `linear-gradient(to bottom, ${group.color || "#888"} 0%, transparent 100%)`,
+          background: `linear-gradient(to bottom, ${group.color || DEFAULT_GROUP_COLOR} 0%, transparent 100%)`,
         }}
       />
-      <div className="absolute bottom-0 left-0 right-0 h-1/5 bg-gradient-to-b from-transparent to-background pointer-events-none" />
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-1/5 bg-gradient-to-b from-transparent to-background" />
 
-      <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-full px-4 text-center">
+      <div className="absolute -bottom-3 left-1/2 w-full -translate-x-1/2 px-4 text-center">
         {isArchived && (
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Archived
           </p>
         )}
         <h1 className="text-3xl font-bold">{group.name}</h1>
-        <p className="text-muted-foreground text-sm mt-1">
+        <p className="mt-1 text-sm text-muted-foreground">
           {activityCount} {activityCount === 1 ? "activity" : "activities"}
         </p>
       </div>
@@ -41,7 +42,7 @@ export default function GroupActivitiesHeader({
       <div className="absolute -bottom-12 right-3 z-20">
         <button
           onClick={onToggleArchiveGroup}
-          className="h-7 w-7 flex items-center border border-muted justify-center rounded-full bg-background/80 backdrop-blur-sm shadow-sm hover:bg-background transition-colors"
+          className="flex h-7 w-7 items-center justify-center rounded-full border border-muted bg-background/80 shadow-sm backdrop-blur-sm transition-colors hover:bg-background"
           title={isArchived ? "Unarchive group" : "Archive group"}
         >
           {isArchived ? (
@@ -55,7 +56,7 @@ export default function GroupActivitiesHeader({
       <div className="absolute -bottom-4 right-3 z-20">
         <button
           onClick={onEditGroup}
-          className="h-7 w-7 flex items-center border border-muted justify-center rounded-full bg-background/80 backdrop-blur-sm shadow-sm hover:bg-background transition-colors"
+          className="flex h-7 w-7 items-center justify-center rounded-full border border-muted bg-background/80 shadow-sm backdrop-blur-sm transition-colors hover:bg-background"
           title="Edit group"
         >
           <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
