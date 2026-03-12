@@ -1,11 +1,5 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { InputPromptDialog } from "@/components/ui/input-prompt-dialog";
 import { Plus, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -42,34 +36,17 @@ export default function AddTaskModal({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent size="sm" className="p-4">
-          <DialogHeader>
-            <DialogTitle>New one-time task</DialogTitle>
-          </DialogHeader>
-          <div className="flex gap-2">
-            <input
-              autoFocus
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleAdd();
-                if (e.key === "Escape") setOpen(false);
-              }}
-              placeholder="Task title…"
-              className="flex-1 rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-            <Button
-              size="sm"
-              onClick={handleAdd}
-              disabled={adding || !title.trim()}
-            >
-              Add
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <InputPromptDialog
+        open={open}
+        onOpenChange={setOpen}
+        title="New memo"
+        value={title}
+        onChange={setTitle}
+        onConfirm={handleAdd}
+        confirmLabel="Add"
+        placeholder="Task title…"
+        confirmDisabled={adding || !title.trim()}
+      />
 
       <button
         onClick={() => setOpen((v) => !v)}

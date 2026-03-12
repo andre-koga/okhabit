@@ -1,5 +1,6 @@
 import { memo } from "react";
 import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface TaskCheckboxProps {
   isComplete: boolean;
@@ -7,6 +8,7 @@ interface TaskCheckboxProps {
   onClick: () => void;
   size?: "sm" | "md";
   title?: string;
+  className?: string;
 }
 
 function TaskCheckbox({
@@ -15,6 +17,7 @@ function TaskCheckbox({
   onClick,
   size = "md",
   title,
+  className,
 }: TaskCheckboxProps) {
   const sizeClass = size === "sm" ? "h-6 w-6" : "h-7 w-[2.75rem]";
 
@@ -22,11 +25,15 @@ function TaskCheckbox({
     <button
       onClick={isToday ? onClick : undefined}
       disabled={!isToday}
-      className={`flex items-center justify-center rounded-full border transition-colors ${sizeClass} ${
+      className={cn(
+        "flex items-center justify-center rounded-full border transition-colors",
+        sizeClass,
         isComplete
           ? "border-primary bg-primary text-primary-foreground"
-          : "border-muted-foreground text-muted-foreground"
-      } disabled:cursor-default disabled:opacity-60`}
+          : "border-muted-foreground text-muted-foreground",
+        "disabled:cursor-default disabled:opacity-60",
+        className
+      )}
       title={
         title ??
         (isToday

@@ -48,6 +48,7 @@ export function useDailyTasks({
     createOneTimeTask,
     toggleOneTimeTask,
     deleteOneTimeTask,
+    updateOneTimeTask,
   } = useOneTimeTasks(dateString);
 
   const {
@@ -185,6 +186,7 @@ export function useDailyTasks({
     createOneTimeTask,
     toggleOneTimeTask,
     deleteOneTimeTask,
+    updateOneTimeTask,
     incrementTask,
     handleStartActivity,
     handleStopActivity,

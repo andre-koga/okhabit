@@ -1,13 +1,15 @@
-import { memo } from "react";
-import { Trash2 } from "lucide-react";
+import { memo, useState } from "react";
+import { Pencil } from "lucide-react";
 import type { OneTimeTask } from "@/lib/db/types";
 import TaskCheckbox from "@/components/tasks/task-checkbox";
+import { InputPromptDialog } from "@/components/ui/input-prompt-dialog";
 
 interface OneTimeTaskItemProps {
   task: OneTimeTask;
   isToday: boolean;
   onToggle: (task: OneTimeTask) => void;
   onDelete: (taskId: string) => void;
+  onUpdate: (taskId: string, title: string) => Promise<boolean>;
 }
 
 function OneTimeTaskItem({
@@ -15,20 +17,45 @@ function OneTimeTaskItem({
   isToday,
   onToggle,
   onDelete,
+  onUpdate,
 }: OneTimeTaskItemProps) {
-  return (
-    <div className="flex items-center gap-2">
-      <TaskCheckbox
-        isComplete={!!task.is_completed}
-        isToday={isToday}
-        onClick={() => onToggle(task)}
-        size="sm"
-      />
+  const [editOpen, setEditOpen] = useState(false);
+  const [draft, setDraft] = useState(task.title);
+  const [saving, setSaving] = useState(false);
 
-      <div className="relative flex h-8 flex-1 items-center overflow-hidden rounded-full border border-border">
+  const handleOpenEdit = (open: boolean) => {
+    if (open) setDraft(task.title);
+    setEditOpen(open);
+  };
+
+  const handleSave = async () => {
+    if (!draft.trim()) return;
+    setSaving(true);
+    const success = await onUpdate(task.id, draft);
+    if (success) setEditOpen(false);
+    setSaving(false);
+  };
+
+  const handleDelete = () => {
+    onDelete(task.id);
+    setEditOpen(false);
+  };
+
+  return (
+    <div className="flex items-start gap-2">
+      <div className="mt-1.5">
+        <TaskCheckbox
+          isComplete={!!task.is_completed}
+          isToday={isToday}
+          onClick={() => onToggle(task)}
+          size="sm"
+        />
+      </div>
+
+      <div className="relative flex min-h-8 flex-1 items-start overflow-hidden rounded-2xl border border-border">
         <label
           onClick={isToday ? () => onToggle(task) : undefined}
-          className={`flex-1 truncate px-4 text-left text-sm font-medium ${
+          className={`min-w-0 flex-1 break-words px-4 py-2 text-left text-sm font-medium ${
             task.is_completed ? "text-muted-foreground line-through" : ""
           } ${isToday ? "cursor-pointer" : "cursor-default"}`}
         >
@@ -38,14 +65,30 @@ function OneTimeTaskItem({
         {isToday && (
           <button
             type="button"
-            aria-label="Delete quick task"
-            className="relative mr-0.5 flex h-9 flex-shrink-0 items-center justify-center rounded-full px-3 text-muted-foreground transition-colors hover:text-destructive"
-            onClick={() => onDelete(task.id)}
+            aria-label="Edit memo"
+            className="relative flex h-9 flex-shrink-0 items-center justify-center px-3 py-2 text-muted-foreground transition-colors hover:text-foreground"
+            onClick={() => setEditOpen(true)}
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Pencil className="h-3.5 w-3.5" />
           </button>
         )}
       </div>
+
+      <InputPromptDialog
+        open={editOpen}
+        onOpenChange={handleOpenEdit}
+        title="Edit memo"
+        value={draft}
+        onChange={setDraft}
+        onConfirm={handleSave}
+        confirmLabel="Save"
+        placeholder="Task title…"
+        confirmDisabled={saving || !draft.trim()}
+        secondaryAction={{
+          label: <>Delete</>,
+          onClick: handleDelete,
+        }}
+      />
     </div>
   );
 }

@@ -92,11 +92,35 @@ export function useOneTimeTasks(dateString: string) {
     await db.oneTimeTasks.delete(taskId);
   }, []);
 
+  const updateOneTimeTask = useCallback(
+    async (taskId: string, title: string): Promise<boolean> => {
+      if (!title.trim()) return false;
+      try {
+        const trimmed = title.trim();
+        setOneTimeTasks((prev) =>
+          prev.map((t) =>
+            t.id === taskId ? { ...t, title: trimmed, updated_at: now() } : t
+          )
+        );
+        await db.oneTimeTasks.update(taskId, {
+          title: trimmed,
+          updated_at: now(),
+        });
+        return true;
+      } catch (error) {
+        console.error("Error updating one-time task:", error);
+        return false;
+      }
+    },
+    []
+  );
+
   return {
     oneTimeTasks,
     loadOneTimeTasks,
     createOneTimeTask,
     toggleOneTimeTask,
     deleteOneTimeTask,
+    updateOneTimeTask,
   };
 }

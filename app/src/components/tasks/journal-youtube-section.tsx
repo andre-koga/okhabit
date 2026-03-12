@@ -1,11 +1,6 @@
 import { useState } from "react";
 import { Pencil, X } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { InputPromptDialog } from "@/components/ui/input-prompt-dialog";
 
 interface JournalYoutubeSectionProps {
   canEdit: boolean;
@@ -107,49 +102,37 @@ export default function JournalYoutubeSection({
 
       {canEdit && (
         <div className="absolute -bottom-4 right-3 z-20">
-          <Dialog open={open} onOpenChange={handleOpen}>
-            <button
-              onClick={() => handleOpen(true)}
-              className="flex h-7 w-7 items-center justify-center rounded-full border border-muted bg-background/80 shadow-sm backdrop-blur-sm transition-colors hover:bg-background"
-              title="Set video URL"
-            >
-              <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-            </button>
-            <DialogContent size="sm" className="w-80 p-4">
-              <DialogHeader>
-                <DialogTitle>YouTube URL</DialogTitle>
-              </DialogHeader>
-              <input
-                autoFocus
-                type="url"
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSave();
-                  if (e.key === "Escape") handleOpen(false);
-                }}
-                placeholder="https://youtu.be/…"
-                className="w-full rounded-md border bg-background px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              <div className="flex justify-end gap-2">
-                {youtubeUrl && (
-                  <button
-                    onClick={handleClear}
-                    className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-destructive"
-                  >
-                    <X className="h-3 w-3" />
-                    Clear
-                  </button>
-                )}
-                <button
-                  onClick={handleSave}
-                  className="rounded-md bg-primary px-3 py-1 text-xs text-primary-foreground transition-colors hover:bg-primary/90"
-                >
-                  Save
-                </button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <button
+            onClick={() => handleOpen(true)}
+            className="flex h-7 w-7 items-center justify-center rounded-full border border-muted bg-background/80 shadow-sm backdrop-blur-sm transition-colors hover:bg-background"
+            title="Set video URL"
+          >
+            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
+          <InputPromptDialog
+            open={open}
+            onOpenChange={handleOpen}
+            title="YouTube URL"
+            value={draft}
+            onChange={setDraft}
+            onConfirm={handleSave}
+            confirmLabel="Save"
+            placeholder="https://youtu.be/…"
+            inputType="url"
+            secondaryAction={
+              youtubeUrl
+                ? {
+                    label: (
+                      <>
+                        <X className="h-3 w-3" />
+                        Clear
+                      </>
+                    ),
+                    onClick: handleClear,
+                  }
+                : undefined
+            }
+          />
         </div>
       )}
     </div>

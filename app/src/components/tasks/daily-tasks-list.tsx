@@ -42,6 +42,7 @@ export default function DailyTasksList({
     createOneTimeTask,
     toggleOneTimeTask,
     deleteOneTimeTask,
+    updateOneTimeTask,
     incrementTask,
     handleStartActivity,
     handleStopActivity,
@@ -82,6 +83,7 @@ export default function DailyTasksList({
               isToday={isToday}
               onToggle={toggleOneTimeTask}
               onDelete={deleteOneTimeTask}
+              onUpdate={updateOneTimeTask}
             />
           ))}
         </div>

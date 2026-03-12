@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import RoutineSelector from "@/components/activities/routine-selector";
 import ActivityPill from "@/components/activities/activity-pill";
 import FormPageLayout from "@/components/ui/form-page-layout";
@@ -6,6 +6,64 @@ import { parseRoutine, isScheduledRoutine } from "@/lib/activity-utils";
 import { formSectionLabel, formInput } from "@/lib/form-styles";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
+
+const VALID_ROUTINES = ["anytime", "daily", "weekly", "custom", "never"];
+
+function computeFormDataFromInitial(
+  initialData?: Partial<Activity> | null
+): FormData {
+  const defaults: FormData = {
+    name: "",
+    routine: "daily",
+    weeklyDays: [],
+    monthlyDay: 1,
+    customInterval: 1,
+    customUnit: "days",
+    completion_target: 1,
+  };
+  if (!initialData) return defaults;
+
+  const parsed = parseRoutine(initialData.routine || "daily");
+  let baseRoutine = "daily";
+  let weeklyDays: number[] = [];
+  let monthlyDay = 1;
+  let customInterval = 1;
+  let customUnit: "days" | "weeks" | "months" = "days";
+
+  switch (parsed.type) {
+    case "weekly":
+      baseRoutine = "weekly";
+      weeklyDays = parsed.days;
+      break;
+    case "monthly":
+      baseRoutine = "monthly";
+      monthlyDay = parsed.day;
+      break;
+    case "custom":
+      baseRoutine = "custom";
+      customInterval = parsed.interval;
+      customUnit = parsed.unit;
+      break;
+    case "daily":
+    case "anytime":
+    case "never":
+      baseRoutine = parsed.type;
+      break;
+    case "unknown":
+      baseRoutine = VALID_ROUTINES.includes(parsed.raw) ? parsed.raw : "daily";
+      break;
+  }
+
+  return {
+    name: initialData.name || "",
+    routine: baseRoutine,
+    weeklyDays,
+    monthlyDay,
+    customInterval,
+    customUnit,
+    completion_target: initialData.completion_target ?? 1,
+  };
+}
 
 interface ActivityFormFieldsProps {
   group: ActivityGroup;
@@ -40,61 +98,9 @@ export default function ActivityFormFields({
   error,
   backPath,
 }: ActivityFormFieldsProps) {
-  const [formData, setFormData] = useState<FormData>({
-    name: "",
-    routine: "daily",
-    weeklyDays: [],
-    monthlyDay: 1,
-    customInterval: 1,
-    customUnit: "days",
-    completion_target: 1,
-  });
-
-  useEffect(() => {
-    if (!initialData) return;
-
-    const parsed = parseRoutine(initialData.routine || "daily");
-    let baseRoutine = "daily";
-    let weeklyDays: number[] = [];
-    let monthlyDay = 1;
-    let customInterval = 1;
-    let customUnit: "days" | "weeks" | "months" = "days";
-
-    switch (parsed.type) {
-      case "weekly":
-        baseRoutine = "weekly";
-        weeklyDays = parsed.days;
-        break;
-      case "monthly":
-        baseRoutine = "monthly";
-        monthlyDay = parsed.day;
-        break;
-      case "custom":
-        baseRoutine = "custom";
-        customInterval = parsed.interval;
-        customUnit = parsed.unit;
-        break;
-      case "daily":
-      case "anytime":
-      case "never":
-        baseRoutine = parsed.type;
-        break;
-      case "unknown":
-        baseRoutine = parsed.raw;
-        break;
-    }
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setFormData({
-      name: initialData.name || "",
-      routine: baseRoutine,
-      weeklyDays,
-      monthlyDay,
-      customInterval,
-      customUnit,
-      completion_target: initialData.completion_target ?? 1,
-    });
-  }, [initialData]);
+  const [formData, setFormData] = useState<FormData>(() =>
+    computeFormDataFromInitial(initialData)
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
