@@ -394,7 +394,7 @@ export default function TasksPageContent() {
             currentDate={currentDate}
           />
 
-          <blockquote className="pb-24 pt-8 text-center font-crimson text-sm italic leading-relaxed text-muted-foreground/80">
+          <blockquote className="pb-12 pt-8 text-center font-crimson text-sm italic leading-relaxed text-muted-foreground/60">
             {quote}
           </blockquote>
         </div>
