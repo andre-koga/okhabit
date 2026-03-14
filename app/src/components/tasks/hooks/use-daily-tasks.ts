@@ -152,6 +152,22 @@ export function useDailyTasks({
 
   const MEMO_TIMELINE_COLOR = "#6b7280";
 
+  // Derive the truly running activity from open periods so UI
+  // doesn't depend solely on the persisted currentActivityId.
+  const resolvedCurrentActivityId = useMemo(() => {
+    const openPeriods = activityPeriods.filter((period) => !period.end_time);
+
+    if (openPeriods.length === 0) return null;
+
+    const latestOpen = [...openPeriods].sort(
+      (left, right) =>
+        new Date(right.start_time).getTime() -
+        new Date(left.start_time).getTime()
+    )[0];
+
+    return latestOpen?.activity_id ?? null;
+  }, [activityPeriods]);
+
   const timelineSessions = useMemo(() => {
     const activitySessions = activityPeriods
       .filter((period) => !!period.end_time)
@@ -219,7 +235,7 @@ export function useDailyTasks({
     completionRate,
     totalTimeSpentMs,
     timelineSessions,
-    currentActivityId,
+    currentActivityId: resolvedCurrentActivityId,
     currentMemoId,
     taskCounts,
     oneTimeTasks,
