@@ -8,6 +8,8 @@ import { useAuth } from "@/lib/use-auth";
 
 export default function SettingsPageContent() {
   const { isSupabaseConfigured } = useAuth();
+  const buildLabel =
+    import.meta.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "dev";
 
   return (
     <div className="space-y-4 p-4 pb-24">
@@ -31,9 +33,7 @@ export default function SettingsPageContent() {
 
       <div className="space-y-1 pt-4 text-center text-xs text-muted-foreground">
         <p>Upwards — local-first habit tracker</p>
-        <p className="scale-75 font-mono opacity-50">
-          cool quotes · 2025-03-12
-        </p>
+        <p className="scale-75 font-mono opacity-50">{buildLabel}</p>
       </div>
 
       <FloatingBackButton to="/" title="Home" />
