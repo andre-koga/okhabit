@@ -1,3 +1,6 @@
+/**
+ * SRP: Renders a reusable single-input confirmation dialog with optional secondary action.
+ */
 import {
   Dialog,
   DialogContent,
@@ -16,12 +19,14 @@ interface InputPromptDialogProps {
   confirmLabel?: string;
   placeholder?: string;
   inputType?: "text" | "url";
+  inputReadOnly?: boolean;
   confirmDisabled?: boolean;
   /** Optional secondary action (e.g. Clear) shown above the confirm button */
   secondaryAction?: {
     label: React.ReactNode;
     onClick: () => void;
     className?: string;
+    disabled?: boolean;
   };
   inputClassName?: string;
   contentClassName?: string;
@@ -37,13 +42,14 @@ export function InputPromptDialog({
   confirmLabel = "Save",
   placeholder,
   inputType = "text",
+  inputReadOnly = false,
   confirmDisabled = false,
   secondaryAction,
   inputClassName,
   contentClassName,
 }: InputPromptDialogProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && !confirmDisabled) {
       e.preventDefault();
       onConfirm();
     }
@@ -64,6 +70,7 @@ export function InputPromptDialog({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
+          readOnly={inputReadOnly}
           placeholder={placeholder}
           className={cn(
             "w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary",
@@ -75,8 +82,9 @@ export function InputPromptDialog({
             <button
               type="button"
               onClick={secondaryAction.onClick}
+              disabled={secondaryAction.disabled}
               className={cn(
-                "flex items-center gap-1 rounded-full bg-secondary px-5 py-2.5 text-sm font-semibold text-secondary-foreground shadow-md transition-colors hover:bg-secondary/90 hover:text-destructive",
+                "flex items-center gap-1 rounded-full bg-secondary px-5 py-2.5 text-sm font-semibold text-secondary-foreground shadow-md transition-colors hover:bg-secondary/90 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-40",
                 secondaryAction.className
               )}
             >

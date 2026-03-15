@@ -70,6 +70,57 @@ export async function uploadJournalVideo(
   return publicUrl.publicUrl;
 }
 
+export async function deleteJournalVideoByUrl(videoUrl: string): Promise<void> {
+  if (!isSupabaseConfigured || !supabase) {
+    return;
+  }
+
+  const objectPath = getJournalVideoObjectPath(videoUrl);
+  if (!objectPath) {
+    return;
+  }
+
+  const userId = getCachedUserId();
+  if (!userId) {
+    throw new JournalVideoUploadError(
+      "You need to be signed in to remove uploaded videos."
+    );
+  }
+
+  // Safety: only allow deleting objects in this user's namespace.
+  if (!objectPath.startsWith(`${userId}/`)) {
+    return;
+  }
+
+  const { error } = await supabase.storage
+    .from(JOURNAL_VIDEO_BUCKET)
+    .remove([objectPath]);
+
+  if (error) {
+    throw new JournalVideoUploadError(
+      error.message ?? "Failed to delete uploaded video."
+    );
+  }
+}
+
+function getJournalVideoObjectPath(videoUrl: string): string | null {
+  if (!videoUrl.trim()) return null;
+
+  try {
+    const parsed = new URL(videoUrl);
+    const expectedPrefix = `/storage/v1/object/public/${JOURNAL_VIDEO_BUCKET}/`;
+    const pathname = parsed.pathname;
+    if (!pathname.startsWith(expectedPrefix)) {
+      return null;
+    }
+
+    const encodedPath = pathname.slice(expectedPrefix.length);
+    return decodeURIComponent(encodedPath);
+  } catch {
+    return null;
+  }
+}
+
 async function compressVideoForUpload(
   file: File,
   maxBytes: number

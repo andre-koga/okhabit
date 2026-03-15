@@ -64,6 +64,7 @@ export default function DailyTasksList({
     runningSession,
     loadActivityPeriods,
     calculateActivityTime,
+    calculateActivityTotalTime,
     calculateMemoTime,
     formatTimerDisplay,
   } = useDailyTasks({ activities, groups, currentDate, refreshTrigger });
@@ -227,7 +228,7 @@ export default function DailyTasksList({
       <ActivityGroupsDrawer
         currentActivityId={currentActivityId}
         activities={activities}
-        calculateActivityTime={calculateActivityTime}
+        calculateActivityTime={calculateActivityTotalTime}
         onStartActivity={handleStartActivity}
         onStopActivity={handleStopActivity}
       />

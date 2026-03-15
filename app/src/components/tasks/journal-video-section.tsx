@@ -2,9 +2,10 @@
  * SRP: Renders the journal video section with URL editing, optional uploads, and a consistent thumbnail facade.
  */
 import { useEffect, useRef, useState } from "react";
-import { CloudOff, Loader2, Pencil, Upload, X } from "lucide-react";
+import { CloudOff, Loader2, Pencil, Trash2, Upload } from "lucide-react";
 import { InputPromptDialog } from "@/components/ui/input-prompt-dialog";
 import {
+  deleteJournalVideoByUrl,
   JournalVideoUploadError,
   uploadJournalVideo,
 } from "@/lib/journal-video-storage";
@@ -23,7 +24,7 @@ interface JournalVideoSectionProps {
   canUpload: boolean;
   thumbnail: JournalThumbnailSource | null;
   canPlay: boolean;
-  onThumbnailGenerated?: (dataUrl: string) => void;
+  onThumbnailGenerated?: (dataUrl: string | null) => void;
   onChange: (url: string) => void;
   onBlur: () => void;
 }
@@ -49,6 +50,7 @@ export default function JournalVideoSection({
   const [open, setOpen] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const [, setUploadError] = useState<string | null>(null);
   const [directVideoThumb, setDirectVideoThumb] = useState<string | null>(null);
   const [forceThumbnailRegeneration, setForceThumbnailRegeneration] =
@@ -63,6 +65,7 @@ export default function JournalVideoSection({
   const videoId =
     thumbnail?.youtubeVideoId ?? (embedUrl ? getVideoId(embedUrl) : null);
   const hasDirectVideo = !videoId && videoUrlForThumb.trim().length > 0;
+  const hasVideoSetup = youtubeUrl.trim().length > 0;
 
   // Generate a thumbnail for direct-uploaded videos to avoid device-specific HUD differences.
   useEffect(() => {
@@ -235,17 +238,38 @@ export default function JournalVideoSection({
     setForceThumbnailRegeneration(true);
     setDirectVideoThumb(null);
     setDirectVideoThumbError(null);
-    onChange(draft);
+    onChange(draft.trim());
     onBlur();
     setOpen(false);
     setPlaying(false);
   };
 
-  const handleClear = () => {
-    onChange("");
-    onBlur();
-    setOpen(false);
-    setPlaying(false);
+  const handleClear = async () => {
+    setUploadError(null);
+    setClearing(true);
+    try {
+      await deleteJournalVideoByUrl(youtubeUrl);
+      setForceThumbnailRegeneration(false);
+      setDirectVideoThumb(null);
+      setDirectVideoThumbError(null);
+      onThumbnailGenerated?.(null);
+      onChange("");
+      onBlur();
+      setDraft("");
+      setOpen(false);
+      setPlaying(false);
+    } catch (error) {
+      let message = "Failed to clear video.";
+      if (error instanceof JournalVideoUploadError) {
+        message = error.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      setUploadError(message);
+      console.error("Error clearing journal video:", error);
+    } finally {
+      setClearing(false);
+    }
   };
 
   const handleFileChange = async (
@@ -408,7 +432,7 @@ export default function JournalVideoSection({
 
       {canEdit && (
         <div className="absolute -bottom-4 right-3 z-20 flex items-center gap-2">
-          {canUpload && (
+          {canUpload && !hasVideoSetup && (
             <>
               <input
                 ref={fileInputRef}
@@ -420,7 +444,7 @@ export default function JournalVideoSection({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
+                disabled={uploading || clearing}
                 className="flex h-7 items-center justify-center rounded-full border border-muted bg-background/80 px-3 text-xs text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-background disabled:opacity-60"
                 title="Upload video"
               >
@@ -445,21 +469,27 @@ export default function JournalVideoSection({
             onOpenChange={handleOpen}
             title="Video URL"
             value={draft}
-            onChange={setDraft}
+            onChange={(nextDraft) => {
+              if (hasVideoSetup) return;
+              setDraft(nextDraft);
+            }}
             onConfirm={handleSave}
             confirmLabel="Save"
             placeholder="https://..."
             inputType="url"
+            inputReadOnly={hasVideoSetup}
+            confirmDisabled={hasVideoSetup || draft.trim().length === 0}
             secondaryAction={
-              youtubeUrl
+              hasVideoSetup
                 ? {
                     label: (
                       <>
-                        <X className="h-3 w-3" />
+                        <Trash2 className="h-3 w-3" />
                         Clear
                       </>
                     ),
                     onClick: handleClear,
+                    disabled: clearing || uploading,
                   }
                 : undefined
             }

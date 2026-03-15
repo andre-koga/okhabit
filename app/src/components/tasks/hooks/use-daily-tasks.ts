@@ -3,8 +3,8 @@
  */
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { toDateStr } from "@/lib/db";
-import type { Activity, ActivityGroup } from "@/lib/db/types";
+import { db, toDateStr } from "@/lib/db";
+import type { Activity, ActivityGroup, ActivityPeriod } from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import {
   shouldShowActivity,
@@ -34,10 +34,23 @@ export function useDailyTasks({
 }: UseDailyTasksParams) {
   const navigate = useNavigate();
   const dateString = toDateStr(currentDate);
-  const isToday = dateString === toDateStr(new Date());
+  const isToday = (() => {
+    const todayMidnight = new Date(toDateStr(new Date()) + "T00:00:00");
+    const entryMidnight = new Date(dateString + "T00:00:00");
+    const diffDays = Math.floor(
+      (todayMidnight.getTime() - entryMidnight.getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
+    // Treat yesterday as fully editable, same as today.
+    return diffDays >= 0 && diffDays <= 1;
+  })();
   const [activityStreaks, setActivityStreaks] = useState<
     Record<string, number>
   >({});
+  const [allActivityPeriods, setAllActivityPeriods] = useState<
+    ActivityPeriod[]
+  >([]);
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   const {
     taskCounts,
@@ -73,6 +86,17 @@ export function useDailyTasks({
     getOrCreateDailyEntry
   );
 
+  const loadAllActivityPeriods = useCallback(async () => {
+    try {
+      const periods = await db.activityPeriods
+        .filter((period) => !period.deleted_at)
+        .toArray();
+      setAllActivityPeriods(periods);
+    } catch (error) {
+      console.error("Error loading all activity periods:", error);
+    }
+  }, []);
+
   const {
     memoPeriods,
     loadMemoPeriods,
@@ -89,12 +113,15 @@ export function useDailyTasks({
   useEffect(() => {
     loadDailyEntry();
     loadActivityPeriods();
+    /* eslint-disable-next-line react-hooks/set-state-in-effect -- loading IndexedDB periods into local state for all-time activity totals */
+    loadAllActivityPeriods();
     loadMemoPeriods();
     loadOneTimeTasks();
   }, [
     currentDate,
     loadDailyEntry,
     loadActivityPeriods,
+    loadAllActivityPeriods,
     loadMemoPeriods,
     loadOneTimeTasks,
   ]);
@@ -104,12 +131,15 @@ export function useDailyTasks({
     if (refreshTrigger === 0) return;
     loadDailyEntry({ silent: true });
     loadActivityPeriods();
+    /* eslint-disable-next-line react-hooks/set-state-in-effect -- refreshing IndexedDB periods into local state after sync */
+    loadAllActivityPeriods();
     loadMemoPeriods();
     loadOneTimeTasks();
   }, [
     refreshTrigger,
     loadDailyEntry,
     loadActivityPeriods,
+    loadAllActivityPeriods,
     loadMemoPeriods,
     loadOneTimeTasks,
   ]);
@@ -190,6 +220,66 @@ export function useDailyTasks({
 
     return latestOpen?.activity_id ?? null;
   }, [activityPeriods]);
+
+  useEffect(() => {
+    if (!resolvedCurrentActivityId) return;
+    const interval = setInterval(() => {
+      setNowMs(Date.now());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [resolvedCurrentActivityId]);
+
+  const activityTotalMsById = useMemo(() => {
+    const totals = new Map<string, number>();
+    const activeOpenPeriodId =
+      resolvedCurrentActivityId === null
+        ? null
+        : (allActivityPeriods
+            .filter(
+              (period) =>
+                period.activity_id === resolvedCurrentActivityId &&
+                !period.end_time
+            )
+            .sort(
+              (left, right) =>
+                new Date(right.start_time).getTime() -
+                new Date(left.start_time).getTime()
+            )[0]?.id ?? null);
+
+    allActivityPeriods.forEach((period) => {
+      const start = new Date(period.start_time).getTime();
+      const end = period.end_time
+        ? new Date(period.end_time).getTime()
+        : period.id === activeOpenPeriodId
+          ? nowMs
+          : start;
+      const intervalMs = Math.max(0, end - start);
+      totals.set(
+        period.activity_id,
+        (totals.get(period.activity_id) ?? 0) + intervalMs
+      );
+    });
+
+    return totals;
+  }, [allActivityPeriods, resolvedCurrentActivityId, nowMs]);
+
+  const calculateActivityTotalTime = useCallback(
+    (activityId: string): number => activityTotalMsById.get(activityId) ?? 0,
+    [activityTotalMsById]
+  );
+
+  const startActivity = useCallback(
+    async (activityId: string) => {
+      await handleStartActivity(activityId);
+      await loadAllActivityPeriods();
+    },
+    [handleStartActivity, loadAllActivityPeriods]
+  );
+
+  const stopActivity = useCallback(async () => {
+    await handleStopActivity();
+    await loadAllActivityPeriods();
+  }, [handleStopActivity, loadAllActivityPeriods]);
 
   const timelineSessions = useMemo(() => {
     const activitySessions = activityPeriods
@@ -279,14 +369,15 @@ export function useDailyTasks({
     deleteOneTimeTask,
     updateOneTimeTask,
     incrementTask,
-    handleStartActivity,
-    handleStopActivity,
+    handleStartActivity: startActivity,
+    handleStopActivity: stopActivity,
     handleStartMemo,
     handleStopMemo,
     handleTimelineClick,
     runningSession,
     loadActivityPeriods,
     calculateActivityTime,
+    calculateActivityTotalTime,
     calculateMemoTime,
     formatTimerDisplay,
   };

@@ -1,3 +1,6 @@
+/**
+ * SRP: Renders the tasks page shell, journal sections, and date-scoped task content.
+ */
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Heart, MapPin, MapPinOff, Flame, Hash, RotateCw } from "lucide-react";
 import { db, toDateStr } from "@/lib/db";
@@ -70,8 +73,6 @@ export default function TasksPageContent() {
   const { loadJournalEntry } = journal;
   const { entryDates, bookmarkedDates, loadJournalMeta } = useJournalMeta();
 
-  const isToday = toDateStr(currentDate) === toDateStr(new Date());
-
   const handleLocationDetected = useCallback(
     (location: LocationData) => {
       journal.setDraftLocation(location);
@@ -83,7 +84,7 @@ export default function TasksPageContent() {
 
   const { detectLocation, isDetectingLocation, resetGeoAttempt } =
     useLocationDetection({
-      isToday,
+      isToday: journal.canEditJournal,
       isJournalLoaded,
       currentLocation: journal.draftLocation,
       onLocationDetected: handleLocationDetected,
@@ -396,7 +397,7 @@ export default function TasksPageContent() {
                         )}
                       </button>
 
-                      {isToday && (
+                      {journal.canEditJournal && (
                         <button
                           type="button"
                           onClick={() => detectLocation(true)}

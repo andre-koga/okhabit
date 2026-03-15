@@ -5,14 +5,19 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
+
+// Format as month DD, HH:MM
 const buildStamp = new Date()
-  .toISOString()
-  .replace(/[-:TZ.]/g, "")
-  .slice(0, 12);
+  .toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }).toLowerCase();
+const listOfFoodAdjectives = ["sweet", "savory", "crispy", "chewy", "smooth", "icy", "warm", "cold", "hot", "cool", "sweet", "savory", "crispy", "chewy", "smooth", "icy", "warm", "cold", "hot", "cool"]
+const listOfFlavors = ["vanilla", "chocolate", "strawberry", "mint", "lemon", "ube", "matcha", "pineapple", "mango", "coconut"]
+const listOfDrinks = ["boba", "espresso", "tea", "soda", "juice", "cappuccino", "latte", "machiatto", "smoothie", "milkshake"]
+const randomPhrase = `${listOfFoodAdjectives[Math.floor(Math.random() * listOfFoodAdjectives.length)]} ${listOfFlavors[Math.floor(Math.random() * listOfFlavors.length)]} ${listOfDrinks[Math.floor(Math.random() * listOfDrinks.length)]}`
 
 export default defineConfig({
   define: {
     "import.meta.env.VITE_APP_BUILD_TIMESTAMP": JSON.stringify(buildStamp),
+    "import.meta.env.VITE_APP_RANDOM_PHRASE": JSON.stringify(randomPhrase),
   },
   plugins: [
     react(),
