@@ -51,6 +51,8 @@ export default function JournalVideoSection({
   const [uploading, setUploading] = useState(false);
   const [, setUploadError] = useState<string | null>(null);
   const [directVideoThumb, setDirectVideoThumb] = useState<string | null>(null);
+  const [forceThumbnailRegeneration, setForceThumbnailRegeneration] =
+    useState(false);
   const [directVideoThumbError, setDirectVideoThumbError] = useState<
     string | null
   >(null);
@@ -67,11 +69,12 @@ export default function JournalVideoSection({
     if (!hasDirectVideo) {
       setDirectVideoThumb(null);
       setDirectVideoThumbError(null);
+      setForceThumbnailRegeneration(false);
       return;
     }
 
-    // If we already have a stored thumbnail, use it and skip regeneration
-    if (storedThumbnail) {
+    // If we already have a stored thumbnail, use it unless a manual refresh was requested.
+    if (storedThumbnail && !forceThumbnailRegeneration) {
       setDirectVideoThumb(storedThumbnail);
       setDirectVideoThumbError(null);
       return;
@@ -146,6 +149,7 @@ export default function JournalVideoSection({
         hasCaptured = true;
         setDirectVideoThumb(url);
         setDirectVideoThumbError(null);
+        setForceThumbnailRegeneration(false);
         onThumbnailGenerated?.(url);
         return true;
       } catch (err) {
@@ -214,7 +218,13 @@ export default function JournalVideoSection({
       video.removeEventListener("error", handleError);
       video.src = "";
     };
-  }, [hasDirectVideo, storedThumbnail, videoUrlForThumb, onThumbnailGenerated]);
+  }, [
+    hasDirectVideo,
+    storedThumbnail,
+    videoUrlForThumb,
+    onThumbnailGenerated,
+    forceThumbnailRegeneration,
+  ]);
 
   const handleOpen = (next: boolean) => {
     if (next) setDraft(youtubeUrl);
@@ -222,6 +232,9 @@ export default function JournalVideoSection({
   };
 
   const handleSave = () => {
+    setForceThumbnailRegeneration(true);
+    setDirectVideoThumb(null);
+    setDirectVideoThumbError(null);
     onChange(draft);
     onBlur();
     setOpen(false);

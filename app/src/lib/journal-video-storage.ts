@@ -88,6 +88,11 @@ async function compressVideoForUpload(
   }
 
   const outputMimeType = getSupportedRecorderMimeType();
+  if (!outputMimeType) {
+    throw new JournalVideoUploadError(
+      "Video is too large (max 50MB), and this browser does not support automatic video compression."
+    );
+  }
   const targetTotalBitrate = Math.max(
     MIN_VIDEO_BITRATE + FALLBACK_AUDIO_BITRATE,
     Math.floor((maxBytes * 8 * COMPRESSION_HEADROOM) / duration)
@@ -207,16 +212,17 @@ async function transcodeWithMediaRecorder(
     video.playsInline = true;
 
     let animationFrameId: number | null = null;
+    let stopTimeoutId: number | null = null;
     let recorder: MediaRecorder | null = null;
     let stream: MediaStream | null = null;
+    let settled = false;
 
     const cleanup = () => {
       if (animationFrameId !== null) {
         cancelAnimationFrame(animationFrameId);
       }
-
-      if (recorder && recorder.state !== "inactive") {
-        recorder.stop();
+      if (stopTimeoutId !== null) {
+        window.clearTimeout(stopTimeoutId);
       }
 
       if (stream) {
@@ -228,9 +234,35 @@ async function transcodeWithMediaRecorder(
       URL.revokeObjectURL(objectUrl);
     };
 
-    video.onerror = () => {
+    const rejectOnce = (message: string) => {
+      if (settled) return;
+      settled = true;
       cleanup();
-      reject(new Error("Could not decode video for compression."));
+      reject(new Error(message));
+    };
+
+    const resolveOnce = (output: File) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(output);
+    };
+
+    const stopRecorderSafely = () => {
+      if (!recorder || recorder.state === "inactive") return;
+      try {
+        recorder.requestData();
+      } catch {
+        // requestData is optional; continue to stop.
+      }
+      window.setTimeout(() => {
+        if (!recorder || recorder.state === "inactive") return;
+        recorder.stop();
+      }, 120);
+    };
+
+    video.onerror = () => {
+      rejectOnce("Could not decode video for compression.");
     };
 
     video.onloadedmetadata = async () => {
@@ -244,15 +276,13 @@ async function transcodeWithMediaRecorder(
       const context = canvas.getContext("2d");
 
       if (!context) {
-        cleanup();
-        reject(new Error("Could not create compression canvas."));
+        rejectOnce("Could not create compression canvas.");
         return;
       }
 
       stream = canvas.captureStream(30);
       if (!stream) {
-        cleanup();
-        reject(new Error("Could not create compression stream."));
+        rejectOnce("Could not create compression stream.");
         return;
       }
 
@@ -280,8 +310,7 @@ async function transcodeWithMediaRecorder(
       try {
         recorder = new MediaRecorder(stream, recorderOptions);
       } catch {
-        cleanup();
-        reject(new Error("Could not initialize video compressor."));
+        rejectOnce("Could not initialize video compressor.");
         return;
       }
 
@@ -292,17 +321,22 @@ async function transcodeWithMediaRecorder(
         }
       };
       recorder.onerror = () => {
-        cleanup();
-        reject(new Error("Video compression failed."));
+        rejectOnce("Video compression failed.");
       };
       recorder.onstop = () => {
-        const extension = options.mimeType.includes("webm") ? "webm" : "mp4";
+        const resolvedMimeType =
+          recorder?.mimeType || options.mimeType || "video/webm";
+        const outputBlob = new Blob(chunks, { type: resolvedMimeType });
+        if (outputBlob.size === 0) {
+          rejectOnce("Video compression produced an empty file.");
+          return;
+        }
+        const extension = resolvedMimeType.includes("webm") ? "webm" : "mp4";
         const outputName = replaceFileExtension(file.name, extension);
-        const output = new File(chunks, outputName, {
-          type: options.mimeType || "video/webm",
+        const output = new File([outputBlob], outputName, {
+          type: resolvedMimeType,
         });
-        cleanup();
-        resolve(output);
+        resolveOnce(output);
       };
 
       const drawFrame = () => {
@@ -313,19 +347,25 @@ async function transcodeWithMediaRecorder(
       };
 
       video.onended = () => {
-        if (recorder && recorder.state !== "inactive") {
-          recorder.stop();
-        }
+        stopRecorderSafely();
       };
 
       recorder.start(1000);
       drawFrame();
+      const fallbackStopMs = Math.max(
+        7_000,
+        Math.ceil(
+          (Number.isFinite(video.duration) ? video.duration : 120) * 1000
+        ) + 4_000
+      );
+      stopTimeoutId = window.setTimeout(() => {
+        stopRecorderSafely();
+      }, fallbackStopMs);
 
       try {
         await video.play();
       } catch {
-        cleanup();
-        reject(new Error("Could not start video playback for compression."));
+        rejectOnce("Could not start video playback for compression.");
       }
     };
   });

@@ -1,3 +1,6 @@
+/**
+ * SRP: Loads and derives daily task state, streaks, and timeline actions for a selected date.
+ */
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toDateStr } from "@/lib/db";
@@ -119,7 +122,9 @@ export function useDailyTasks({
     );
 
     void getOrComputeActivityStreaksForDate(visibleActivities, currentDate, {
-      forceRecomputeTarget: isToday,
+      // Recompute target-day streaks for the viewed date so historical days
+      // reflect current task counts instead of stale cached streak rows.
+      forceRecomputeTarget: true,
     }).then((streaks) => {
       if (!cancelled) {
         setActivityStreaks(streaks);
