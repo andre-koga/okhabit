@@ -240,18 +240,20 @@ export default function GroupActivitiesTimeline({
                   </span>
                 </div>
 
-                {/* Sessions for this day */}
+                {/* Sessions for this day, latest first */}
                 <div className="space-y-1 pl-3">
-                  {day.sessions.map((session) => (
-                    <ActivityTimelineItem
-                      key={session.id}
-                      activityName={session.activityName}
-                      groupColor={session.groupColor}
-                      intervalMs={session.intervalMs}
-                      activityId={session.activityId}
-                      onClick={() => handleTimelineClick(session.id)}
-                    />
-                  ))}
+                  {day.sessions
+                    .sort((a, b) => a.intervalMs - b.intervalMs)
+                    .map((session) => (
+                      <ActivityTimelineItem
+                        key={session.id}
+                        activityName={session.activityName}
+                        groupColor={session.groupColor}
+                        intervalMs={session.intervalMs}
+                        activityId={session.activityId}
+                        onClick={() => handleTimelineClick(session.id)}
+                      />
+                    ))}
                 </div>
               </div>
             ))}
