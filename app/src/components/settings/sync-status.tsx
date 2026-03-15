@@ -10,7 +10,7 @@ const FADE_OUT_DELAY_MS = 2200;
 
 export default function SyncStatus() {
   const [syncState, setSyncState] = useState(syncEngine.getState());
-  const { isSupabaseConfigured, isAuthed, signOut } = useAuth();
+  const { isSupabaseConfigured, isAuthed } = useAuth();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isVisible, setIsVisible] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
@@ -97,7 +97,6 @@ export default function SyncStatus() {
         isOnline={isOnline}
         isAuthed={isAuthed}
         onManualSync={handleManualSync}
-        onSignOut={signOut}
         onToggleAuth={() => setShowAuth((prev) => !prev)}
       />
 

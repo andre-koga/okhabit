@@ -11,10 +11,13 @@ import { useAuth } from "@/lib/use-auth";
 
 export default function SettingsPageContent() {
   const { isSupabaseConfigured } = useAuth();
+  const rawSha =
+    import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA ??
+    import.meta.env.VERCEL_GIT_COMMIT_SHA;
   const buildLabel =
-    import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ??
-    import.meta.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ??
-    "dev";
+    typeof rawSha === "string" && rawSha.length >= 7 && !rawSha.startsWith("${")
+      ? rawSha.slice(0, 7)
+      : "dev";
 
   return (
     <div className="space-y-4 p-4 pb-24">

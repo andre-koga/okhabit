@@ -94,7 +94,21 @@ export function useDailyTasks({
     loadActivityPeriods,
     loadMemoPeriods,
     loadOneTimeTasks,
+  ]);
+
+  // When sync completes, refresh daily data without showing loading (avoids flash/scroll reset).
+  useEffect(() => {
+    if (refreshTrigger === 0) return;
+    loadDailyEntry({ silent: true });
+    loadActivityPeriods();
+    loadMemoPeriods();
+    loadOneTimeTasks();
+  }, [
     refreshTrigger,
+    loadDailyEntry,
+    loadActivityPeriods,
+    loadMemoPeriods,
+    loadOneTimeTasks,
   ]);
 
   useEffect(() => {

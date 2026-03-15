@@ -313,39 +313,40 @@ export class SyncEngine {
       "activity_periods",
     ];
 
-    for (const table of SYNC_TABLES) {
-      const dexieTable = TABLE_MAP[table];
-      const shouldFullPull = FULL_PULL_TABLES.includes(table);
-      const since = shouldFullPull
-        ? fullSince
-        : (() => {
-            if (!lastSync) return fullSince;
-            const sinceMs = Math.max(
-              0,
-              parseTimestamp(lastSync) - PULL_BUFFER_MS
-            );
-            return new Date(sinceMs).toISOString();
-          })();
+    // Suppress mutation hooks for the entire pull so bulkPut does not schedule debounced sync.
+    await this.withSuppressedMutationSignals(async () => {
+      for (const table of SYNC_TABLES) {
+        const dexieTable = TABLE_MAP[table];
+        const shouldFullPull = FULL_PULL_TABLES.includes(table);
+        const since = shouldFullPull
+          ? fullSince
+          : (() => {
+              if (!lastSync) return fullSince;
+              const sinceMs = Math.max(
+                0,
+                parseTimestamp(lastSync) - PULL_BUFFER_MS
+              );
+              return new Date(sinceMs).toISOString();
+            })();
 
-      const query = supabase.from(table).select("*").eq("user_id", userId);
+        const query = supabase.from(table).select("*").eq("user_id", userId);
 
-      const { data, error } = await (shouldFullPull
-        ? query
-        : query.gt("updated_at", since));
+        const { data, error } = await (shouldFullPull
+          ? query
+          : query.gt("updated_at", since));
 
-      if (error) {
-        throw new Error(`Pull error on ${table}: ${error.message}`);
-      }
+        if (error) {
+          throw new Error(`Pull error on ${table}: ${error.message}`);
+        }
 
-      if (!data || data.length === 0) continue;
+        if (!data || data.length === 0) continue;
 
-      await this.withSuppressedMutationSignals(async () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (db[dexieTable] as any).bulkPut(
           data.map((r) => ({ ...r, synced_at: r.updated_at }))
         );
-      });
-    }
+      }
+    });
 
     const now = new Date().toISOString();
     saveLastSyncAt(now);

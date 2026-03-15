@@ -44,39 +44,44 @@ export function useJournalEntry(currentDate: Date) {
   // Track which date the current draft is for to prevent cross-date saves
   const draftDateRef = useRef<string>("");
 
-  const loadJournalEntry = useCallback(async () => {
-    const dateStr = toDateStr(currentDate);
-    draftDateRef.current = dateStr; // Mark which date we're loading
-    try {
-      // Immediately clear all draft fields to prevent stale data
-      setJournalEntry(null);
-      setDraftTitle("");
-      setDraftText("");
-      setDraftEmoji("");
-      setDraftBookmarked(false);
-      setDraftYoutubeUrl("");
-      setDraftLocation(null);
-      setEmojiInput("");
-      draftRef.current = {
-        title: "",
-        text: "",
-        emoji: "",
-        bookmarked: false,
-        youtubeUrl: "",
-        location: null,
-        videoThumbnail: null,
-      };
+  const loadJournalEntry = useCallback(
+    async (opts?: { background?: boolean }) => {
+      const dateStr = toDateStr(currentDate);
+      draftDateRef.current = dateStr;
+      const background = opts?.background ?? false;
+      try {
+        if (!background) {
+          setJournalEntry(null);
+          setDraftTitle("");
+          setDraftText("");
+          setDraftEmoji("");
+          setDraftBookmarked(false);
+          setDraftYoutubeUrl("");
+          setDraftLocation(null);
+          setEmojiInput("");
+          draftRef.current = {
+            title: "",
+            text: "",
+            emoji: "",
+            bookmarked: false,
+            youtubeUrl: "",
+            location: null,
+            videoThumbnail: null,
+          };
+        }
 
-      const entry = await db.journalEntries
-        .where("entry_date")
-        .equals(dateStr)
-        .filter((e) => !e.deleted_at)
-        .first();
-      setJournalEntry(entry ?? null);
-    } catch (error) {
-      console.error("Error loading journal entry:", error);
-    }
-  }, [currentDate]);
+        const entry = await db.journalEntries
+          .where("entry_date")
+          .equals(dateStr)
+          .filter((e) => !e.deleted_at)
+          .first();
+        setJournalEntry(entry ?? null);
+      } catch (error) {
+        console.error("Error loading journal entry:", error);
+      }
+    },
+    [currentDate]
+  );
 
   // Sync draft fields whenever the persisted entry changes (NOT on date change to avoid race conditions)
   /* eslint-disable react-hooks/set-state-in-effect */

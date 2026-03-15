@@ -12,24 +12,28 @@ export function useDailyEntry(dateString: string) {
   );
   const [currentMemoId, setCurrentMemoId] = useState<string | null>(null);
 
-  const loadDailyEntry = useCallback(async () => {
-    try {
-      setLoading(true);
-      const entry = await db.dailyEntries
-        .where("date")
-        .equals(dateString)
-        .filter((e) => !e.deleted_at)
-        .first();
-      setDailyEntry(entry || null);
-      setTaskCounts((entry?.task_counts as Record<string, number>) || {});
-      setCurrentActivityId(entry?.current_activity_id || null);
-      setCurrentMemoId(entry?.current_memo_id || null);
-    } catch (error) {
-      console.error("Error loading daily entry:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [dateString]);
+  const loadDailyEntry = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      const silent = opts?.silent ?? false;
+      try {
+        if (!silent) setLoading(true);
+        const entry = await db.dailyEntries
+          .where("date")
+          .equals(dateString)
+          .filter((e) => !e.deleted_at)
+          .first();
+        setDailyEntry(entry || null);
+        setTaskCounts((entry?.task_counts as Record<string, number>) || {});
+        setCurrentActivityId(entry?.current_activity_id || null);
+        setCurrentMemoId(entry?.current_memo_id || null);
+      } catch (error) {
+        console.error("Error loading daily entry:", error);
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [dateString]
+  );
 
   const getOrCreateDailyEntry = useCallback(async (): Promise<DailyEntry> => {
     const entry = await getOrCreateDailyEntryDb(dateString);

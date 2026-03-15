@@ -106,6 +106,20 @@ export default function TasksPageContent() {
     }
   }, []);
 
+  /** Updates activities/groups from DB without showing loading (e.g. after sync). */
+  const loadDataInBackground = useCallback(async () => {
+    try {
+      const [loadedActivities, g] = await Promise.all([
+        db.activities.filter((a) => isActiveActivity(a)).toArray(),
+        db.activityGroups.filter((g) => isActiveGroup(g)).sortBy("created_at"),
+      ]);
+      setActivities(sortActivitiesByOrder(loadedActivities));
+      setGroups(g);
+    } catch (error) {
+      logError("Error loading data", error);
+    }
+  }, []);
+
   useEffect(() => {
     loadData();
   }, [loadData]);
@@ -115,14 +129,16 @@ export default function TasksPageContent() {
       const wasSyncing = prevSyncingRef.current;
       prevSyncingRef.current = state.isSyncing;
       if (wasSyncing && !state.isSyncing) {
-        loadData();
-        loadJournalEntry();
-        loadJournalMeta();
-        setRefreshTrigger((t) => t + 1);
+        void (async () => {
+          await loadDataInBackground();
+          await loadJournalEntry({ background: true });
+          await loadJournalMeta();
+          setRefreshTrigger((t) => t + 1);
+        })();
       }
     });
     return unsubscribe;
-  }, [loadData, loadJournalEntry, loadJournalMeta]);
+  }, [loadDataInBackground, loadJournalEntry, loadJournalMeta]);
 
   useEffect(() => {
     loadJournalMeta();

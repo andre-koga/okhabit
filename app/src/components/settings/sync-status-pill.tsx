@@ -1,11 +1,4 @@
-import {
-  Cloud,
-  CloudOff,
-  RefreshCw,
-  LogIn,
-  LogOut,
-  AlertCircle,
-} from "lucide-react";
+import { Cloud, CloudOff, RefreshCw, LogIn, AlertCircle } from "lucide-react";
 import { syncEngine } from "@/lib/sync";
 
 interface SyncStatusPillProps {
@@ -13,7 +6,6 @@ interface SyncStatusPillProps {
   isOnline: boolean;
   isAuthed: boolean;
   onManualSync: () => void;
-  onSignOut: () => void;
   onToggleAuth: () => void;
 }
 
@@ -22,7 +14,6 @@ export function SyncStatusPill({
   isOnline,
   isAuthed,
   onManualSync,
-  onSignOut,
   onToggleAuth,
 }: SyncStatusPillProps) {
   const canSync = isAuthed && isOnline;
@@ -72,15 +63,7 @@ export function SyncStatusPill({
           </span>
         </button>
 
-        {isAuthed ? (
-          <button
-            onClick={onSignOut}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
-            title="Sign out"
-          >
-            <LogOut className="h-3 w-3" />
-          </button>
-        ) : (
+        {!isAuthed && (
           <button
             onClick={onToggleAuth}
             className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"

@@ -1,3 +1,6 @@
+/**
+ * SRP: Computes and persists activity streak rows only when streak values change.
+ */
 import { db, newId, now, toDateStr } from "@/lib/db";
 import type { Activity, ActivityStreak, DailyEntry } from "@/lib/db/types";
 import { shouldShowActivity } from "@/lib/activity-utils";
@@ -54,6 +57,11 @@ async function upsertActivityStreak(
   const timestamp = now();
 
   if (existing) {
+    // Avoid no-op rewrites that would trigger unnecessary sync debounce loops.
+    if (existing.streak === streak && !existing.deleted_at) {
+      return;
+    }
+
     await db.activityStreaks.update(existing.id, {
       streak,
       updated_at: timestamp,
