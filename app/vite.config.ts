@@ -1,18 +1,18 @@
 /**
- * SRP: Configures Vite build behavior and exposed client build metadata.
+ * SRP: Configures Vite build behavior and exposes client build timestamp metadata.
  */
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
+const buildStamp = new Date()
+  .toISOString()
+  .replace(/[-:TZ.]/g, "")
+  .slice(0, 12);
 
 export default defineConfig({
   define: {
-    "import.meta.env.VITE_VERCEL_GIT_COMMIT_SHA": JSON.stringify(
-      process.env.VITE_VERCEL_GIT_COMMIT_SHA ??
-        process.env.VERCEL_GIT_COMMIT_SHA ??
-        ""
-    ),
+    "import.meta.env.VITE_APP_BUILD_TIMESTAMP": JSON.stringify(buildStamp),
   },
   plugins: [
     react(),
