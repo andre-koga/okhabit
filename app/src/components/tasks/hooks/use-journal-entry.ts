@@ -38,6 +38,7 @@ export function useJournalEntry(currentDate: Date) {
     bookmarked: false,
     youtubeUrl: "",
     location: null,
+    videoThumbnail: null,
   });
 
   // Track which date the current draft is for to prevent cross-date saves
