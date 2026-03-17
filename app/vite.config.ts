@@ -8,11 +8,60 @@ import path from "path";
 
 // Format as month DD, HH:MM
 const buildStamp = new Date()
-  .toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }).toLowerCase();
-const listOfFoodAdjectives = ["sweet", "savory", "crispy", "chewy", "smooth", "icy", "warm", "cold", "hot", "cool", "sweet", "savory", "crispy", "chewy", "smooth", "icy", "warm", "cold", "hot", "cool"]
-const listOfFlavors = ["vanilla", "chocolate", "strawberry", "mint", "lemon", "ube", "matcha", "pineapple", "mango", "coconut"]
-const listOfDrinks = ["boba", "espresso", "tea", "soda", "juice", "cappuccino", "latte", "machiatto", "smoothie", "milkshake"]
-const randomPhrase = `${listOfFoodAdjectives[Math.floor(Math.random() * listOfFoodAdjectives.length)]} ${listOfFlavors[Math.floor(Math.random() * listOfFlavors.length)]} ${listOfDrinks[Math.floor(Math.random() * listOfDrinks.length)]}`
+  .toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+  .toLowerCase();
+const listOfFoodAdjectives = [
+  "sweet",
+  "savory",
+  "crispy",
+  "chewy",
+  "smooth",
+  "icy",
+  "warm",
+  "cold",
+  "hot",
+  "cool",
+  "sweet",
+  "savory",
+  "crispy",
+  "chewy",
+  "smooth",
+  "icy",
+  "warm",
+  "cold",
+  "hot",
+  "cool",
+];
+const listOfFlavors = [
+  "vanilla",
+  "chocolate",
+  "strawberry",
+  "mint",
+  "lemon",
+  "ube",
+  "matcha",
+  "pineapple",
+  "mango",
+  "coconut",
+];
+const listOfDrinks = [
+  "boba",
+  "espresso",
+  "tea",
+  "soda",
+  "juice",
+  "cappuccino",
+  "latte",
+  "machiatto",
+  "smoothie",
+  "milkshake",
+];
+const randomPhrase = `${listOfFoodAdjectives[Math.floor(Math.random() * listOfFoodAdjectives.length)]} ${listOfFlavors[Math.floor(Math.random() * listOfFlavors.length)]} ${listOfDrinks[Math.floor(Math.random() * listOfDrinks.length)]}`;
 
 export default defineConfig({
   define: {

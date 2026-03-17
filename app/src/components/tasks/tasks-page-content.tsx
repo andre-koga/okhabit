@@ -2,7 +2,15 @@
  * SRP: Renders the tasks page shell, journal sections, and date-scoped task content.
  */
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Heart, MapPin, MapPinOff, Flame, Hash, RotateCw } from "lucide-react";
+import {
+  Heart,
+  MapPin,
+  MapPinOff,
+  Flame,
+  Hash,
+  Pencil,
+  RotateCw,
+} from "lucide-react";
 import { db, toDateStr } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import {
@@ -18,11 +26,11 @@ import JournalVideoSection, {
   type JournalThumbnailSource,
 } from "@/components/tasks/journal-video-section";
 import JournalTextSection from "@/components/tasks/journal-text-section";
+import JournalEditDialog from "@/components/tasks/journal-edit-dialog";
 import DateNavigator from "@/components/tasks/date-navigator";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import type { LocationData } from "@/lib/db/types";
 import { getYoutubeEmbedUrl } from "@/lib/youtube-utils";
-import { getFirstEmoji } from "@/lib/emoji-utils";
 import { logError } from "@/lib/error-utils";
 import { useAuth } from "@/lib/use-auth";
 import { syncEngine } from "@/lib/sync";
@@ -62,6 +70,7 @@ export default function TasksPageContent() {
   const [showLocationInput, setShowLocationInput] = useState(false);
   const [locationInputVal, setLocationInputVal] = useState("");
   const [isJournalLoaded, setIsJournalLoaded] = useState(false);
+  const [journalEditOpen, setJournalEditOpen] = useState(false);
   const [quote] = useState(pickRandomQuote);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -153,6 +162,7 @@ export default function TasksPageContent() {
 
   useEffect(() => {
     setIsJournalLoaded(false);
+    setJournalEditOpen(false);
     resetGeoAttempt();
     void loadJournalEntry().finally(() => {
       setIsJournalLoaded(true);
@@ -231,49 +241,14 @@ export default function TasksPageContent() {
       {/* Emoji — centered, overlaps the bottom of the video */}
       <div className="pointer-events-none relative z-10 -mt-10 flex justify-center">
         <div className="pointer-events-auto relative">
-          {journal.canEditJournal ? (
-            journal.showEmojiInput ? (
-              <input
-                autoFocus
-                type="text"
-                value={journal.emojiInput}
-                onChange={(e) => {
-                  const emoji = getFirstEmoji(e.target.value);
-                  journal.setEmojiInput(emoji);
-                }}
-                onBlur={() => {
-                  const emoji = getFirstEmoji(journal.emojiInput);
-                  journal.setDraftEmoji(emoji);
-                  journal.draftRef.current.emoji = emoji;
-                  journal.setShowEmojiInput(false);
-                  journal.saveDraft();
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === "Escape")
-                    e.currentTarget.blur();
-                }}
-                placeholder=""
-                className="h-20 w-20 rounded-full bg-background text-center text-5xl shadow-md placeholder:text-xl placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            ) : (
-              <button
-                onClick={() => journal.setShowEmojiInput(true)}
-                className="flex h-20 w-20 items-center justify-center rounded-full bg-background text-5xl shadow-md"
-                title="Set day emoji"
-              >
-                {journal.draftEmoji || (
-                  <span className="text-2xl leading-none text-muted-foreground">
-                    ＋
-                  </span>
-                )}
-              </button>
-            )
-          ) : journal.draftEmoji ? (
+          {journal.draftEmoji ? (
             <span className="flex h-20 w-20 items-center justify-center rounded-full bg-background text-5xl shadow-md">
               {journal.draftEmoji}
             </span>
           ) : (
-            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-background shadow-md" />
+            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-background text-5xl text-muted-foreground/30 shadow-md">
+              🙂
+            </span>
           )}
 
           {/* Bookmark badge — top-right of emoji */}
@@ -283,18 +258,26 @@ export default function TasksPageContent() {
       <div className="px-4 pt-4">
         <div className="mx-auto max-w-2xl space-y-3">
           <JournalTextSection
-            canEdit={journal.canEditJournal}
             title={journal.draftTitle}
             text={journal.draftText}
-            onTitleChange={(val) => {
-              journal.setDraftTitle(val);
-              journal.draftRef.current.title = val;
+          />
+
+          <JournalEditDialog
+            open={journalEditOpen}
+            canEdit={journal.canEditJournal}
+            initialEmoji={journal.draftEmoji}
+            initialTitle={journal.draftTitle}
+            initialText={journal.draftText}
+            onOpenChange={setJournalEditOpen}
+            onSave={({ emoji, title, text }) => {
+              journal.setDraftEmoji(emoji);
+              journal.setDraftTitle(title);
+              journal.setDraftText(text);
+              journal.draftRef.current.emoji = emoji;
+              journal.draftRef.current.title = title;
+              journal.draftRef.current.text = text;
+              journal.saveDraft();
             }}
-            onTextChange={(val) => {
-              journal.setDraftText(val);
-              journal.draftRef.current.text = val;
-            }}
-            onBlur={journal.saveDraft}
           />
 
           <div className="-mt-1 pb-1">
@@ -325,6 +308,20 @@ export default function TasksPageContent() {
               </p>
             )}
           </div>
+
+          {journal.canEditJournal && (
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={() => setJournalEditOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                title="Edit journal"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Edit
+              </button>
+            </div>
+          )}
 
           {/* Info bar — sits on the section divider */}
           <div className="py-3">

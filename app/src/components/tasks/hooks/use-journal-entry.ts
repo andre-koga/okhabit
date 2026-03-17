@@ -1,3 +1,6 @@
+/**
+ * SRP: Manages date-scoped journal draft state, loading, and persistence.
+ */
 import { useState, useCallback, useEffect, useRef } from "react";
 import { db, toDateStr, now, newId } from "@/lib/db";
 import type { JournalEntry, LocationData } from "@/lib/db/types";
@@ -27,8 +30,6 @@ export function useJournalEntry(currentDate: Date) {
   const [draftBookmarked, setDraftBookmarked] = useState(false);
   const [draftYoutubeUrl, setDraftYoutubeUrl] = useState("");
   const [draftLocation, setDraftLocation] = useState<LocationData | null>(null);
-  const [emojiInput, setEmojiInput] = useState("");
-  const [showEmojiInput, setShowEmojiInput] = useState(false);
 
   // Ref so blur-save handlers always read the latest draft without stale closures
   const draftRef = useRef<JournalDraft>({
@@ -58,7 +59,6 @@ export function useJournalEntry(currentDate: Date) {
           setDraftBookmarked(false);
           setDraftYoutubeUrl("");
           setDraftLocation(null);
-          setEmojiInput("");
           draftRef.current = {
             title: "",
             text: "",
@@ -99,7 +99,6 @@ export function useJournalEntry(currentDate: Date) {
     setDraftBookmarked(b);
     setDraftYoutubeUrl(y);
     setDraftLocation(l);
-    setEmojiInput(e);
     draftRef.current = {
       title: t,
       text: tx,
@@ -249,10 +248,6 @@ export function useJournalEntry(currentDate: Date) {
     setDraftBookmarked,
     draftYoutubeUrl,
     setDraftYoutubeUrl,
-    emojiInput,
-    setEmojiInput,
-    showEmojiInput,
-    setShowEmojiInput,
     draftRef,
     canEditJournal,
     // state
