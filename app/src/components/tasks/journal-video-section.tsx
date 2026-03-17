@@ -2,8 +2,13 @@
  * SRP: Renders the journal video section with URL editing, optional uploads, and a consistent thumbnail facade.
  */
 import { useEffect, useRef, useState } from "react";
-import { CloudOff, Loader2, Pencil, Trash2, Upload } from "lucide-react";
-import { InputPromptDialog } from "@/components/ui/input-prompt-dialog";
+import { CloudOff, Loader2, Pencil, Upload } from "lucide-react";
+import {
+  FormDialog,
+  FormDialogActions,
+  FormField,
+  FormStack,
+} from "@/components/forms";
 import {
   deleteJournalVideoByUrl,
   JournalVideoUploadError,
@@ -272,6 +277,15 @@ export default function JournalVideoSection({
     }
   };
 
+  const handleDialogInputKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (event.key === "Enter" && !hasVideoSetup && draft.trim().length > 0) {
+      event.preventDefault();
+      handleSave();
+    }
+  };
+
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -464,36 +478,44 @@ export default function JournalVideoSection({
           >
             <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
-          <InputPromptDialog
+          <FormDialog
             open={open}
             onOpenChange={handleOpen}
             title="Video URL"
-            value={draft}
-            onChange={(nextDraft) => {
-              if (hasVideoSetup) return;
-              setDraft(nextDraft);
-            }}
-            onConfirm={handleSave}
-            confirmLabel="Save"
-            placeholder="https://..."
-            inputType="url"
-            inputReadOnly={hasVideoSetup}
-            confirmDisabled={hasVideoSetup || draft.trim().length === 0}
-            secondaryAction={
-              hasVideoSetup
-                ? {
-                    label: (
-                      <>
-                        <Trash2 className="h-3 w-3" />
-                        Clear
-                      </>
-                    ),
-                    onClick: handleClear,
-                    disabled: clearing || uploading,
-                  }
-                : undefined
-            }
-          />
+            contentClassName="w-80"
+          >
+            <FormStack>
+              <FormField
+                id="journal-video-url"
+                label="Video URL"
+                labelClassName="sr-only"
+                value={draft}
+                onChange={(event) => {
+                  if (hasVideoSetup) return;
+                  setDraft(event.target.value);
+                }}
+                onKeyDown={handleDialogInputKeyDown}
+                type="url"
+                readOnly={hasVideoSetup}
+                placeholder="https://..."
+              />
+              <FormDialogActions
+                onConfirm={handleSave}
+                confirmLabel="Save"
+                confirmDisabled={hasVideoSetup || draft.trim().length === 0}
+                secondaryAction={
+                  hasVideoSetup
+                    ? {
+                        label: "Clear",
+                        onClick: handleClear,
+                        disabled: clearing || uploading,
+                        destructive: true,
+                      }
+                    : undefined
+                }
+              />
+            </FormStack>
+          </FormDialog>
         </div>
       )}
     </div>

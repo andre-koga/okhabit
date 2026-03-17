@@ -71,6 +71,7 @@ export default function TasksPageContent() {
   const [locationInputVal, setLocationInputVal] = useState("");
   const [isJournalLoaded, setIsJournalLoaded] = useState(false);
   const [journalEditOpen, setJournalEditOpen] = useState(false);
+  const [journalEditSession, setJournalEditSession] = useState(0);
   const [quote] = useState(pickRandomQuote);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -270,6 +271,7 @@ export default function TasksPageContent() {
           />
 
           <JournalEditDialog
+            key={journalEditSession}
             open={journalEditOpen}
             canEdit={journal.canEditJournal}
             initialEmoji={journal.draftEmoji}
@@ -320,7 +322,10 @@ export default function TasksPageContent() {
             <div className="flex justify-center">
               <button
                 type="button"
-                onClick={() => setJournalEditOpen(true)}
+                onClick={() => {
+                  setJournalEditSession((session) => session + 1);
+                  setJournalEditOpen(true);
+                }}
                 className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
                 title="Edit journal"
               >
