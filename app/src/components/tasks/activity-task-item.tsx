@@ -1,5 +1,8 @@
+/**
+ * SRP: Renders one activity row with completion, pause state, timer, and streak controls.
+ */
 import { memo, useEffect, useState } from "react";
-import { X, Flame } from "lucide-react";
+import { X, Flame, Pause, Play } from "lucide-react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { getActivityDisplayName } from "@/lib/activity-utils";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
@@ -12,9 +15,12 @@ interface ActivityTaskItemProps {
   count: number;
   streak: number;
   timeSpent: number;
+  isPaused: boolean;
+  isBreakDay: boolean;
   isCurrentActivity: boolean;
   isToday: boolean;
   onIncrement: (activityId: string, target: number) => void;
+  onTogglePaused: (activityId: string) => void;
   onStartActivity: (activityId: string) => void;
   onStopActivity: () => void;
 }
@@ -25,9 +31,12 @@ function ActivityTaskItem({
   count,
   streak,
   timeSpent,
+  isPaused,
+  isBreakDay,
   isCurrentActivity,
   isToday,
   onIncrement,
+  onTogglePaused,
   onStartActivity,
   onStopActivity,
 }: ActivityTaskItemProps) {
@@ -41,9 +50,10 @@ function ActivityTaskItem({
   }, [isCurrentActivity]);
 
   const target = activity.completion_target ?? 1;
-  const isComplete = count >= target;
+  const isComplete = !isPaused && count >= target;
   const isNeverTask = activity.routine === "never";
   const groupColor = group?.color || DEFAULT_GROUP_COLOR;
+  const canUpdateCount = isToday && !isPaused;
   const streakColorClass =
     streak === 0
       ? "text-muted-foreground"
@@ -57,14 +67,22 @@ function ActivityTaskItem({
     <div className="flex items-center gap-2">
       {isNeverTask ? (
         <div
-          onClick={isToday ? () => onIncrement(activity.id, target) : undefined}
-          className={`flex h-7 w-[2.75rem] items-center justify-center rounded-md border border-destructive transition-colors ${
-            isToday ? "cursor-pointer" : "cursor-default opacity-60"
-          } ${isComplete ? "bg-destructive" : "bg-transparent"}`}
-          role={isToday ? "button" : undefined}
-          tabIndex={isToday ? 0 : undefined}
+          onClick={
+            canUpdateCount ? () => onIncrement(activity.id, target) : undefined
+          }
+          className={`flex h-7 w-[2.75rem] items-center justify-center rounded-md border transition-colors ${
+            canUpdateCount ? "cursor-pointer" : "cursor-default opacity-60"
+          } ${
+            isBreakDay || isPaused
+              ? isComplete
+                ? "border-amber-500 bg-amber-500 text-amber-950"
+                : "border-amber-500/60 bg-amber-500/10 text-amber-500"
+              : "border-destructive"
+          } ${!(isBreakDay || isPaused) ? (isComplete ? "bg-destructive" : "bg-transparent") : ""}`}
+          role={canUpdateCount ? "button" : undefined}
+          tabIndex={canUpdateCount ? 0 : undefined}
           onKeyDown={
-            isToday
+            canUpdateCount
               ? (e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
@@ -74,27 +92,51 @@ function ActivityTaskItem({
               : undefined
           }
         >
-          {isComplete && <X className="h-4 w-4 text-destructive-foreground" />}
+          {isComplete && (
+            <X
+              className={`h-4 w-4 ${
+                isBreakDay || isPaused
+                  ? "text-amber-950"
+                  : "text-destructive-foreground"
+              }`}
+            />
+          )}
         </div>
       ) : target <= 1 ? (
         <TaskCheckbox
           isComplete={isComplete}
-          isToday={isToday}
+          isToday={canUpdateCount}
           onClick={() => onIncrement(activity.id, target)}
+          title={isPaused ? "Task paused for this day" : undefined}
+          className={
+            isBreakDay || isPaused
+              ? isComplete
+                ? "border-amber-500 bg-amber-500 text-amber-950"
+                : "border-amber-500/60 bg-amber-500/10 text-amber-500"
+              : ""
+          }
         />
       ) : (
         <button
-          onClick={isToday ? () => onIncrement(activity.id, target) : undefined}
-          disabled={!isToday}
+          onClick={
+            canUpdateCount ? () => onIncrement(activity.id, target) : undefined
+          }
+          disabled={!canUpdateCount}
           className={`flex h-7 min-w-[2.75rem] items-center justify-center rounded-full border px-2 text-xs font-semibold transition-colors ${
-            isComplete
-              ? "border-primary bg-primary text-primary-foreground"
-              : count > 0
-                ? "border-primary/40 bg-primary/20 text-primary"
-                : "border-muted-foreground text-muted-foreground"
+            isBreakDay || isPaused
+              ? isComplete
+                ? "border-amber-500 bg-amber-500 text-amber-950"
+                : count > 0
+                  ? "border-amber-500/80 bg-amber-500/20 text-amber-700"
+                  : "border-amber-500/60 bg-amber-500/10 text-amber-500"
+              : isComplete
+                ? "border-primary bg-primary text-primary-foreground"
+                : count > 0
+                  ? "border-primary/40 bg-primary/20 text-primary"
+                  : "border-muted-foreground text-muted-foreground"
           } disabled:cursor-default disabled:opacity-60`}
           title={
-            isToday
+            canUpdateCount
               ? `${count} / ${target} — click to increment`
               : `${count} / ${target}`
           }
@@ -111,7 +153,7 @@ function ActivityTaskItem({
         elapsedMs={timeSpent}
         isRunning={isCurrentActivity}
         onPlayStop={
-          isToday
+          isToday && !isPaused
             ? () =>
                 isCurrentActivity
                   ? onStopActivity()
@@ -122,6 +164,26 @@ function ActivityTaskItem({
         readOnly={!isToday}
         className="flex-1"
       />
+
+      <button
+        type="button"
+        onClick={isToday ? () => onTogglePaused(activity.id) : undefined}
+        disabled={!isToday}
+        className={`inline-flex h-7 w-7 items-center justify-center rounded-full border transition-colors ${
+          isPaused
+            ? "border-amber-500/60 text-amber-500"
+            : "border-muted-foreground/40 text-muted-foreground hover:text-foreground"
+        } disabled:cursor-default disabled:opacity-60`}
+        title={
+          isPaused ? "Resume task for this day" : "Pause task for this day"
+        }
+      >
+        {isPaused ? (
+          <Play className="h-3.5 w-3.5" />
+        ) : (
+          <Pause className="h-3.5 w-3.5" />
+        )}
+      </button>
 
       <div
         className={`flex items-center gap-0.5 text-sm font-semibold ${streakColorClass}`}

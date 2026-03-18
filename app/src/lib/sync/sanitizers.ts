@@ -1,3 +1,6 @@
+/**
+ * SRP: Sanitizes sync payloads so only schema-valid rows and references are upserted.
+ */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { db, newId } from "@/lib/db";
 import type { SyncTable } from "./sync-transformers";
@@ -38,6 +41,8 @@ const ALLOWED_COLUMNS: Record<SyncTable, Set<string>> = {
     "user_id",
     "date",
     "task_counts",
+    "paused_task_ids",
+    "is_break_day",
     "current_activity_id",
     "current_memo_id",
     "created_at",

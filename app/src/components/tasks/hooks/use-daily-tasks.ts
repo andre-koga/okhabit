@@ -54,6 +54,8 @@ export function useDailyTasks({
 
   const {
     taskCounts,
+    pausedTaskIds,
+    isBreakDay,
     loading,
     currentActivityId,
     setCurrentActivityId,
@@ -62,6 +64,8 @@ export function useDailyTasks({
     loadDailyEntry,
     getOrCreateDailyEntry,
     incrementTask,
+    toggleTaskPaused,
+    toggleBreakDay,
   } = useDailyEntry(dateString);
 
   const {
@@ -164,11 +168,15 @@ export function useDailyTasks({
     return () => {
       cancelled = true;
     };
-  }, [activities, currentDate, isToday, taskCounts]);
+  }, [activities, currentDate, isToday, taskCounts, pausedTaskIds, isBreakDay]);
 
   const dailyActivities = useMemo(
     () => activities.filter((a) => shouldShowActivity(a, currentDate)),
     [activities, currentDate]
+  );
+  const pausedTaskIdSet = useMemo(
+    () => new Set(pausedTaskIds),
+    [pausedTaskIds]
   );
 
   const getGroupForActivity = useCallback(
@@ -178,12 +186,21 @@ export function useDailyTasks({
   );
 
   const { nonNeverCount, completedCount, completionRate } = useMemo(() => {
+    if (isBreakDay) {
+      return {
+        nonNeverCount: 0,
+        completedCount: 0,
+        completionRate: 0,
+      };
+    }
+
     const nonNever = dailyActivities.filter(
-      (a) => a.routine !== "never"
+      (a) => a.routine !== "never" && !pausedTaskIdSet.has(a.id)
     ).length;
     const completed = dailyActivities.filter(
       (a) =>
         a.routine !== "never" &&
+        !pausedTaskIdSet.has(a.id) &&
         (taskCounts[a.id] || 0) >= (a.completion_target ?? 1)
     ).length;
     const rate = nonNever === 0 ? 0 : Math.round((completed / nonNever) * 100);
@@ -192,7 +209,7 @@ export function useDailyTasks({
       completedCount: completed,
       completionRate: rate,
     };
-  }, [dailyActivities, taskCounts]);
+  }, [dailyActivities, isBreakDay, pausedTaskIdSet, taskCounts]);
 
   const totalTimeSpentMs = useMemo(
     () =>
@@ -386,12 +403,16 @@ export function useDailyTasks({
     currentActivityId: resolvedCurrentActivityId,
     currentMemoId,
     taskCounts,
+    pausedTaskIds,
+    isBreakDay,
     oneTimeTasks,
     createOneTimeTask,
     toggleOneTimeTask,
     deleteOneTimeTask,
     updateOneTimeTask,
     incrementTask,
+    toggleTaskPaused,
+    toggleBreakDay,
     handleStartActivity: startActivity,
     handleStopActivity: stopActivity,
     handleStartMemo,

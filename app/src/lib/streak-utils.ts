@@ -43,9 +43,32 @@ function isCompletedOnDate(
   entry: DailyEntry | undefined
 ): boolean {
   if (!entry) return false;
+  const pausedTaskIds = Array.isArray(entry.paused_task_ids)
+    ? entry.paused_task_ids
+    : [];
+  if (pausedTaskIds.includes(activity.id)) return false;
   const target = activity.completion_target ?? 1;
   const taskCounts = (entry.task_counts as Record<string, number>) || {};
   return (taskCounts[activity.id] || 0) >= target;
+}
+
+type DailyTaskStreakStatus = "incrementable" | "reset" | "skip";
+
+function getDailyTaskStreakStatus(
+  activity: Activity,
+  entry: DailyEntry | undefined
+): DailyTaskStreakStatus {
+  if (!entry) return "reset";
+  const isCompleted = isCompletedOnDate(activity, entry);
+
+  // Break day behavior:
+  // - incomplete tasks are neutral (skip)
+  // - completed tasks still affect streaks normally
+  if (entry.is_break_day && !isCompleted) return "skip";
+
+  return shouldIncrementStreak(activity, isCompleted)
+    ? "incrementable"
+    : "reset";
 }
 
 async function upsertActivityStreak(
@@ -148,10 +171,16 @@ async function ensureStreakForActivityOnDate(
     }
 
     const dateStr = toDateStr(cursorDay);
-    const isCompleted = isCompletedOnDate(activity, entriesByDate.get(dateStr));
-    const nextStreak = shouldIncrementStreak(activity, isCompleted)
-      ? previousStreak + 1
-      : 0;
+    const streakStatus = getDailyTaskStreakStatus(
+      activity,
+      entriesByDate.get(dateStr)
+    );
+    const nextStreak =
+      streakStatus === "skip"
+        ? previousStreak
+        : streakStatus === "incrementable"
+          ? previousStreak + 1
+          : 0;
     const existingRow = streakRowByDate.get(dateStr);
 
     await upsertActivityStreak(activity.id, dateStr, nextStreak, existingRow);

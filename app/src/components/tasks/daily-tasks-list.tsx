@@ -12,7 +12,7 @@ import ActiveMemoPill from "./active-memo-pill";
 import AddTaskModal from "./add-task-modal";
 import AssignActivityDialog from "./assign-activity-dialog";
 import { useDailyTasks } from "./hooks/use-daily-tasks";
-import { CircleCheckBig } from "lucide-react";
+import { CircleCheckBig, Palmtree } from "lucide-react";
 import SessionDetailsDialog from "@/components/activities/session-details-dialog";
 
 interface DailyTasksListProps {
@@ -51,12 +51,16 @@ export default function DailyTasksList({
     currentActivityId,
     currentMemoId,
     taskCounts,
+    pausedTaskIds,
+    isBreakDay,
     oneTimeTasks,
     createOneTimeTask,
     toggleOneTimeTask,
     deleteOneTimeTask,
     updateOneTimeTask,
     incrementTask,
+    toggleTaskPaused,
+    toggleBreakDay,
     handleStartActivity,
     handleStopActivity,
     handleStartMemo,
@@ -70,6 +74,7 @@ export default function DailyTasksList({
     calculateMemoTime,
     formatTimerDisplay,
   } = useDailyTasks({ activities, groups, currentDate, refreshTrigger });
+  const pausedTaskIdSet = new Set(pausedTaskIds);
 
   const openAssignDialog = (periodId: string, intervalMs: number) => {
     setAssignPeriodId(periodId);
@@ -119,7 +124,9 @@ export default function DailyTasksList({
       {dailyActivities.length > 0 && (
         <div className="mb-2 ml-1 mr-1.5 flex items-center justify-between text-xs text-muted-foreground">
           <span>
-            {completedCount} / {nonNeverCount} ({completionRate}%)
+            {isBreakDay
+              ? "Break day"
+              : `${completedCount} / ${nonNeverCount} (${completionRate}%)`}
           </span>
           <span>{formatTimerDisplay(totalTimeSpentMs)}</span>
         </div>
@@ -145,13 +152,40 @@ export default function DailyTasksList({
               count={taskCounts[activity.id] || 0}
               streak={activityStreaks[activity.id] || 0}
               timeSpent={calculateActivityTime(activity.id)}
+              isPaused={pausedTaskIdSet.has(activity.id)}
+              isBreakDay={isBreakDay}
               isCurrentActivity={currentActivityId === activity.id}
               isToday={isToday}
               onIncrement={incrementTask}
+              onTogglePaused={toggleTaskPaused}
               onStartActivity={handleStartActivity}
               onStopActivity={handleStopActivity}
             />
           ))}
+      </div>
+
+      <div className="mt-4 flex flex-col items-center justify-center gap-1">
+        <button
+          type="button"
+          onClick={() => {
+            void toggleBreakDay();
+          }}
+          disabled={!isToday}
+          className={`inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-1.5 text-xs font-medium transition-colors ${
+            isBreakDay
+              ? "text-amber-500"
+              : "text-muted-foreground hover:text-foreground"
+          } disabled:cursor-default disabled:opacity-70`}
+          title={isBreakDay ? "Unset break day" : "Mark this day as break day"}
+        >
+          <Palmtree className="h-3.5 w-3.5" />
+          {isBreakDay ? "Break Day Active" : "Mark as Break Day"}
+        </button>
+        {!isBreakDay && (
+          <p className="text-center text-[11px] text-muted-foreground">
+            Incomplete tasks won&apos;t affect streaks.
+          </p>
+        )}
       </div>
 
       {(currentActivityId || currentMemoId || timelineSessions.length > 0) && (

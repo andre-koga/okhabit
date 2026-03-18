@@ -80,6 +80,7 @@ export default function TasksPageContent() {
   const { isSupabaseConfigured, isAuthed } = useAuth();
 
   const journal = useJournalEntry(currentDate);
+  const dateString = toDateStr(currentDate);
   const { loadJournalEntry } = journal;
   const { entryDates, bookmarkedDates, loadJournalMeta } = useJournalMeta();
 
@@ -224,7 +225,7 @@ export default function TasksPageContent() {
         canEdit={journal.canEditJournal}
         youtubeUrl={journal.draftYoutubeUrl}
         embedUrl={embedUrl}
-        entryDate={toDateStr(currentDate)}
+        entryDate={dateString}
         canUpload={isSupabaseConfigured && isAuthed}
         canPlay={isOnline}
         thumbnail={((): JournalThumbnailSource | null => {

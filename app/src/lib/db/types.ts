@@ -1,6 +1,6 @@
-// Local-first type definitions
-// Sync fields (synced_at, deleted_at) are null for local-only data
-// and will be used when the optional cloud sync feature is added.
+/**
+ * SRP: Defines local-first database entity types shared by storage, sync, and UI layers.
+ */
 
 export interface ActivityGroup {
   id: string;
@@ -32,6 +32,8 @@ export interface DailyEntry {
   id: string;
   date: string; // YYYY-MM-DD
   task_counts: Record<string, number> | null;
+  paused_task_ids: string[] | null;
+  is_break_day: boolean | null;
   current_activity_id: string | null;
   current_memo_id: string | null;
   created_at: string;

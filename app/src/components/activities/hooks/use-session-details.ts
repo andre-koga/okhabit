@@ -210,6 +210,8 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
           id: newId(),
           date: selectedDateString,
           task_counts: {},
+          paused_task_ids: [],
+          is_break_day: false,
           current_activity_id: null,
           current_memo_id: null,
           created_at: timestamp,

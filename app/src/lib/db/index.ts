@@ -1,3 +1,6 @@
+/**
+ * SRP: Defines the Dexie database schema versions and exports shared DB helpers.
+ */
 import Dexie, { type Table } from "dexie";
 import { v4 as uuidv4 } from "uuid";
 import { toDateString } from "@/lib/date-utils";
@@ -58,6 +61,19 @@ export class UpwardsDB extends Dexie {
       activityGroups: "id, name, is_archived, deleted_at, created_at",
       activities: "id, group_id, is_archived, deleted_at, created_at",
       dailyEntries: "id, date, deleted_at",
+      activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
+      journalEntries:
+        "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
+      oneTimeTasks:
+        "id, date, is_completed, is_pinned, due_date, deleted_at, created_at",
+      activityStreaks: "id, activity_id, date, [activity_id+date], deleted_at",
+      memoPeriods: "id, daily_entry_id, one_time_task_id, deleted_at",
+    });
+
+    this.version(5).stores({
+      activityGroups: "id, name, is_archived, deleted_at, created_at",
+      activities: "id, group_id, is_archived, deleted_at, created_at",
+      dailyEntries: "id, date, is_break_day, deleted_at",
       activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
       journalEntries:
         "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
