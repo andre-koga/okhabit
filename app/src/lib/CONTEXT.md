@@ -29,6 +29,8 @@ lib/
 ├── activity-periods.ts
 ├── date-utils.ts
 ├── journal-utils.ts
+├── journal-video-compression.ts  # Browser-side compress before upload
+├── journal-video-storage.ts      # Supabase Storage upload/delete
 ├── streak-utils.ts
 ├── color-utils.ts
 ├── error-utils.ts

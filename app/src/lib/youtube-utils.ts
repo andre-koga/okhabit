@@ -1,4 +1,12 @@
 /**
+ * Extract YouTube video ID from an embed URL (e.g. https://www.youtube.com/embed/VIDEO_ID).
+ */
+export function getYoutubeVideoIdFromEmbed(embedUrl: string): string | null {
+  const match = embedUrl.match(/embed\/([A-Za-z0-9_-]{11})/);
+  return match ? match[1] : null;
+}
+
+/**
  * Extract YouTube video ID and return embed URL, or null if invalid.
  */
 export function getYoutubeEmbedUrl(url: string): string | null {

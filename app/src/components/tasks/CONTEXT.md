@@ -15,6 +15,7 @@ tasks/
 │   ├── use-daily-entry.ts      # Daily entry CRUD, task counts
 │   ├── use-one-time-tasks.ts   # One-time tasks
 │   ├── use-activity-tracking.ts
+│   ├── use-direct-video-thumbnail.ts  # Canvas frame capture for direct uploads
 │   ├── use-journal-entry.ts
 │   ├── use-journal-meta.ts
 │   └── use-location-detection.ts
@@ -31,6 +32,7 @@ tasks/
 ## Hooks
 
 - **`use-daily-tasks`** — Composes `useDailyEntry`, `useOneTimeTasks`, `useActivityTracking`. Main entry for daily list.
+- **`use-direct-video-thumbnail`** — Generates thumbnail from direct-uploaded video URL via canvas capture.
 - **`use-journal-entry`** — Journal state, save, load. Used by `tasks-page-content`.
 - **`use-journal-meta`** — Entry dates, bookmarked dates for calendar.
 - **`use-location-detection`** — Geolocation + reverse geocoding for journal.
