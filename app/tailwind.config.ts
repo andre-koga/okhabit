@@ -43,6 +43,7 @@ export default {
       },
       fontFamily: {
         crimson: ["Crimson Pro", "serif"],
+        mono: ["JetBrains Mono", "monospace"],
       },
       borderRadius: {
         lg: "var(--radius)",

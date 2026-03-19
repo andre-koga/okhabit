@@ -73,11 +73,11 @@ function Pill({
       )}
       <span
         className={
-          "flex-shrink-0 " + (isSm ? "mt-[1px] text-[10px]" : "mt-0.5 text-xs")
+          "flex-shrink-0 font-mono " +
+          (isSm ? "mt-[1px] text-[10px]" : "mt-0.5 text-xs")
         }
         style={{
           color: resolvedTextColor,
-          fontFamily: "JetBrains Mono, monospace",
         }}
       >
         {formatTimerDisplay(elapsedMs)}

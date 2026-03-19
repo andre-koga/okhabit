@@ -3,6 +3,8 @@
  */
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Flame, Hash } from "lucide-react";
+import { Settings } from "lucide-react";
+import { Link } from "react-router-dom";
 import { toDateStr } from "@/lib/db";
 import { HOLD_ACTION_DELAY_MS } from "@/lib/consts";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
@@ -17,7 +19,6 @@ import JournalTextSection from "@/components/tasks/journal-text-section";
 import JournalEditDialog from "@/components/tasks/journal-edit-dialog";
 import DateNavigator from "@/components/tasks/date-navigator";
 import TasksJournalMetaBar from "@/components/tasks/tasks-journal-meta-bar";
-import { FloatingBackButton } from "@/components/ui/floating-back-button";
 import type { LocationData } from "@/lib/db/types";
 import {
   getYoutubeEmbedUrl,
@@ -213,6 +214,19 @@ export default function TasksPageContent() {
         </div>
       </div>
 
+      <div className="absolute -mt-8 pl-2">
+        <div className="mx-auto flex max-w-2xl justify-start">
+          <Link
+            to="/settings"
+            title="Settings"
+            aria-label="Open settings"
+            className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background/90 text-muted-foreground shadow-sm transition-colors hover:text-foreground"
+          >
+            <Settings className="h-3.5 w-3.5 opacity-80" />
+          </Link>
+        </div>
+      </div>
+
       <div className="px-4 pt-4">
         <div className="mx-auto max-w-2xl space-y-3">
           <div
@@ -323,8 +337,6 @@ export default function TasksPageContent() {
           </blockquote>
         </div>
       </div>
-
-      <FloatingBackButton to="/settings" title="Settings" icon="settings" />
 
       <div className="fixed bottom-3 left-1/2 z-50 -translate-x-1/2">
         <DateNavigator

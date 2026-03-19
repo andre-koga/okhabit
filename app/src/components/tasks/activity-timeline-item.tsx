@@ -51,18 +51,14 @@ function ActivityTimelineItem({
             event.stopPropagation();
             onStartActivity(activityId);
           }}
-          className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors"
-          style={{ fontFamily: "JetBrains Mono, monospace" }}
+          className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2 py-0.5 font-mono text-xs text-muted-foreground transition-colors"
           title="Start this activity"
         >
           <Play className="h-2.5 w-2.5" />
           {formatTimerDisplay(intervalMs)}
         </button>
       ) : (
-        <span
-          className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground"
-          style={{ fontFamily: "JetBrains Mono, monospace" }}
-        >
+        <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2 py-0.5 font-mono text-xs text-muted-foreground">
           <Play className="h-2.5 w-2.5" />
           {formatTimerDisplay(intervalMs)}
         </span>

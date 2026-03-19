@@ -2,9 +2,11 @@
  * SRP: Displays the currently running activity with elapsed time and stop/edit actions.
  */
 import { useEffect, useState, memo, useMemo } from "react";
+import { useRef } from "react";
 import { db } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
-import { Pencil, Square } from "lucide-react";
+import { Square } from "lucide-react";
+import { HOLD_ACTION_DELAY_MS } from "@/lib/consts";
 import {
   formatTimerDisplay,
   getActivityDisplayName,
@@ -39,7 +41,7 @@ interface ActiveActivityPillProps {
   groups: ActivityGroup[];
   elapsedMs: number;
   onStop: () => void;
-  /** When set, clicking the pill (not Stop) opens the session edit dialog. */
+  /** When set, holding the pill opens the session edit dialog. */
   onEdit?: () => void;
 }
 
@@ -57,6 +59,8 @@ function ActiveActivityPill({
   const [resolvedGroup, setResolvedGroup] = useState<ActivityGroup | null>(
     null
   );
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const suppressNextStopClickRef = useRef(false);
 
   useEffect(() => {
     if (!currentActivityId) {
@@ -102,6 +106,35 @@ function ActiveActivityPill({
     };
   }, [currentActivityId, activities, groups]);
 
+  useEffect(() => {
+    return () => {
+      if (holdTimerRef.current != null) {
+        clearTimeout(holdTimerRef.current);
+      }
+    };
+  }, []);
+
+  const clearHoldTimer = () => {
+    if (holdTimerRef.current != null) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+  };
+
+  const handleHoldStart = () => {
+    if (!onEdit) return;
+    clearHoldTimer();
+    holdTimerRef.current = setTimeout(() => {
+      holdTimerRef.current = null;
+      suppressNextStopClickRef.current = true;
+      onEdit();
+    }, HOLD_ACTION_DELAY_MS);
+  };
+
+  const handleHoldEnd = () => {
+    clearHoldTimer();
+  };
+
   // Calculate color values before early returns (Rules of Hooks)
   const activity = resolvedActivity;
   const group = resolvedGroup;
@@ -129,6 +162,23 @@ function ActiveActivityPill({
         color: textColor,
         boxShadow,
       }}
+      onPointerDown={onEdit ? handleHoldStart : undefined}
+      onPointerUp={onEdit ? handleHoldEnd : undefined}
+      onPointerCancel={onEdit ? handleHoldEnd : undefined}
+      onContextMenu={onEdit ? (e) => e.preventDefault() : undefined}
+      onKeyDown={
+        onEdit
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onEdit();
+              }
+            }
+          : undefined
+      }
+      role={onEdit ? "button" : undefined}
+      tabIndex={onEdit ? 0 : undefined}
+      aria-label={onEdit ? "Hold to edit running activity" : undefined}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -141,26 +191,27 @@ function ActiveActivityPill({
             {getActivityDisplayName(activity, group)}
           </p>
         </div>
-        <button className="rounded-full" type="button" onClick={onEdit}>
-          <Pencil className="h-3.5 w-3.5" />
-        </button>
+        <div>
+          <p className="font-mono">{formatTimerDisplay(elapsedMs)}</p>
+        </div>
       </div>
 
       <div className="mt-2 flex justify-end">
         <button
           type="button"
-          onClick={onStop}
+          onClick={() => {
+            if (suppressNextStopClickRef.current) {
+              suppressNextStopClickRef.current = false;
+              return;
+            }
+            onStop();
+          }}
           className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide"
           style={{ color: textColor }}
           title="Stop this activity"
         >
           <Square className="h-3.5 w-3.5" style={{ fill: textColor }} />
-          <span
-            className="shrink-0 text-sm"
-            style={{ fontFamily: "JetBrains Mono, monospace" }}
-          >
-            {formatTimerDisplay(elapsedMs)}
-          </span>
+          <span className="shrink-0 text-base">STOP</span>
         </button>
       </div>
     </div>

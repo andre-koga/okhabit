@@ -112,10 +112,7 @@ function ActiveMemoPill({
             {resolvedMemo.title}
           </p>
         </div>
-        <span
-          className="shrink-0 text-sm"
-          style={{ fontFamily: "JetBrains Mono, monospace" }}
-        >
+        <span className="shrink-0 font-mono text-sm">
           {formatTimerDisplay(elapsedMs)}
         </span>
       </div>

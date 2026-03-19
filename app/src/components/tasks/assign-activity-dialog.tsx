@@ -120,8 +120,7 @@ export default function AssignActivityDialog({
           label="Duration"
           value={formatTimerDisplay(intervalMs)}
           readOnly
-          className="tabular-nums"
-          style={{ fontFamily: "JetBrains Mono, monospace" }}
+          className="font-mono tabular-nums"
         />
 
         <FormSelectField
