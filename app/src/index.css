@@ -69,6 +69,16 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply select-none bg-background text-foreground;
+    -webkit-touch-callout: none;
+  }
+  input,
+  textarea,
+  [contenteditable="true"],
+  [contenteditable=""],
+  [data-selectable="true"] {
+    @apply select-text;
+    -webkit-user-select: text;
+    user-select: text;
   }
 }
