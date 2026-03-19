@@ -1,5 +1,6 @@
 import { memo } from "react";
 import { Check } from "lucide-react";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 interface TaskCheckboxProps {
@@ -9,6 +10,8 @@ interface TaskCheckboxProps {
   size?: "sm" | "md";
   title?: string;
   className?: string;
+  completeContent?: ReactNode;
+  incompleteContent?: ReactNode;
 }
 
 function TaskCheckbox({
@@ -18,6 +21,8 @@ function TaskCheckbox({
   size = "md",
   title,
   className,
+  completeContent,
+  incompleteContent,
 }: TaskCheckboxProps) {
   const sizeClass = size === "sm" ? "h-6 w-6" : "h-7 w-[2.75rem]";
 
@@ -43,7 +48,9 @@ function TaskCheckbox({
           : undefined)
       }
     >
-      {isComplete && <Check className="h-4 w-4" />}
+      {isComplete
+        ? (completeContent ?? <Check className="h-4 w-4" />)
+        : (incompleteContent ?? null)}
     </button>
   );
 }

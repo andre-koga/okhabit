@@ -1,8 +1,8 @@
 /**
  * SRP: Renders the journal video section with URL editing, optional uploads, and a consistent thumbnail facade.
  */
-import { useState, useRef } from "react";
-import { CloudOff, Loader2, Pencil, Upload } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { CloudOff, Loader2, Upload } from "lucide-react";
 import {
   FormDialog,
   FormDialogActions,
@@ -14,6 +14,7 @@ import {
   JournalVideoUploadError,
   uploadJournalVideo,
 } from "@/lib/journal-video-storage";
+import { HOLD_ACTION_DELAY_MS } from "@/lib/consts";
 import { getYoutubeVideoIdFromEmbed } from "@/lib/youtube-utils";
 import { useDirectVideoThumbnail } from "./hooks/use-direct-video-thumbnail";
 
@@ -71,6 +72,8 @@ export default function JournalVideoSection({
   const [clearing, setClearing] = useState(false);
   const [, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const suppressNextPlayClickRef = useRef(false);
 
   const storedThumbnail = thumbnail?.storedThumbnail ?? null;
   const videoUrlForThumb = thumbnail?.videoUrl ?? youtubeUrl;
@@ -97,6 +100,44 @@ export default function JournalVideoSection({
     if (next) setDraft(youtubeUrl);
     setOpen(next);
   };
+
+  const clearHoldTimer = () => {
+    if (holdTimerRef.current != null) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+  };
+
+  const handleHoldStart = () => {
+    if (!canEdit) return;
+    clearHoldTimer();
+    holdTimerRef.current = setTimeout(() => {
+      holdTimerRef.current = null;
+      suppressNextPlayClickRef.current = true;
+      handleOpen(true);
+    }, HOLD_ACTION_DELAY_MS);
+  };
+
+  const handleHoldEnd = () => {
+    clearHoldTimer();
+  };
+
+  const handlePlayClick = () => {
+    if (suppressNextPlayClickRef.current) {
+      suppressNextPlayClickRef.current = false;
+      return;
+    }
+    if (!canPlay) return;
+    setPlaying(true);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (holdTimerRef.current != null) {
+        clearTimeout(holdTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleSave = () => {
     setForceThumbnailRegeneration(true);
@@ -178,6 +219,10 @@ export default function JournalVideoSection({
     <div
       className="relative w-full bg-muted"
       style={{ paddingBottom: "56.25%" }}
+      onPointerDown={canEdit ? handleHoldStart : undefined}
+      onPointerUp={canEdit ? handleHoldEnd : undefined}
+      onPointerCancel={canEdit ? handleHoldEnd : undefined}
+      onContextMenu={canEdit ? (e) => e.preventDefault() : undefined}
     >
       {videoId ? (
         playing ? (
@@ -190,10 +235,7 @@ export default function JournalVideoSection({
           />
         ) : (
           <button
-            onClick={() => {
-              if (!canPlay) return;
-              setPlaying(true);
-            }}
+            onClick={handlePlayClick}
             className="group absolute inset-0 h-full w-full"
             title={canPlay ? "Play video" : "Offline – connect to play"}
           >
@@ -219,10 +261,7 @@ export default function JournalVideoSection({
           />
         ) : directVideoThumb ? (
           <button
-            onClick={() => {
-              if (!canPlay) return;
-              setPlaying(true);
-            }}
+            onClick={handlePlayClick}
             className="group absolute inset-0 h-full w-full"
             title={canPlay ? "Play video" : "Offline – connect to play"}
           >
@@ -235,10 +274,7 @@ export default function JournalVideoSection({
           </button>
         ) : directVideoThumbError ? (
           <button
-            onClick={() => {
-              if (!canPlay) return;
-              setPlaying(true);
-            }}
+            onClick={handlePlayClick}
             className="group absolute inset-0 h-full w-full"
             title={canPlay ? "Play video" : "Offline – connect to play"}
           >
@@ -293,13 +329,6 @@ export default function JournalVideoSection({
               </button>
             </>
           )}
-          <button
-            onClick={() => handleOpen(true)}
-            className="flex h-6 w-6 items-center justify-center rounded-full border border-muted bg-background/80 shadow-sm backdrop-blur-sm transition-colors hover:bg-background"
-            title="Set video"
-          >
-            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
           <FormDialog
             open={open}
             onOpenChange={handleOpen}

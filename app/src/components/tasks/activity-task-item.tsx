@@ -2,7 +2,7 @@
  * SRP: Renders one activity row with completion, pause state, timer, and streak controls.
  */
 import { memo, useEffect, useRef, useState } from "react";
-import { Flame, Pause, Play, X } from "lucide-react";
+import { Flame, X } from "lucide-react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { getActivityDisplayName } from "@/lib/activity-utils";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
@@ -62,25 +62,24 @@ function ActivityTaskItem({
     : !isPaused && count >= target;
   const groupColor = group?.color || DEFAULT_GROUP_COLOR;
   const canUpdateCount = isToday && (!isPaused || isNeverTask);
-  const streakColorClass =
-    streak === 0
-      ? "text-muted-foreground"
-      : streak <= 5
-        ? "text-yellow-500"
-        : streak <= 25
-          ? "text-orange-500"
-          : "text-red-500";
 
   const neverLongPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
   const neverLongPressFiredRef = useRef(false);
   const neverPointerLeftRef = useRef(false);
+  const pauseLongPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+  const suppressNextPlayStopClickRef = useRef(false);
 
   useEffect(() => {
     return () => {
       if (neverLongPressTimerRef.current != null) {
         clearTimeout(neverLongPressTimerRef.current);
+      }
+      if (pauseLongPressTimerRef.current != null) {
+        clearTimeout(pauseLongPressTimerRef.current);
       }
     };
   }, []);
@@ -90,6 +89,27 @@ function ActivityTaskItem({
       clearTimeout(neverLongPressTimerRef.current);
       neverLongPressTimerRef.current = null;
     }
+  };
+
+  const clearPauseLongPressTimer = () => {
+    if (pauseLongPressTimerRef.current != null) {
+      clearTimeout(pauseLongPressTimerRef.current);
+      pauseLongPressTimerRef.current = null;
+    }
+  };
+
+  const handlePauseHoldStart = () => {
+    if (!isToday || isNeverTask) return;
+    clearPauseLongPressTimer();
+    pauseLongPressTimerRef.current = setTimeout(() => {
+      pauseLongPressTimerRef.current = null;
+      suppressNextPlayStopClickRef.current = true;
+      onTogglePaused(activity.id);
+    }, HOLD_ACTION_DELAY_MS);
+  };
+
+  const handlePauseHoldEnd = () => {
+    clearPauseLongPressTimer();
   };
 
   return (
@@ -173,7 +193,12 @@ function ActivityTaskItem({
               : undefined
           }
         >
-          {count === 1 ? (
+          {!isComplete ? (
+            <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none">
+              <Flame className="h-3 w-3 fill-inherit" />
+              <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
+            </span>
+          ) : count === 1 ? (
             <X className="h-3.5 w-3.5" aria-hidden="true" />
           ) : count > 1 ? (
             <span className="mt-0.5 font-mono text-xs font-semibold tabular-nums leading-none">
@@ -187,6 +212,12 @@ function ActivityTaskItem({
           isToday={canUpdateCount}
           onClick={() => onIncrement(activity.id, target)}
           title={isPaused ? "Task paused for this day" : undefined}
+          completeContent={
+            <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none">
+              <Flame className="h-3 w-3 fill-inherit" />
+              <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
+            </span>
+          }
           className={
             isBreakDay || isPaused
               ? isComplete
@@ -220,63 +251,62 @@ function ActivityTaskItem({
               : `${count} / ${target}`
           }
         >
-          <p className="pt-0.5 font-mono">
-            {count}/{target}
-          </p>
+          {isComplete ? (
+            <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none">
+              <Flame className="h-3 w-3 fill-inherit" />
+              <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
+            </span>
+          ) : (
+            <p className="pt-0.5 font-mono">
+              {count}/{target}
+            </p>
+          )}
         </button>
       )}
 
-      <Pill
-        name={getActivityDisplayName(activity, group)}
-        color={groupColor}
-        elapsedMs={timeSpent}
-        isRunning={isCurrentActivity}
-        onPlayStop={
-          isToday && !isPaused
-            ? () =>
-                isCurrentActivity
-                  ? onStopActivity()
-                  : onStartActivity(activity.id)
-            : undefined
-        }
-        nameClassName={isComplete ? "line-through text-muted-foreground" : ""}
-        readOnly={!isToday}
-        className="flex-1"
-      />
-
-      <button
-        type="button"
-        onClick={
-          !isNeverTask && isToday
-            ? () => onTogglePaused(activity.id)
-            : undefined
-        }
-        disabled={isNeverTask || !isToday}
-        className={`inline-flex h-7 w-7 items-center justify-center rounded-full border transition-colors ${
-          isPaused
-            ? "border-amber-500/60 text-amber-500"
-            : "border-muted-foreground/40 text-muted-foreground hover:text-foreground"
-        } disabled:cursor-default disabled:opacity-40`}
-        title={
-          isNeverTask
-            ? "Pause is unavailable for never tasks"
-            : isPaused
-              ? "Resume task for this day"
-              : "Pause task for this day"
-        }
-      >
-        {isPaused ? (
-          <Play className="h-3.5 w-3.5" />
-        ) : (
-          <Pause className="h-3.5 w-3.5" />
-        )}
-      </button>
-
       <div
-        className={`flex items-center gap-0.5 text-sm font-semibold ${streakColorClass}`}
+        className="flex-1"
+        onPointerDown={
+          isToday && !isNeverTask ? handlePauseHoldStart : undefined
+        }
+        onPointerUp={isToday && !isNeverTask ? handlePauseHoldEnd : undefined}
+        onPointerCancel={
+          isToday && !isNeverTask ? handlePauseHoldEnd : undefined
+        }
+        onContextMenu={
+          isToday && !isNeverTask ? (e) => e.preventDefault() : undefined
+        }
+        title={
+          isToday && !isNeverTask
+            ? isPaused
+              ? "Hold to resume task for this day"
+              : "Hold to pause task for this day"
+            : undefined
+        }
       >
-        <Flame className="h-3.5 w-3.5" />
-        <span>{streak}</span>
+        <Pill
+          name={getActivityDisplayName(activity, group)}
+          color={groupColor}
+          elapsedMs={timeSpent}
+          isRunning={isCurrentActivity}
+          onPlayStop={
+            isToday && !isPaused
+              ? () => {
+                  if (suppressNextPlayStopClickRef.current) {
+                    suppressNextPlayStopClickRef.current = false;
+                    return;
+                  }
+                  if (isCurrentActivity) {
+                    onStopActivity();
+                    return;
+                  }
+                  onStartActivity(activity.id);
+                }
+              : undefined
+          }
+          nameClassName={isComplete ? "line-through text-muted-foreground" : ""}
+          readOnly={!isToday}
+        />
       </div>
     </div>
   );

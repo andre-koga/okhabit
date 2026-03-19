@@ -1,9 +1,10 @@
 /**
  * SRP: Renders the tasks page shell, journal sections, and date-scoped task content.
  */
-import { useState, useEffect, useCallback } from "react";
-import { Flame, Hash, Pencil } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Flame, Hash } from "lucide-react";
 import { toDateStr } from "@/lib/db";
+import { HOLD_ACTION_DELAY_MS } from "@/lib/consts";
 import DailyTasksList from "@/components/tasks/daily-tasks-list";
 import { useJournalEntry } from "@/components/tasks/hooks/use-journal-entry";
 import { useJournalMeta } from "@/components/tasks/hooks/use-journal-meta";
@@ -41,6 +42,9 @@ export default function TasksPageContent() {
   const [journalEditSession, setJournalEditSession] = useState(0);
   const [quote] = useState(pickRandomHabitQuote);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+  const journalHoldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
 
   const { isSupabaseConfigured, isAuthed } = useAuth();
 
@@ -111,6 +115,14 @@ export default function TasksPageContent() {
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (journalHoldTimerRef.current != null) {
+        clearTimeout(journalHoldTimerRef.current);
+      }
+    };
+  }, []);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -140,6 +152,31 @@ export default function TasksPageContent() {
           storedThumbnail: journal.videoThumbnail,
         }
       : null;
+
+  const openJournalEditor = () => {
+    setJournalEditSession((session) => session + 1);
+    setJournalEditOpen(true);
+  };
+
+  const clearJournalHoldTimer = () => {
+    if (journalHoldTimerRef.current != null) {
+      clearTimeout(journalHoldTimerRef.current);
+      journalHoldTimerRef.current = null;
+    }
+  };
+
+  const handleJournalHoldStart = () => {
+    if (!journal.canEditJournal) return;
+    clearJournalHoldTimer();
+    journalHoldTimerRef.current = setTimeout(() => {
+      journalHoldTimerRef.current = null;
+      openJournalEditor();
+    }, HOLD_ACTION_DELAY_MS);
+  };
+
+  const handleJournalHoldEnd = () => {
+    clearJournalHoldTimer();
+  };
 
   return (
     <div className="pb-32">
@@ -178,10 +215,41 @@ export default function TasksPageContent() {
 
       <div className="px-4 pt-4">
         <div className="mx-auto max-w-2xl space-y-3">
-          <JournalTextSection
-            title={journal.draftTitle}
-            text={journal.draftText}
-          />
+          <div
+            onPointerDown={
+              journal.canEditJournal ? handleJournalHoldStart : undefined
+            }
+            onPointerUp={
+              journal.canEditJournal ? handleJournalHoldEnd : undefined
+            }
+            onPointerCancel={
+              journal.canEditJournal ? handleJournalHoldEnd : undefined
+            }
+            onContextMenu={
+              journal.canEditJournal ? (e) => e.preventDefault() : undefined
+            }
+            onKeyDown={
+              journal.canEditJournal
+                ? (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      openJournalEditor();
+                    }
+                  }
+                : undefined
+            }
+            role={journal.canEditJournal ? "button" : undefined}
+            tabIndex={journal.canEditJournal ? 0 : undefined}
+            aria-label={
+              journal.canEditJournal ? "Hold to edit journal" : undefined
+            }
+            className={journal.canEditJournal ? "cursor-pointer" : undefined}
+          >
+            <JournalTextSection
+              title={journal.draftTitle}
+              text={journal.draftText}
+            />
+          </div>
 
           <JournalEditDialog
             key={journalEditSession}
@@ -230,23 +298,6 @@ export default function TasksPageContent() {
               </p>
             )}
           </div>
-
-          {journal.canEditJournal && (
-            <div className="flex justify-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setJournalEditSession((session) => session + 1);
-                  setJournalEditOpen(true);
-                }}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-                title="Edit journal"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-                Edit
-              </button>
-            </div>
-          )}
 
           <TasksJournalMetaBar
             currentDate={currentDate}
