@@ -15,7 +15,10 @@ lib/
 │   ├── types.ts
 │   └── daily-entry.ts
 ├── sync/             # Supabase sync
-│   ├── index.ts
+│   ├── index.ts           # SyncEngine, auto-sync, mutation hooks
+│   ├── sync-constants.ts  # Table lists, timing
+│   ├── sync-push.ts       # Push / upsert pipeline
+│   ├── sync-pull.ts       # Pull / bulkPut pipeline
 │   ├── sanitizers.ts
 │   ├── sync-transformers.ts
 │   └── sync-storage.ts

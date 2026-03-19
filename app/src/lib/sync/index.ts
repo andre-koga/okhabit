@@ -9,49 +9,17 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase";
 import { getErrorMessage, ERROR_MESSAGES } from "@/lib/error-utils";
-import { loadLastSyncAt, saveLastSyncAt } from "./sync-storage";
+import { loadLastSyncAt } from "./sync-storage";
+import type { SyncTable } from "./sync-transformers";
 import {
-  type SyncTable,
-  toRemoteRow,
-  dedupeRowsForUpsert,
-  UPSERT_CONFLICT_TARGET,
-  parseTimestamp,
-} from "./sync-transformers";
-import {
-  sanitizeForeignKeyRefsBeforeUpsert,
-  normalizeActivityStreakIdsBeforeUpsert,
-  stripUnknownColumns,
-} from "./sanitizers";
-
-const EPOCH = "1970-01-01T00:00:00.000Z";
-const DEBOUNCE_SYNC_MS = 5_000;
-const DEFAULT_PERIODIC_SYNC_MS = 60_000;
-/** Buffer for incremental pull to avoid missing rows due to device clock skew. */
-const PULL_BUFFER_MS = 5 * 60 * 1000;
-/** Avoid infinite resync loops if something keeps marking rows dirty unexpectedly. */
-const MAX_CHAINED_SYNCS = 25;
-
-const SYNC_TABLES: SyncTable[] = [
-  "activity_groups",
-  "activities",
-  "daily_entries",
-  "activity_periods",
-  "journal_entries",
-  "one_time_tasks",
-  "activity_streaks",
-  "memo_periods",
-];
-
-const TABLE_MAP: Record<SyncTable, keyof typeof db> = {
-  activity_groups: "activityGroups",
-  activities: "activities",
-  daily_entries: "dailyEntries",
-  activity_periods: "activityPeriods",
-  journal_entries: "journalEntries",
-  one_time_tasks: "oneTimeTasks",
-  activity_streaks: "activityStreaks",
-  memo_periods: "memoPeriods",
-};
+  DEBOUNCE_SYNC_MS,
+  DEFAULT_PERIODIC_SYNC_MS,
+  MAX_CHAINED_SYNCS,
+  SYNC_TABLES,
+  TABLE_MAP,
+} from "./sync-constants";
+import { runPushInternal } from "./sync-push";
+import { runPull } from "./sync-pull";
 
 export interface SyncState {
   isSyncing: boolean;
@@ -239,7 +207,13 @@ export class SyncEngine {
 
   async push(): Promise<{ failedTables: string[] }> {
     if (!this.canSync() || !supabase) return { failedTables: [] };
-    return this.pushInternal(false);
+    return runPushInternal(
+      {
+        withLocalSyncMetadataWrites: (op) =>
+          this.withLocalSyncMetadataWrites(op),
+      },
+      { forceAll: false }
+    );
   }
 
   /**
@@ -252,7 +226,13 @@ export class SyncEngine {
     this.clearDirtyIds();
     this.setState({ isSyncing: true, lastError: null });
     try {
-      const { failedTables } = await this.pushInternal(true);
+      const { failedTables } = await runPushInternal(
+        {
+          withLocalSyncMetadataWrites: (op) =>
+            this.withLocalSyncMetadataWrites(op),
+        },
+        { forceAll: true }
+      );
       if (failedTables.length > 0) {
         this.setState({
           lastError: `Upload failed for: ${failedTables.join(", ")}. Try again.`,
@@ -269,176 +249,22 @@ export class SyncEngine {
     }
   }
 
-  private async pushInternal(
-    forceAll: boolean
-  ): Promise<{ failedTables: string[] }> {
-    const failedTables: string[] = [];
-    if (!supabase) return { failedTables };
-    const userId = getCachedUserId()!;
-    if (!userId) return { failedTables };
-
-    for (const table of SYNC_TABLES) {
-      const dexieTable = TABLE_MAP[table];
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const records: any[] = await (db[dexieTable] as any)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .filter((r: any) =>
-          forceAll ? true : !r.synced_at || r.updated_at > r.synced_at
-        )
-        .toArray();
-
-      if (records.length === 0) continue;
-
-      const rows = records
-        .map((r) => toRemoteRow(table, r, userId))
-        .filter((r): r is NonNullable<typeof r> => r !== null);
-
-      const dedupedRows = dedupeRowsForUpsert(table, rows);
-      const duplicateCount = rows.length - dedupedRows.length;
-      if (duplicateCount > 0) {
-        console.warn(
-          `[sync] deduped ${duplicateCount} conflicting row(s) on ${table} before upsert`
-        );
-      }
-
-      const sanitizedRows = await sanitizeForeignKeyRefsBeforeUpsert(
-        supabase,
-        table,
-        dedupedRows,
-        userId
-      );
-
-      const normalizedRows = await normalizeActivityStreakIdsBeforeUpsert(
-        supabase,
-        table,
-        sanitizedRows,
-        userId
-      );
-
-      const skippedCount = records.length - rows.length;
-      if (skippedCount > 0) {
-        console.warn(
-          `[sync] skipped ${skippedCount} invalid row(s) on ${table} due to non-UUID id`
-        );
-      }
-
-      const schemaSafeRows = stripUnknownColumns(table, normalizedRows);
-
-      if (schemaSafeRows.length === 0) {
-        const now = new Date().toISOString();
-        await this.withLocalSyncMetadataWrites(async () => {
-          await Promise.all(
-            records.map((r) =>
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (db[dexieTable] as any).update(r.id, { synced_at: now })
-            )
-          );
-        });
-        continue;
-      }
-
-      try {
-        const { error } = await supabase.from(table).upsert(schemaSafeRows, {
-          onConflict: UPSERT_CONFLICT_TARGET[table],
-        });
-
-        if (error) {
-          failedTables.push(table);
-          console.warn(
-            `[sync] push failed for ${table}, continuing with other tables:`,
-            error.message
-          );
-          continue;
-        }
-
-        const now = new Date().toISOString();
-        await this.withLocalSyncMetadataWrites(async () => {
-          await Promise.all(
-            records.map((r) =>
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (db[dexieTable] as any).update(r.id, { synced_at: now })
-            )
-          );
-        });
-      } catch (err) {
-        failedTables.push(table);
-        console.warn(
-          `[sync] push failed for ${table}, continuing with other tables:`,
-          err
-        );
-      }
-    }
-
-    return { failedTables };
-  }
-
   async pull(): Promise<void> {
     if (!this.canSync() || !supabase) return;
-    const client = supabase;
-    const userId = getCachedUserId()!;
-    const lastSync = this.state.lastSyncAt ?? null;
-    const fullSince = EPOCH;
+    const userId = getCachedUserId();
+    if (!userId) return;
 
-    // Reference tables: always pull all so child records find their refs.
-    // activity_periods: full pull so timeline never misses the latest period (clock skew).
-    const FULL_PULL_TABLES: SyncTable[] = [
-      "activity_groups",
-      "activities",
-      "daily_entries",
-      "activity_periods",
-    ];
-
-    // Suppress mutation hooks for the entire pull so bulkPut does not schedule debounced sync.
-    await this.withSuppressedMutationSignals(async () => {
-      for (const table of SYNC_TABLES) {
-        const dexieTable = TABLE_MAP[table];
-        const shouldFullPull = FULL_PULL_TABLES.includes(table);
-        const since = shouldFullPull
-          ? fullSince
-          : (() => {
-              if (!lastSync) return fullSince;
-              const sinceMs = Math.max(
-                0,
-                parseTimestamp(lastSync) - PULL_BUFFER_MS
-              );
-              return new Date(sinceMs).toISOString();
-            })();
-
-        const query = client.from(table).select("*").eq("user_id", userId);
-
-        const { data, error } = await (shouldFullPull
-          ? query
-          : query.gt("updated_at", since));
-
-        if (error) {
-          throw new Error(`Pull error on ${table}: ${error.message}`);
-        }
-
-        if (!data || data.length === 0) continue;
-
-        const rowsToApply = data.filter((r) => {
-          const id = String((r as { id: string }).id);
-          const dirty = this.dirtyIdsByTable.get(table);
-          return !dirty?.has(id);
-        });
-
-        if (rowsToApply.length === 0) continue;
-
-        this.applyRemoteFromPull = true;
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (db[dexieTable] as any).bulkPut(
-            rowsToApply.map((r) => ({ ...r, synced_at: r.updated_at }))
-          );
-        } finally {
-          this.applyRemoteFromPull = false;
-        }
-      }
+    const now = await runPull({
+      supabase,
+      userId,
+      lastSyncAt: this.state.lastSyncAt ?? null,
+      dirtyIdsByTable: this.dirtyIdsByTable,
+      withSuppressedMutationSignals: (op) =>
+        this.withSuppressedMutationSignals(op),
+      setApplyRemoteFromPull: (value) => {
+        this.applyRemoteFromPull = value;
+      },
     });
-
-    const now = new Date().toISOString();
-    saveLastSyncAt(now);
     this.setState({ lastSyncAt: now });
   }
 
