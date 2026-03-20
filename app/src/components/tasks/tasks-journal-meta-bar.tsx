@@ -1,7 +1,7 @@
 /**
  * SRP: Today page divider bar — detected location display and quick edit action.
  */
-import { Heart, Pencil } from "lucide-react";
+import { Heart, PaintRoller, Pencil } from "lucide-react";
 import type { UseJournalEntryReturn } from "@/components/tasks/hooks/use-journal-entry";
 
 type Journal = UseJournalEntryReturn;
@@ -16,7 +16,7 @@ export default function TasksJournalMetaBar({
   onEditRequest,
 }: TasksJournalMetaBarProps) {
   return (
-    <div className="relative flex justify-end py-3">
+    <div className="relative flex justify-end gap-3 p-4">
       <button
         type="button"
         onClick={() => {
@@ -38,9 +38,18 @@ export default function TasksJournalMetaBar({
       </button>
       <button
         type="button"
+        // onClick={onEditRequest}
+        // disabled={!journal.canEditJournal}
+        className="text-muted-foreground disabled:cursor-default disabled:opacity-70"
+        title="Edit journal"
+      >
+        <PaintRoller className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
         onClick={onEditRequest}
         disabled={!journal.canEditJournal}
-        className="flex items-center gap-1.5 rounded-full bg-background px-3 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:cursor-default disabled:opacity-70"
+        className="text-muted-foreground disabled:cursor-default disabled:opacity-70"
         title="Edit journal"
       >
         <Pencil className="h-4 w-4" />

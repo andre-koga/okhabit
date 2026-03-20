@@ -14,7 +14,7 @@ export default function JournalTextSection({
   return (
     <>
       <p
-        className={`text-left font-crimson text-3xl font-bold ${
+        className={`py-2 text-left font-crimson text-3xl font-bold ${
           title ? "" : "text-muted-foreground/30"
         }`}
       >

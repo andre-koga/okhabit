@@ -35,13 +35,6 @@ import { getJournalVideoPlaybackUrl } from "@/lib/journal-video-storage";
 import { pickRandomHabitQuote } from "@/lib/habit-quotes";
 import { useAuth } from "@/lib/use-auth";
 
-function journalStreakColorClass(streak: number): string {
-  if (streak === 0) return "text-muted-foreground";
-  if (streak <= 5) return "text-yellow-500";
-  if (streak <= 25) return "text-orange-500";
-  return "text-red-500";
-}
-
 export default function TasksPageContent() {
   const SWIPE_MIN_DISTANCE_PX = 70;
   const SWIPE_DIRECTION_RATIO = 1.35;
@@ -148,8 +141,6 @@ export default function TasksPageContent() {
     );
   }
 
-  const streak = journal.journalCompletionStreak ?? 0;
-  const journalStreakClass = journalStreakColorClass(streak);
   const videoPlaybackSrc = getJournalVideoPlaybackUrl(journal.draftVideoPath);
 
   const journalThumbnail: JournalThumbnailSource | null = videoPlaybackSrc
@@ -363,12 +354,12 @@ export default function TasksPageContent() {
             )}
           </div>
 
-          <div className="mb-2 flex items-end">
-            <div className="flex items-center gap-1 rounded-full bg-background text-xs text-muted-foreground">
+          <div className="mb-2 flex items-end gap-4">
+            <div className="flex items-center px-2 text-xs text-muted-foreground">
               {(journal.canEditJournal && isDetectingLocation) ||
               journal.draftLocation ? (
                 <>
-                  <MapPin className="h-3 w-3 shrink-0" />
+                  <MapPin className="h-3 w-3" />
                   <span className="max-w-[80px] truncate">
                     {journal.canEditJournal && isDetectingLocation
                       ? "Detecting"
@@ -377,11 +368,25 @@ export default function TasksPageContent() {
                 </>
               ) : (
                 <>
-                  <MapPinOff className="h-3 w-3 shrink-0" />
+                  <MapPinOff className="h-3 w-3" />
                   <span>None</span>
                 </>
               )}
             </div>
+            {journal.isJournalComplete &&
+              typeof journal.journalCompletionStreak === "number" &&
+              typeof journal.journalEntryNumber === "number" && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center">
+                    <Hash className="h-3 w-3" />
+                    {journal.journalEntryNumber}
+                  </span>
+                  <span className={`inline-flex items-center`}>
+                    <Flame className="h-3 w-3" />
+                    {journal.journalCompletionStreak}
+                  </span>
+                </div>
+              )}
           </div>
         </div>
 
@@ -419,29 +424,6 @@ export default function TasksPageContent() {
               journal.saveDraft();
             }}
           />
-
-          <div className="-mt-1 pb-1">
-            {journal.isJournalComplete &&
-              typeof journal.journalCompletionStreak === "number" &&
-              typeof journal.journalEntryNumber === "number" && (
-                <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
-                  <span
-                    className={`inline-flex items-center ${journalStreakClass}`}
-                  >
-                    <Flame className="h-3.5 w-3.5" />
-                    <span className="pt-0.5 font-medium">
-                      {journal.journalCompletionStreak}
-                    </span>
-                  </span>
-                  <span className="inline-flex items-center">
-                    <Hash className="h-3.5 w-3.5" />
-                    <span className="pt-0.5 font-medium">
-                      {journal.journalEntryNumber}
-                    </span>
-                  </span>
-                </div>
-              )}
-          </div>
         </div>
 
         <TasksJournalMetaBar
