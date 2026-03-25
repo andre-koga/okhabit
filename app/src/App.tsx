@@ -4,9 +4,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import TodayPage from "@/pages/today";
 import GroupPage from "@/pages/group";
-import EditGroupPage from "@/pages/edit-group";
-import NewActivityPage from "@/pages/new-activity";
-import EditActivityPage from "@/pages/edit-activity";
 import SessionDetailsPage from "@/pages/session-details";
 import StatsPage from "@/pages/stats";
 import SettingsPage from "@/pages/settings";
@@ -23,12 +20,6 @@ export default function App() {
         <Route path="/" element={<TodayPage />} />
         <Route path="/activities/stats" element={<StatsPage />} />
         <Route path="/activities/:groupId" element={<GroupPage />} />
-        <Route path="/activities/:groupId/new" element={<NewActivityPage />} />
-        <Route path="/activities/:groupId/edit" element={<EditGroupPage />} />
-        <Route
-          path="/activities/:groupId/edit/:activityId"
-          element={<EditActivityPage />}
-        />
         <Route
           path="/activities/:groupId/sessions/:sessionId"
           element={<SessionDetailsPage />}

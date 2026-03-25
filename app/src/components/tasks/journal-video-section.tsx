@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { CloudOff } from "lucide-react";
 import { useDirectVideoThumbnail } from "./hooks/use-direct-video-thumbnail";
+import { cn } from "@/lib/utils";
 
 export interface JournalThumbnailSource {
   videoSrc: string | null;
@@ -58,7 +59,7 @@ export default function JournalVideoSection({
   };
 
   return (
-    <div className="relative w-full bg-muted" style={{ paddingBottom: "50%" }}>
+    <div className={cn("relative aspect-[2/1] w-full bg-muted/50")}>
       {hasVideo ? (
         playing ? (
           <video

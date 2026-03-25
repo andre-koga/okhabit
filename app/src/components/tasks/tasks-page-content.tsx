@@ -356,27 +356,29 @@ export default function TasksPageContent() {
         </div>
       )}
 
-      <div className="m-2 flex flex-col gap-2">
-        <JournalDateHeaderCard
-          currentDate={currentDate}
-          onDateChange={setCurrentDate}
-          entryDates={entryDates}
-          bookmarkedDates={bookmarkedDates}
-          onCalendarOpen={loadJournalMeta}
-          canEditJournal={journal.canEditJournal}
-          isDetectingLocation={isDetectingLocation}
-          draftLocation={journal.draftLocation}
-          loading={dailyTasks.loading}
-          dailyActivitiesCount={dailyTasks.dailyActivities.length}
-          isBreakDay={dailyTasks.isBreakDay}
-          completedCount={dailyTasks.completedCount}
-          nonNeverCount={dailyTasks.nonNeverCount}
-          totalTimeSpentMs={dailyTasks.totalTimeSpentMs}
-          dayWeather={journalDayWeather}
-        />
+      <div className="flex flex-col">
+        {/* <div className="bg-muted/50">
+          <JournalDateHeaderCard
+            currentDate={currentDate}
+            onDateChange={setCurrentDate}
+            entryDates={entryDates}
+            bookmarkedDates={bookmarkedDates}
+            onCalendarOpen={loadJournalMeta}
+            canEditJournal={journal.canEditJournal}
+            isDetectingLocation={isDetectingLocation}
+            draftLocation={journal.draftLocation}
+            loading={dailyTasks.loading}
+            dailyActivitiesCount={dailyTasks.dailyActivities.length}
+            isBreakDay={dailyTasks.isBreakDay}
+            completedCount={dailyTasks.completedCount}
+            nonNeverCount={dailyTasks.nonNeverCount}
+            totalTimeSpentMs={dailyTasks.totalTimeSpentMs}
+            dayWeather={journalDayWeather}
+          />
+        </div> */}
 
         <div
-          className="overflow-hidden rounded-2xl border border-border shadow-lg"
+          className="mb-2 overflow-hidden"
           onPointerDown={
             journal.canEditJournal ? handleJournalPointerDown : undefined
           }

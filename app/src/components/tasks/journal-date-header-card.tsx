@@ -138,12 +138,7 @@ export default function JournalDateHeaderCard({
 
   return (
     <>
-      <div
-        className={cn(
-          "relative overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-b from-card to-muted/20 shadow-md sm:px-6",
-          "ring-1 ring-border/40"
-        )}
-      >
+      <div className="relative m-2 overflow-hidden rounded-2xl border border-border sm:px-6">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent" />
 
         <div
