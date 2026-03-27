@@ -1,20 +1,16 @@
 /**
- * SRP: Uploads and deletes journal videos in Supabase Storage using bucket object paths.
+ * SRP: Uploads and deletes journal videos in Supabase Storage.
  */
 import {
   supabase,
   isSupabaseConfigured,
   getCachedUserId,
 } from "@/lib/supabase";
-import {
-  compressVideoForUpload,
-  JournalVideoUploadError,
-} from "@/lib/journal-video-compression";
+import { compressVideo, VideoCompressionError } from "@/lib/video-compression";
 
-export { JournalVideoUploadError };
+export class JournalVideoUploadError extends Error {}
 
 const JOURNAL_VIDEO_BUCKET = "journal-videos";
-const MAX_VIDEO_BYTES = 50 * 1024 * 1024; // 50MB
 
 export async function uploadJournalVideo(
   file: File,
@@ -33,18 +29,23 @@ export async function uploadJournalVideo(
     );
   }
 
-  const fileToUpload =
-    file.size > MAX_VIDEO_BYTES
-      ? await compressVideoForUpload(file, MAX_VIDEO_BYTES)
-      : file;
+  let compressed: File;
+  try {
+    compressed = await compressVideo(file);
+  } catch (error) {
+    if (error instanceof VideoCompressionError) {
+      throw new JournalVideoUploadError(error.message);
+    }
+    throw new JournalVideoUploadError("Failed to process video.");
+  }
 
-  const safeName = fileToUpload.name.replace(/[^\w.-]/g, "_").toLowerCase();
+  const safeName = compressed.name.replace(/[^\w.-]/g, "_").toLowerCase();
   const timestamp = Date.now();
   const path = `${userId}/${entryDate}/${timestamp}-${safeName}`;
 
   const { data, error } = await supabase.storage
     .from(JOURNAL_VIDEO_BUCKET)
-    .upload(path, fileToUpload, {
+    .upload(path, compressed, {
       cacheControl: "3600",
       upsert: false,
     });
