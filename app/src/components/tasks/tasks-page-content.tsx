@@ -152,7 +152,7 @@ export default function TasksPageContent() {
 
   return (
     <div
-      className="pb-32"
+      className="pb-28"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -186,14 +186,12 @@ export default function TasksPageContent() {
         </div>
       )}
 
-      <div className="flex flex-col">
-        <JournalCard
-          currentDate={currentDate}
-          onDateChange={setCurrentDate}
-          loadJournalEntry={journal.loadJournalEntry}
-          loadJournalMeta={loadJournalMeta}
-        />
-      </div>
+      <JournalCard
+        currentDate={currentDate}
+        onDateChange={setCurrentDate}
+        loadJournalEntry={journal.loadJournalEntry}
+        loadJournalMeta={loadJournalMeta}
+      />
 
       <div className="p-3">
         <DailyTasksList

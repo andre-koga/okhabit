@@ -9,7 +9,7 @@ import {
   type MouseEvent,
   type PointerEvent,
 } from "react";
-import { Flame, Hash } from "lucide-react";
+import { Flame, Hash, MapPin } from "lucide-react";
 import { toDateStr } from "@/lib/db";
 import { HOLD_ACTION_DELAY_MS } from "@/lib/consts";
 import { getJournalVideoPlaybackUrl } from "@/lib/journal-video-storage";
@@ -65,6 +65,8 @@ export default function JournalCard({
         storedThumbnail: journal.videoThumbnail,
       }
     : null;
+
+  const location = journal.draftLocation ?? journal.persistedLocation;
 
   const handleLocationDetected = useCallback(
     (location: LocationData) => {
@@ -251,20 +253,29 @@ export default function JournalCard({
               )}
             </div>
 
-            {journal.isJournalComplete &&
-              typeof journal.journalCompletionStreak === "number" &&
-              typeof journal.journalEntryNumber === "number" && (
-                <div className="pointer-events-auto mb-2 flex items-end gap-2 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center">
-                    <Hash className="h-3 w-3" />
-                    {journal.journalEntryNumber}
-                  </span>
-                  <span className="inline-flex items-center">
-                    <Flame className="h-3 w-3" />
-                    {journal.journalCompletionStreak}
-                  </span>
-                </div>
+            <div className="pointer-events-auto mb-2 flex flex-col items-end gap-1">
+              {journal.isJournalComplete &&
+                typeof journal.journalCompletionStreak === "number" &&
+                typeof journal.journalEntryNumber === "number" && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center">
+                      <Hash className="h-3 w-3" />
+                      {journal.journalEntryNumber}
+                    </span>
+                    <span className="inline-flex items-center">
+                      <Flame className="h-3 w-3" />
+                      {journal.journalCompletionStreak}
+                    </span>
+                  </div>
+                )}
+
+              {location && (
+                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                  <MapPin className="h-3 w-3" />
+                  {location.displayName}
+                </span>
               )}
+            </div>
           </div>
 
           <div className="mx-auto max-w-2xl space-y-3 px-4">
