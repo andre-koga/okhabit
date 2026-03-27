@@ -89,7 +89,7 @@ export default function SyncStatus() {
 
   return (
     <div
-      className={`fixed right-4 top-4 z-50 transition-opacity duration-500 ${
+      className={`fixed left-1/2 top-2 z-50 -translate-x-1/2 transition-opacity duration-500 ${
         isVisible
           ? "pointer-events-auto opacity-100"
           : "pointer-events-none opacity-0"
@@ -111,7 +111,7 @@ export default function SyncStatus() {
       )}
 
       {isOnline && syncState.lastError && (
-        <div className="absolute right-0 top-14 w-72 rounded-lg border border-red-500/50 bg-background p-3 shadow-xl">
+        <div className="absolute left-1/2 top-14 w-72 -translate-x-1/2 rounded-lg border border-red-500/50 bg-background p-3 shadow-xl">
           <div className="flex items-start gap-2">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
             <div className="flex-1">
