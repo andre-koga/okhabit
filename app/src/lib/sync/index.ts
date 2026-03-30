@@ -25,7 +25,7 @@ export interface SyncState {
 
 type StateListener = (state: SyncState) => void;
 
-export class SyncEngine {
+class SyncEngine {
   private state: SyncState = {
     isSyncing: false,
     lastSyncAt: loadLastSyncAt(),

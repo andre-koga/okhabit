@@ -12,27 +12,6 @@ export interface DayWeatherSnapshot {
   wmoCode: number;
 }
 
-/** Rough WMO → icon bucket for UI (Open-Meteo uses WMO Weather interpretation codes). */
-export type WeatherVisualKind =
-  | "clear"
-  | "partlyCloudy"
-  | "cloud"
-  | "fog"
-  | "rain"
-  | "snow"
-  | "storm";
-
-export function wmoCodeToVisual(code: number): WeatherVisualKind {
-  if (code === 0) return "clear";
-  if (code === 1 || code === 2) return "partlyCloudy";
-  if (code === 3) return "cloud";
-  if (code === 45 || code === 48) return "fog";
-  if (code >= 51 && code <= 67) return "rain";
-  if (code >= 71 && code <= 77) return "snow";
-  if (code >= 80 && code <= 86) return "rain";
-  return "storm";
-}
-
 type ForecastJson = {
   current?: {
     temperature_2m?: number;

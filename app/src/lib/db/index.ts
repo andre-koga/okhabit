@@ -31,7 +31,7 @@ function normalizeLegacyVideoPath(pathOrUrl: unknown): string | null {
   }
 }
 
-export class UpwardsDB extends Dexie {
+class UpwardsDB extends Dexie {
   activityGroups!: Table<ActivityGroup>;
   activities!: Table<Activity>;
   dailyEntries!: Table<DailyEntry>;
@@ -158,14 +158,3 @@ export const now = () => new Date().toISOString();
 
 // Helper: new UUID
 export const newId = () => uuidv4();
-
-// Re-export types for convenience
-export type {
-  ActivityGroup,
-  Activity,
-  DailyEntry,
-  ActivityPeriod,
-  JournalEntry,
-  OneTimeTask,
-  ActivityStreak,
-} from "./types";

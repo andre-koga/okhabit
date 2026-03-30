@@ -17,38 +17,12 @@ export function toDateString(date: Date): string {
 }
 
 /**
- * Format Date for display (e.g. "Jan 15, 2025").
- */
-export function formatDate(date: Date): string {
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-/**
  * Format Date for display (e.g. "Jan 15").
  */
 export function formatDateShort(date: Date): string {
   return date.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
-  });
-}
-
-/**
- * Format Date for display, adding year only when different from reference year.
- */
-export function formatDateWithOptionalYear(
-  date: Date,
-  referenceDate: Date = new Date()
-): string {
-  const includeYear = date.getFullYear() !== referenceDate.getFullYear();
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    ...(includeYear ? { year: "numeric" } : {}),
   });
 }
 
@@ -112,20 +86,6 @@ export function startOfDay(date: Date): Date {
   const day = new Date(date);
   day.setHours(0, 0, 0, 0);
   return day;
-}
-
-/**
- * Shift HH:MM:SS time string by delta minutes.
- */
-export function shiftTimeByMinutes(time: string, deltaMinutes: number): string {
-  if (!time) return "";
-  const [hours, minutes, seconds = 0] = time.split(":").map(Number);
-  if (Number.isNaN(hours) || Number.isNaN(minutes)) return time;
-  const total = (hours * 60 + minutes + deltaMinutes + 24 * 60) % (24 * 60);
-  const nextHours = String(Math.floor(total / 60)).padStart(2, "0");
-  const nextMinutes = String(total % 60).padStart(2, "0");
-  const nextSeconds = String(seconds).padStart(2, "0");
-  return `${nextHours}:${nextMinutes}:${nextSeconds}`;
 }
 
 /**

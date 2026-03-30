@@ -69,41 +69,6 @@ export function getJournalVideoPlaybackUrl(videoPath: string): string | null {
   return data?.publicUrl ?? null;
 }
 
-export async function deleteJournalVideoByPath(
-  videoPath: string
-): Promise<void> {
-  if (!isSupabaseConfigured || !supabase) {
-    return;
-  }
-
-  const objectPath = toJournalVideoPath(videoPath);
-  if (!objectPath) {
-    return;
-  }
-
-  const userId = getCachedUserId();
-  if (!userId) {
-    throw new JournalVideoUploadError(
-      "You need to be signed in to remove uploaded videos."
-    );
-  }
-
-  // Safety: only allow deleting objects in this user's namespace.
-  if (!objectPath.startsWith(`${userId}/`)) {
-    return;
-  }
-
-  const { error } = await supabase.storage
-    .from(JOURNAL_VIDEO_BUCKET)
-    .remove([objectPath]);
-
-  if (error) {
-    throw new JournalVideoUploadError(
-      error.message ?? "Failed to delete uploaded video."
-    );
-  }
-}
-
 export function toJournalVideoPath(videoPathOrLegacyUrl: string): string {
   const raw = videoPathOrLegacyUrl.trim();
   if (!raw) return "";

@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import { db, newId, now } from "@/lib/db";
 import type {
   Activity,
@@ -22,7 +21,7 @@ import { ERROR_MESSAGES } from "@/lib/error-utils";
 
 const NONE_ACTIVITY_VALUE = "__none__";
 
-export interface SessionDetailsData {
+interface SessionDetailsData {
   group: ActivityGroup;
   activity: Activity | null;
   period: ActivityPeriod;
@@ -43,13 +42,8 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     onDone,
     onUpdated,
   } = options;
-  const params = useParams<{
-    groupId: string;
-    sessionId: string;
-  }>();
-  const navigate = useNavigate();
-  const groupId = groupIdOption ?? params.groupId;
-  const sessionId = sessionIdOption ?? params.sessionId;
+  const groupId = groupIdOption;
+  const sessionId = sessionIdOption;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -61,11 +55,6 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
 
-  const backPath = useMemo(() => {
-    if (!groupId) return "/";
-    return `/activities/${groupId}`;
-  }, [groupId]);
-
   const onDoneRef = useRef(onDone);
   const onUpdatedRef = useRef(onUpdated);
   useEffect(() => {
@@ -76,12 +65,8 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
   }, [onUpdated]);
 
   const finish = useCallback(() => {
-    if (onDoneRef.current) {
-      onDoneRef.current();
-      return;
-    }
-    navigate(backPath);
-  }, [backPath, navigate]);
+    onDoneRef.current?.();
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -277,8 +262,6 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     setStartTime,
     endTime,
     setEndTime,
-    backPath,
-    navigate,
     handleDelete,
     handleSave,
     today: useMemo(() => startOfDay(new Date()), []),

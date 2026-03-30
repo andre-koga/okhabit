@@ -29,7 +29,7 @@ export function useGroupActivitiesData(group: ActivityGroup) {
   }, [group.id]);
 
   useEffect(() => {
-    loadActivities();
+    void loadActivities();
   }, [loadActivities]);
 
   return { activities, loading, loadActivities };

@@ -9,7 +9,7 @@ import {
 
 export { isHiddenGroupDefaultActivity, getOrCreateHiddenGroupDefaultActivity };
 
-export type ParsedRoutine =
+type ParsedRoutine =
   | { type: "daily" }
   | { type: "anytime" }
   | { type: "never" }
@@ -61,16 +61,6 @@ export function parseRoutine(routine: string | null): ParsedRoutine {
 }
 
 /**
- * Format milliseconds into a human-readable duration string.
- * e.g. 3661000 → "1h 1m 1s"
- */
-export function formatActivityTime(milliseconds: number): string {
-  const { hours, minutes, seconds } = decomposeDurationMs(milliseconds);
-  if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
-  return `${minutes}m ${seconds}s`;
-}
-
-/**
  * Format milliseconds into a timer display string (MM:SS or HH:MM:SS).
  * Returns "MM:SS" by default, switches to "HH:MM:SS" when elapsed time >= 1 hour.
  * e.g. 65000 → "01:05", 3661000 → "01:01:01"
@@ -81,31 +71,6 @@ export function formatTimerDisplay(elapsedMs: number): string {
     return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   }
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-}
-
-/**
- * Format milliseconds as natural language, e.g. "5 hours and 20 minutes".
- * Omits zero parts; returns "No time tracked" when duration is zero.
- */
-export function formatDurationProse(elapsedMs: number): string {
-  const { totalSeconds, hours, minutes } = decomposeDurationMs(elapsedMs);
-
-  if (hours === 0 && minutes === 0) {
-    if (totalSeconds <= 0) {
-      return "No time tracked";
-    }
-    return "Less than a minute";
-  }
-
-  const hourPart =
-    hours === 0 ? null : hours === 1 ? "1 hour" : `${hours} hours`;
-  const minutePart =
-    minutes === 0 ? null : minutes === 1 ? "1 minute" : `${minutes} minutes`;
-
-  if (hourPart && minutePart) {
-    return `${hourPart} and ${minutePart}`;
-  }
-  return hourPart ?? minutePart ?? "No time tracked";
 }
 
 /**

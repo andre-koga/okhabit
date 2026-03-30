@@ -60,19 +60,3 @@ export function getCachedUserId(): string | null {
 export function getCachedSession(): Session | null {
   return _cachedSession;
 }
-
-// ─── Convenience helpers ──────────────────────────────────────────────────────
-
-/** Returns true when a user is signed in (synchronous, no I/O). */
-export function isAuthenticated(): boolean {
-  return _cachedSession !== null;
-}
-
-/** Async – resolves the userId, waiting for the initial session load.
- *  Prefer getCachedUserId() everywhere the cache is already warm. */
-export async function getCurrentUserId(): Promise<string | null> {
-  if (!supabase) return null;
-  const { data } = await supabase.auth.getSession();
-  _cachedSession = data.session ?? null;
-  return _cachedSession?.user?.id ?? null;
-}

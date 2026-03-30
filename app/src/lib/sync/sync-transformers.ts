@@ -24,7 +24,7 @@ export function isValidUuid(value: unknown): value is string {
   return typeof value === "string" && UUID_REGEX.test(value);
 }
 
-export function sanitizeUuidReferences(
+function sanitizeUuidReferences(
   table: SyncTable,
   row: Record<string, unknown>
 ): Record<string, unknown> {
