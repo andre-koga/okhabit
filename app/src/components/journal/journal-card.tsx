@@ -12,7 +12,6 @@ import { getJournalVideoPlaybackUrl } from "@/lib/journal";
 import { useAuth } from "@/lib/use-auth";
 import { cn } from "@/lib/utils";
 import type { UseJournalEntryReturn } from "@/components/journal/hooks/use-journal-entry";
-import { useJournalDayWeather } from "@/components/journal/hooks/use-journal-day-weather";
 import { useLocationDetection } from "@/components/journal/hooks/use-location-detection";
 import JournalDateHeaderCard from "@/components/journal/journal-date-header-card";
 import JournalVideoSection, {
@@ -73,11 +72,6 @@ export default function JournalCard({
       journal.saveLocation(location);
     },
     [journal]
-  );
-
-  const journalDayWeather = useJournalDayWeather(
-    currentDate,
-    journal.draftLocation ?? journal.persistedLocation
   );
 
   const { detectLocation, resetGeoAttempt } = useLocationDetection({
@@ -192,9 +186,6 @@ export default function JournalCard({
     }
     openJournalEditor();
   };
-
-  // Suppress unused variable lint — weather data will be consumed when the weather UI is wired up
-  void journalDayWeather;
 
   return (
     <>
