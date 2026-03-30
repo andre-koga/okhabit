@@ -9,7 +9,7 @@ import {
   type MouseEvent,
   type PointerEvent,
 } from "react";
-import { Flame, Hash } from "lucide-react";
+import { Hash } from "lucide-react";
 import { toDateStr } from "@/lib/db";
 import { HOLD_ACTION_DELAY_MS } from "@/lib/consts";
 import { getJournalVideoPlaybackUrl } from "@/lib/journal-video-storage";
@@ -254,16 +254,11 @@ export default function JournalCard({
             </div>
 
             {journal.isJournalComplete &&
-              typeof journal.journalCompletionStreak === "number" &&
               typeof journal.journalEntryNumber === "number" && (
                 <div className="pointer-events-auto mb-2 flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center">
+                  <span className="inline-flex items-center tabular-nums">
                     <Hash className="h-3 w-3" />
                     {journal.journalEntryNumber}
-                  </span>
-                  <span className="inline-flex items-center">
-                    <Flame className="h-3 w-3" />
-                    {journal.journalCompletionStreak}
                   </span>
                 </div>
               )}
@@ -275,6 +270,12 @@ export default function JournalCard({
                 title={journal.draftTitle}
                 text={journal.draftText}
                 location={location ?? undefined}
+                journalCompletionStreak={
+                  journal.isJournalComplete &&
+                  typeof journal.journalCompletionStreak === "number"
+                    ? journal.journalCompletionStreak
+                    : null
+                }
               />
             </div>
           </div>

@@ -27,7 +27,7 @@ function TaskCheckbox({
   completeContent,
   incompleteContent,
 }: TaskCheckboxProps) {
-  const sizeClass = size === "sm" ? "h-6 w-6" : "h-7 w-[2.75rem]";
+  const sizeClass = size === "sm" ? "h-7 w-7" : "h-7 w-[2.75rem]";
 
   return (
     <button

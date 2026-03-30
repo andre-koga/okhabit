@@ -213,7 +213,6 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
           paused_task_ids: [],
           is_break_day: false,
           current_activity_id: null,
-          current_memo_id: null,
           created_at: timestamp,
           updated_at: timestamp,
           synced_at: null,

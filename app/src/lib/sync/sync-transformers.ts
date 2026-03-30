@@ -8,8 +8,7 @@ export type SyncTable =
   | "activity_periods"
   | "journal_entries"
   | "one_time_tasks"
-  | "activity_streaks"
-  | "memo_periods";
+  | "activity_streaks";
 
 export const UPSERT_CONFLICT_TARGET: Record<SyncTable, string> = {
   activity_groups: "id",
@@ -19,7 +18,6 @@ export const UPSERT_CONFLICT_TARGET: Record<SyncTable, string> = {
   journal_entries: "user_id,entry_date",
   one_time_tasks: "id",
   activity_streaks: "user_id,activity_id,date",
-  memo_periods: "id",
 };
 
 export function isValidUuid(value: unknown): value is string {
@@ -43,10 +41,6 @@ export function sanitizeUuidReferences(
     sanitized.current_activity_id = null;
   }
 
-  if (table === "daily_entries" && !isValidUuid(sanitized.current_memo_id)) {
-    sanitized.current_memo_id = null;
-  }
-
   if (table === "activity_periods") {
     if (!isValidUuid(sanitized.daily_entry_id)) {
       sanitized.daily_entry_id = null;
@@ -58,15 +52,6 @@ export function sanitizeUuidReferences(
 
   if (table === "activity_streaks" && !isValidUuid(sanitized.activity_id)) {
     sanitized.activity_id = null;
-  }
-
-  if (table === "memo_periods") {
-    if (!isValidUuid(sanitized.daily_entry_id)) {
-      sanitized.daily_entry_id = null;
-    }
-    if (!isValidUuid(sanitized.one_time_task_id)) {
-      sanitized.one_time_task_id = null;
-    }
   }
 
   return sanitized;

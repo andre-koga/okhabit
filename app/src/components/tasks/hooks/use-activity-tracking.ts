@@ -5,7 +5,6 @@ import { useState, useCallback } from "react";
 import { db, now, newId } from "@/lib/db";
 import type { ActivityPeriod, DailyEntry } from "@/lib/db/types";
 import { closeOpenPeriods } from "@/lib/activity-periods";
-import { closeOpenMemoPeriods } from "@/lib/memo-periods";
 
 export function useActivityTracking(
   dateString: string,
@@ -62,7 +61,6 @@ export function useActivityTracking(
         const entry = await getOrCreateDailyEntry();
 
         await closeOpenPeriods(entry.id);
-        await closeOpenMemoPeriods(entry.id);
 
         const newPeriod: ActivityPeriod = {
           id: newId(),
@@ -78,7 +76,6 @@ export function useActivityTracking(
         await db.activityPeriods.add(newPeriod);
         await db.dailyEntries.update(entry.id, {
           current_activity_id: activityId,
-          current_memo_id: null,
           updated_at: n,
         });
 
@@ -105,7 +102,6 @@ export function useActivityTracking(
 
       await db.dailyEntries.update(entry.id, {
         current_activity_id: null,
-        current_memo_id: null,
         updated_at: n,
       });
 

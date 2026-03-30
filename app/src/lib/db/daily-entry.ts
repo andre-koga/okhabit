@@ -27,7 +27,6 @@ export async function getOrCreateDailyEntry(
     paused_task_ids: [],
     is_break_day: false,
     current_activity_id: null,
-    current_memo_id: null,
     created_at: n,
     updated_at: n,
     synced_at: null,

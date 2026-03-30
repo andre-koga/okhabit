@@ -35,7 +35,6 @@ export interface DailyEntry {
   paused_task_ids: string[] | null;
   is_break_day: boolean | null;
   current_activity_id: string | null;
-  current_memo_id: string | null;
   created_at: string;
   updated_at: string;
   synced_at: string | null;
@@ -92,18 +91,6 @@ export interface OneTimeTask {
   order_index: number | null;
   is_pinned: boolean | null;
   due_date: string | null; // YYYY-MM-DD, when memo is due
-  created_at: string;
-  updated_at: string;
-  synced_at: string | null;
-  deleted_at: string | null;
-}
-
-export interface MemoPeriod {
-  id: string;
-  daily_entry_id: string;
-  one_time_task_id: string;
-  start_time: string; // ISO string
-  end_time: string | null; // ISO string
   created_at: string;
   updated_at: string;
   synced_at: string | null;

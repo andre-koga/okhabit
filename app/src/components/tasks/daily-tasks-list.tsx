@@ -8,10 +8,8 @@ import ActivityTimelineItem from "./activity-timeline-item";
 import OneTimeTaskItem from "./one-time-task-item";
 import ActivityGroupsDrawer from "./activity-groups-drawer";
 import ActiveActivityPill from "./active-activity-pill";
-import ActiveMemoPill from "./active-memo-pill";
 import AddTaskModal from "./add-task-modal";
 import AssignActivityDialog from "./assign-activity-dialog";
-import MemoSessionDetailsDialog from "./memo-session-details-dialog";
 import { useDailyTasks } from "./hooks/use-daily-tasks";
 import { CircleCheckBig, Palmtree } from "lucide-react";
 import SessionDetailsDialog from "@/components/activities/session-details-dialog";
@@ -36,9 +34,6 @@ export default function DailyTasksList({
     groupId: string;
     sessionId: string;
   } | null>(null);
-  const [editingMemoSessionId, setEditingMemoSessionId] = useState<
-    string | null
-  >(null);
 
   const {
     isToday,
@@ -48,7 +43,6 @@ export default function DailyTasksList({
     getGroup,
     timelineSessions,
     currentActivityId,
-    currentMemoId,
     taskCounts,
     pausedTaskIds,
     isBreakDay,
@@ -64,17 +58,11 @@ export default function DailyTasksList({
     toggleBreakDay,
     handleStartActivity,
     handleStopActivity,
-    handleStartMemo,
-    handleStopMemo,
     runningSession,
-    runningMemoSession,
     currentActivityElapsedMs,
-    currentMemoElapsedMs,
     loadActivityPeriods,
-    loadMemoPeriods,
     calculateActivityTime,
     calculateActivityTotalTime,
-    calculateMemoTime,
     formatTimerDisplay,
   } = daily;
   const pausedTaskIdSet = new Set(pausedTaskIds);
@@ -111,10 +99,6 @@ export default function DailyTasksList({
               onToggle={toggleOneTimeTask}
               onDelete={deleteOneTimeTask}
               onUpdate={updateOneTimeTask}
-              timeSpent={calculateMemoTime(task.id)}
-              isCurrentMemo={currentMemoId === task.id}
-              onStartMemo={handleStartMemo}
-              onStopMemo={handleStopMemo}
             />
           ))}
         </div>
@@ -182,7 +166,7 @@ export default function DailyTasksList({
         )}
       </div>
 
-      {(currentActivityId || currentMemoId || timelineSessions.length > 0) && (
+      {(currentActivityId || timelineSessions.length > 0) && (
         <div className="mt-6 space-y-2">
           <div className="ml-1 mr-1.5 flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -213,20 +197,8 @@ export default function DailyTasksList({
                 : undefined
             }
           />
-          <ActiveMemoPill
-            currentMemoId={currentMemoId}
-            oneTimeTasks={oneTimeTasks}
-            elapsedMs={currentMemoElapsedMs}
-            onStop={handleStopMemo}
-            onEdit={
-              runningMemoSession
-                ? () => setEditingMemoSessionId(runningMemoSession.sessionId)
-                : undefined
-            }
-          />
           {timelineSessions.map((session) => {
-            const isMemo = session.type === "memo";
-            const isUnknown = !isMemo && !session.groupId;
+            const isUnknown = !session.groupId;
             return (
               <ActivityTimelineItem
                 key={session.id}
@@ -235,25 +207,16 @@ export default function DailyTasksList({
                 intervalMs={session.intervalMs}
                 activityId={session.activityId || ""}
                 onClick={
-                  isMemo
-                    ? () => setEditingMemoSessionId(session.id)
-                    : isUnknown
-                      ? () => openAssignDialog(session.id, session.intervalMs)
-                      : () =>
-                          setEditingSession({
-                            groupId: session.groupId,
-                            sessionId: session.id,
-                          })
+                  isUnknown
+                    ? () => openAssignDialog(session.id, session.intervalMs)
+                    : () =>
+                        setEditingSession({
+                          groupId: session.groupId,
+                          sessionId: session.id,
+                        })
                 }
                 onStartActivity={
-                  isToday && !isMemo && !isUnknown
-                    ? handleStartActivity
-                    : undefined
-                }
-                onStartMemo={
-                  isToday && isMemo && session.memoId
-                    ? () => handleStartMemo(session.memoId)
-                    : undefined
+                  isToday && !isUnknown ? handleStartActivity : undefined
                 }
               />
             );
@@ -297,17 +260,6 @@ export default function DailyTasksList({
           }}
         />
       )}
-
-      <MemoSessionDetailsDialog
-        sessionId={editingMemoSessionId}
-        open={editingMemoSessionId !== null}
-        onOpenChange={(open) => {
-          if (!open) setEditingMemoSessionId(null);
-        }}
-        onSessionUpdated={() => {
-          void loadMemoPeriods();
-        }}
-      />
     </div>
   );
 }

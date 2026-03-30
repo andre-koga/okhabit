@@ -12,7 +12,6 @@ import type {
   JournalEntry,
   OneTimeTask,
   ActivityStreak,
-  MemoPeriod,
 } from "./types";
 
 const JOURNAL_VIDEO_PREFIX = "/storage/v1/object/public/journal-videos/";
@@ -44,7 +43,6 @@ export class UpwardsDB extends Dexie {
   journalEntries!: Table<JournalEntry>;
   oneTimeTasks!: Table<OneTimeTask>;
   activityStreaks!: Table<ActivityStreak>;
-  memoPeriods!: Table<MemoPeriod>;
 
   constructor() {
     super("okhabit");
@@ -131,6 +129,29 @@ export class UpwardsDB extends Dexie {
             }
           });
       });
+
+    this.version(7)
+      .stores({
+        activityGroups: "id, name, is_archived, deleted_at, created_at",
+        activities: "id, group_id, is_archived, deleted_at, created_at",
+        dailyEntries: "id, date, is_break_day, deleted_at",
+        activityPeriods: "id, daily_entry_id, activity_id, deleted_at",
+        journalEntries:
+          "id, entry_date, is_bookmarked, is_journal_complete, journal_entry_number, deleted_at",
+        oneTimeTasks:
+          "id, date, is_completed, is_pinned, due_date, deleted_at, created_at",
+        activityStreaks:
+          "id, activity_id, date, [activity_id+date], deleted_at",
+      })
+      .upgrade(async (tx) => {
+        await tx.table("memoPeriods").clear();
+        await tx
+          .table("dailyEntries")
+          .toCollection()
+          .modify((row) => {
+            delete (row as Record<string, unknown>).current_memo_id;
+          });
+      });
   }
 }
 
@@ -157,5 +178,4 @@ export type {
   JournalEntry,
   OneTimeTask,
   ActivityStreak,
-  MemoPeriod,
 } from "./types";
