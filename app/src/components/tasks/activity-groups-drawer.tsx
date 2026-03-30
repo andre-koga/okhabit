@@ -285,7 +285,7 @@ export default function ActivityGroupsDrawer({
         onClick={() => setOpen((v) => !v)}
         title={open ? "Close activity picker" : "Pick group or activity"}
         aria-label={open ? "Close activity picker" : "Pick group or activity"}
-        className="fixed bottom-2 left-1/2 z-[60] flex h-12 w-[40vw] -translate-x-1/2 items-center justify-center gap-2 rounded-full bg-primary px-6 text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
+        className="fixed bottom-2 right-2 z-[60] flex h-12 w-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
       >
         {open ? (
           <X className="h-5 w-5 shrink-0" aria-hidden />
