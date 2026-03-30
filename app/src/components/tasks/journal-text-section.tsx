@@ -1,7 +1,7 @@
 /**
  * SRP: Renders journal location and streak above the title, then title and reflection text.
  */
-import { MapPin } from "lucide-react";
+import { Flame, MapPin } from "lucide-react";
 import type { LocationData } from "@/lib/db/types";
 
 interface JournalTextSectionProps {
@@ -25,7 +25,7 @@ export default function JournalTextSection({
   return (
     <>
       {showMetaRow && (
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 pt-2 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-muted-foreground">
           {location ? (
             <span className="inline-flex min-w-0 items-center gap-1">
               <MapPin className="h-3 w-3 shrink-0" />
@@ -40,7 +40,7 @@ export default function JournalTextSection({
               title={`Journal streak: ${journalCompletionStreak}`}
               aria-label={`Journal streak: ${journalCompletionStreak}`}
             >
-              <span aria-hidden>🔥</span>
+              <Flame className="h-3 w-3 shrink-0" />
               {journalCompletionStreak}
             </span>
           )}
@@ -48,9 +48,9 @@ export default function JournalTextSection({
       )}
 
       <p
-        className={`text-left font-crimson text-3xl font-bold ${
+        className={`pb-2 text-left font-crimson text-3xl font-bold ${
           title ? "" : "text-muted-foreground/30"
-        } ${showMetaRow ? "pt-1" : "pt-2"}`}
+        } ${showMetaRow ? "pt-2" : "pt-3"}`}
       >
         {title || "Untitled"}
       </p>

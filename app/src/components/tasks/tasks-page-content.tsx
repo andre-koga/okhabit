@@ -189,7 +189,7 @@ export default function TasksPageContent() {
       <JournalCard
         currentDate={currentDate}
         onDateChange={setCurrentDate}
-        loadJournalEntry={journal.loadJournalEntry}
+        journal={journal}
         loadJournalMeta={loadJournalMeta}
       />
 

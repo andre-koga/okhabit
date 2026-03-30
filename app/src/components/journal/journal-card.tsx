@@ -9,13 +9,12 @@ import {
   type MouseEvent,
   type PointerEvent,
 } from "react";
-import { Hash } from "lucide-react";
 import { toDateStr } from "@/lib/db";
 import { HOLD_ACTION_DELAY_MS } from "@/lib/consts";
 import { getJournalVideoPlaybackUrl } from "@/lib/journal-video-storage";
 import { useAuth } from "@/lib/use-auth";
 import { cn } from "@/lib/utils";
-import { useJournalEntry } from "../tasks/hooks/use-journal-entry";
+import type { UseJournalEntryReturn } from "../tasks/hooks/use-journal-entry";
 import { useJournalMeta } from "../tasks/hooks/use-journal-meta";
 import { useJournalDayWeather } from "../tasks/hooks/use-journal-day-weather";
 import { useLocationDetection } from "../tasks/hooks/use-location-detection";
@@ -31,15 +30,15 @@ import type { LocationData } from "@/lib/db/types";
 interface JournalCardProps {
   currentDate: Date;
   onDateChange: (date: Date) => void;
-  /** Called after loadJournalEntry/loadJournalMeta so parent can wire into sync refresh. */
-  loadJournalEntry: ReturnType<typeof useJournalEntry>["loadJournalEntry"];
+  /** Single hook instance from the page — must not duplicate useJournalEntry inside this card. */
+  journal: UseJournalEntryReturn;
   loadJournalMeta: ReturnType<typeof useJournalMeta>["loadJournalMeta"];
 }
 
 export default function JournalCard({
   currentDate,
   onDateChange,
-  loadJournalEntry,
+  journal,
   loadJournalMeta,
 }: JournalCardProps) {
   const [journalEditOpen, setJournalEditOpen] = useState(false);
@@ -54,7 +53,6 @@ export default function JournalCard({
 
   const { isSupabaseConfigured, isAuthed } = useAuth();
   const { entryDates, bookmarkedDates } = useJournalMeta();
-  const journal = useJournalEntry(currentDate);
   const dateString = toDateStr(currentDate);
 
   const videoPlaybackSrc = getJournalVideoPlaybackUrl(journal.draftVideoPath);
@@ -103,10 +101,12 @@ export default function JournalCard({
     setIsJournalLoaded(false);
     setJournalEditOpen(false);
     resetGeoAttempt();
-    void loadJournalEntry().finally(() => {
+    void journal.loadJournalEntry().finally(() => {
       setIsJournalLoaded(true);
     });
-  }, [loadJournalEntry, resetGeoAttempt]);
+    // journal intentionally omitted — object identity changes every render; loadJournalEntry tracks date.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- omit journal object
+  }, [journal.loadJournalEntry, resetGeoAttempt]);
 
   useEffect(() => {
     if (!journal.canEditJournal) return;
@@ -252,16 +252,6 @@ export default function JournalCard({
                 </span>
               )}
             </div>
-
-            {journal.isJournalComplete &&
-              typeof journal.journalEntryNumber === "number" && (
-                <div className="pointer-events-auto mb-2 flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="inline-flex items-center tabular-nums">
-                    <Hash className="h-3 w-3" />
-                    {journal.journalEntryNumber}
-                  </span>
-                </div>
-              )}
           </div>
 
           <div className="mx-auto max-w-2xl space-y-3 px-4">
