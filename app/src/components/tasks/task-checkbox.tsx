@@ -2,6 +2,7 @@ import { memo } from "react";
 import { Check } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface TaskCheckboxProps {
   isComplete: boolean;
@@ -24,21 +25,14 @@ function TaskCheckbox({
   completeContent,
   incompleteContent,
 }: TaskCheckboxProps) {
-  const sizeClass = size === "sm" ? "h-6 w-6" : "h-7 w-[2.75rem]";
-
   return (
-    <button
+    <Button
+      type="button"
+      variant={isComplete ? "taskComplete" : "taskTodo"}
+      size={size === "sm" ? "taskSm" : "taskMd"}
       onClick={isToday ? onClick : undefined}
       disabled={!isToday}
-      className={cn(
-        "flex items-center justify-center rounded-full border transition-colors",
-        sizeClass,
-        isComplete
-          ? "border-primary bg-primary text-primary-foreground"
-          : "border-muted-foreground text-muted-foreground",
-        "disabled:cursor-default disabled:opacity-60",
-        className
-      )}
+      className={cn("disabled:cursor-default disabled:opacity-60", className)}
       title={
         title ??
         (isToday
@@ -51,7 +45,7 @@ function TaskCheckbox({
       {isComplete
         ? (completeContent ?? <Check className="h-4 w-4" />)
         : (incompleteContent ?? null)}
-    </button>
+    </Button>
   );
 }
 

@@ -1,6 +1,3 @@
-/**
- * SRP: Renders today's tasks, timeline, and task-related dialogs.
- */
 import { useState } from "react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import ActivityTaskItem from "./activity-task-item";
@@ -8,26 +5,26 @@ import ActivityTimelineItem from "./activity-timeline-item";
 import OneTimeTaskItem from "./one-time-task-item";
 import ActivityGroupsDrawer from "./activity-groups-drawer";
 import ActiveActivityPill from "./active-activity-pill";
-import ActiveMemoPill from "./active-memo-pill";
 import AddTaskModal from "./add-task-modal";
 import AssignActivityDialog from "./assign-activity-dialog";
 import { useDailyTasks } from "./hooks/use-daily-tasks";
 import { CircleCheckBig, Palmtree } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import SessionDetailsDialog from "@/components/activities/session-details-dialog";
+
+export type DailyTasksState = ReturnType<typeof useDailyTasks>;
 
 interface DailyTasksListProps {
   activities: Activity[];
   groups: ActivityGroup[];
-  currentDate: Date;
-  /** When this changes, daily data is reloaded (e.g. after sync). */
-  refreshTrigger?: number;
+  daily: DailyTasksState;
 }
 
 export default function DailyTasksList({
   activities,
   groups,
-  currentDate,
-  refreshTrigger = 0,
+  daily,
 }: DailyTasksListProps) {
   const [assignPeriodId, setAssignPeriodId] = useState<string | null>(null);
   const [assignIntervalMs, setAssignIntervalMs] = useState(0);
@@ -43,13 +40,8 @@ export default function DailyTasksList({
     activityStreaks,
     dailyActivities,
     getGroup,
-    nonNeverCount,
-    completedCount,
-    completionRate,
-    totalTimeSpentMs,
     timelineSessions,
     currentActivityId,
-    currentMemoId,
     taskCounts,
     pausedTaskIds,
     isBreakDay,
@@ -65,17 +57,13 @@ export default function DailyTasksList({
     toggleBreakDay,
     handleStartActivity,
     handleStopActivity,
-    handleStartMemo,
-    handleStopMemo,
     runningSession,
     currentActivityElapsedMs,
-    currentMemoElapsedMs,
     loadActivityPeriods,
     calculateActivityTime,
     calculateActivityTotalTime,
-    calculateMemoTime,
     formatTimerDisplay,
-  } = useDailyTasks({ activities, groups, currentDate, refreshTrigger });
+  } = daily;
   const pausedTaskIdSet = new Set(pausedTaskIds);
 
   const openAssignDialog = (periodId: string, intervalMs: number) => {
@@ -94,7 +82,7 @@ export default function DailyTasksList({
         onAdd={createOneTimeTask}
         icon={CircleCheckBig}
         triggerTitle="Add quick task"
-        triggerClassName="fixed bottom-16 right-4 z-[60] h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-md flex items-center justify-center hover:bg-primary/90 transition-colors"
+        triggerClassName="fixed bottom-16 right-2 z-[60] flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
       />
 
       {oneTimeTasks.length > 0 && (
@@ -110,10 +98,6 @@ export default function DailyTasksList({
               onToggle={toggleOneTimeTask}
               onDelete={deleteOneTimeTask}
               onUpdate={updateOneTimeTask}
-              timeSpent={calculateMemoTime(task.id)}
-              isCurrentMemo={currentMemoId === task.id}
-              onStartMemo={handleStartMemo}
-              onStopMemo={handleStopMemo}
             />
           ))}
         </div>
@@ -122,17 +106,6 @@ export default function DailyTasksList({
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         For Today
       </p>
-
-      {dailyActivities.length > 0 && (
-        <div className="mb-2 ml-1 mr-1.5 flex items-center justify-between text-xs text-muted-foreground">
-          <span>
-            {isBreakDay
-              ? "Break day"
-              : `${completedCount} / ${nonNeverCount} (${completionRate}%)`}
-          </span>
-          <span>{formatTimerDisplay(totalTimeSpentMs)}</span>
-        </div>
-      )}
 
       <div className="flex-1 space-y-2">
         {loading && (
@@ -169,22 +142,24 @@ export default function DailyTasksList({
       </div>
 
       <div className="mt-4 flex flex-col items-center justify-center gap-1">
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={() => {
             void toggleBreakDay();
           }}
           disabled={!isToday}
-          className={`inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-1.5 text-xs font-medium transition-colors ${
+          className={cn(
+            "inline-flex gap-1.5 rounded-full border-border bg-background px-4 py-1.5 text-xs font-medium disabled:cursor-default disabled:opacity-70",
             isBreakDay
               ? "text-amber-500"
               : "text-muted-foreground hover:text-foreground"
-          } disabled:cursor-default disabled:opacity-70`}
+          )}
           title={isBreakDay ? "Unset break day" : "Mark this day as break day"}
         >
           <Palmtree className="h-3.5 w-3.5" />
           {isBreakDay ? "Break Day Active" : "Mark as Break Day"}
-        </button>
+        </Button>
         {!isBreakDay && (
           <p className="text-center text-[11px] text-muted-foreground">
             Incomplete tasks won&apos;t affect streaks.
@@ -192,7 +167,7 @@ export default function DailyTasksList({
         )}
       </div>
 
-      {(currentActivityId || currentMemoId || timelineSessions.length > 0) && (
+      {(currentActivityId || timelineSessions.length > 0) && (
         <div className="mt-6 space-y-2">
           <div className="ml-1 mr-1.5 flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -223,15 +198,8 @@ export default function DailyTasksList({
                 : undefined
             }
           />
-          <ActiveMemoPill
-            currentMemoId={currentMemoId}
-            oneTimeTasks={oneTimeTasks}
-            elapsedMs={currentMemoElapsedMs}
-            onStop={handleStopMemo}
-          />
           {timelineSessions.map((session) => {
-            const isMemo = session.type === "memo";
-            const isUnknown = !isMemo && !session.groupId;
+            const isUnknown = !session.groupId;
             return (
               <ActivityTimelineItem
                 key={session.id}
@@ -240,20 +208,16 @@ export default function DailyTasksList({
                 intervalMs={session.intervalMs}
                 activityId={session.activityId || ""}
                 onClick={
-                  isMemo
-                    ? undefined
-                    : isUnknown
-                      ? () => openAssignDialog(session.id, session.intervalMs)
-                      : () =>
-                          setEditingSession({
-                            groupId: session.groupId,
-                            sessionId: session.id,
-                          })
+                  isUnknown
+                    ? () => openAssignDialog(session.id, session.intervalMs)
+                    : () =>
+                        setEditingSession({
+                          groupId: session.groupId,
+                          sessionId: session.id,
+                        })
                 }
                 onStartActivity={
-                  isToday && !isMemo && !isUnknown
-                    ? handleStartActivity
-                    : undefined
+                  isToday && !isUnknown ? handleStartActivity : undefined
                 }
               />
             );

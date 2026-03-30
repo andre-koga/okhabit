@@ -1,6 +1,3 @@
-/**
- * SRP: Sanitizes sync payloads so only schema-valid rows and references are upserted.
- */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { db, newId } from "@/lib/db";
 import type { SyncTable } from "./sync-transformers";
@@ -44,7 +41,6 @@ const ALLOWED_COLUMNS: Record<SyncTable, Set<string>> = {
     "paused_task_ids",
     "is_break_day",
     "current_activity_id",
-    "current_memo_id",
     "created_at",
     "updated_at",
     "deleted_at",
@@ -68,7 +64,7 @@ const ALLOWED_COLUMNS: Record<SyncTable, Set<string>> = {
     "text_content",
     "day_emoji",
     "is_bookmarked",
-    "youtube_url",
+    "video_path",
     "video_thumbnail",
     "is_journal_complete",
     "journal_entry_number",
@@ -98,17 +94,6 @@ const ALLOWED_COLUMNS: Record<SyncTable, Set<string>> = {
     "activity_id",
     "date",
     "streak",
-    "created_at",
-    "updated_at",
-    "deleted_at",
-  ]),
-  memo_periods: new Set([
-    "id",
-    "user_id",
-    "daily_entry_id",
-    "one_time_task_id",
-    "start_time",
-    "end_time",
     "created_at",
     "updated_at",
     "deleted_at",
@@ -188,9 +173,49 @@ export async function sanitizeForeignKeyRefsBeforeUpsert(
       );
     }
 
-    // Skip remote activity check: we push activities before activity_periods in the
-    // same sync run, so referenced activities should exist. The remote check could
-    // null valid refs due to timing/propagation, causing assigned activities to revert.
+    // Both tables FK to activities(id); cloud may lag local Dexie without this check.
+    if (table === "activity_periods" || table === "activity_streaks") {
+      const referencedActivityIds = Array.from(
+        new Set(
+          result
+            .map((row) => row.activity_id)
+            .filter((id): id is string => isValidUuid(id))
+        )
+      );
+
+      if (referencedActivityIds.length > 0) {
+        const { data: remoteActivities, error: remoteActivitiesError } =
+          await supabaseClient
+            .from("activities")
+            .select("id")
+            .eq("user_id", userId)
+            .in("id", referencedActivityIds);
+
+        if (!remoteActivitiesError) {
+          const remoteActivityIds = new Set(
+            (remoteActivities ?? []).map((activity) => activity.id)
+          );
+
+          let missingRemoteActivityRefCount = 0;
+          result = result.map((row) => {
+            if (!row.activity_id || !isValidUuid(row.activity_id)) {
+              return row;
+            }
+            if (remoteActivityIds.has(row.activity_id)) {
+              return row;
+            }
+            missingRemoteActivityRefCount += 1;
+            return { ...row, activity_id: null };
+          });
+
+          if (missingRemoteActivityRefCount > 0) {
+            console.warn(
+              `[sync] nulled ${missingRemoteActivityRefCount} non-existent remote activity_id reference(s) on ${table}`
+            );
+          }
+        }
+      }
+    }
   }
 
   if (table === "activity_periods") {
@@ -260,56 +285,6 @@ export async function sanitizeForeignKeyRefsBeforeUpsert(
           );
         }
       }
-    }
-  }
-
-  if (table === "memo_periods") {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const dailyEntryIdsRaw: any[] = await (db.dailyEntries as any)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .filter((d: any) => !d.deleted_at)
-      .primaryKeys();
-    const validDailyEntryIds = new Set(
-      dailyEntryIdsRaw.map((id) => String(id)).filter((id) => isValidUuid(id))
-    );
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const taskIdsRaw: any[] = await (db.oneTimeTasks as any)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .filter((t: any) => !t.deleted_at)
-      .primaryKeys();
-    const validTaskIds = new Set(
-      taskIdsRaw.map((id) => String(id)).filter((id) => isValidUuid(id))
-    );
-
-    let missingDailyEntryRefCount = 0;
-    let missingTaskRefCount = 0;
-    result = result.map((row) => {
-      let r = { ...row };
-      if (row.daily_entry_id && isValidUuid(row.daily_entry_id)) {
-        if (!validDailyEntryIds.has(row.daily_entry_id)) {
-          missingDailyEntryRefCount += 1;
-          r = { ...r, daily_entry_id: null };
-        }
-      }
-      if (row.one_time_task_id && isValidUuid(row.one_time_task_id)) {
-        if (!validTaskIds.has(row.one_time_task_id)) {
-          missingTaskRefCount += 1;
-          r = { ...r, one_time_task_id: null };
-        }
-      }
-      return r;
-    });
-
-    if (missingDailyEntryRefCount > 0) {
-      console.warn(
-        `[sync] nulled ${missingDailyEntryRefCount} missing daily_entry_id reference(s) on memo_periods`
-      );
-    }
-    if (missingTaskRefCount > 0) {
-      console.warn(
-        `[sync] nulled ${missingTaskRefCount} missing one_time_task_id reference(s) on memo_periods`
-      );
     }
   }
 

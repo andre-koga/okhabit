@@ -1,7 +1,3 @@
-/**
- * SRP: Defines shared dialog-form style tokens for form composition components.
- */
-
 export const dialogFieldClassName =
   "w-full rounded-md border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary read-only:cursor-default read-only:border-border read-only:border-dashed disabled:cursor-not-allowed disabled:opacity-50 read-only:bg-muted/30";
 
@@ -22,3 +18,7 @@ export const dialogSecondaryActionClassName =
 export const dialogSecondaryDestructiveClassName = "hover:text-destructive";
 
 export const dialogFieldLabelClassName = "text-xs";
+
+/** Action control in a dialog form: same chrome as {@link dialogFieldClassName} / select triggers (rounded-md, border, h-10). */
+export const dialogFormControlButtonClassName =
+  "flex h-10 w-full items-center justify-start gap-2 rounded-md border border-input bg-background px-3 text-sm text-foreground shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0";

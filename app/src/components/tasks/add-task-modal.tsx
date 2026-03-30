@@ -1,10 +1,9 @@
-/**
- * SRP: Opens the memo creation flow from a floating trigger button.
- */
 import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { MemoEditDialog } from "@/components/tasks/memo-edit-dialog";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface AddTaskModalProps {
   /** Called with the task title and optional options; return true on success to close the modal. */
@@ -14,6 +13,8 @@ interface AddTaskModalProps {
   ) => Promise<boolean>;
   triggerClassName?: string;
   triggerTitle?: string;
+  /** Shown next to the icon inside the trigger (wider layouts). */
+  triggerLabel?: string;
   icon?: LucideIcon;
   disabled?: boolean;
 }
@@ -22,6 +23,7 @@ export default function AddTaskModal({
   onAdd,
   triggerClassName,
   triggerTitle = "Add one-time task",
+  triggerLabel,
   icon: Icon = Plus,
   disabled = false,
 }: AddTaskModalProps) {
@@ -73,17 +75,38 @@ export default function AddTaskModal({
         confirmDisabled={adding || !title.trim()}
       />
 
-      <button
+      <Button
+        type="button"
+        variant="default"
+        size={triggerLabel ? "default" : "floatingNav"}
         onClick={() => setOpen((v) => !v)}
         disabled={disabled}
         title={triggerTitle}
-        className={
-          triggerClassName ||
-          "fixed bottom-3 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
-        }
+        aria-label={triggerTitle}
+        className={cn(
+          !triggerLabel &&
+            "fixed bottom-2 right-2 z-[60] gap-0 px-0 text-primary-foreground shadow-md hover:bg-primary/90",
+          triggerLabel && "rounded-full shadow-md",
+          triggerClassName
+        )}
       >
-        {open ? <X className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
-      </button>
+        {triggerLabel ? (
+          <span className="flex items-center justify-center gap-2">
+            {open ? (
+              <X className="h-5 w-5 shrink-0" aria-hidden />
+            ) : (
+              <Icon className="h-5 w-5 shrink-0" aria-hidden />
+            )}
+            <span className="text-sm font-semibold">
+              {open ? "Close" : triggerLabel}
+            </span>
+          </span>
+        ) : open ? (
+          <X className="h-5 w-5" aria-hidden />
+        ) : (
+          <Icon className="h-5 w-5" aria-hidden />
+        )}
+      </Button>
     </>
   );
 }

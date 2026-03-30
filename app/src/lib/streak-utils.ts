@@ -1,10 +1,7 @@
-/**
- * SRP: Computes and persists activity streak rows only when streak values change.
- */
-import { db, newId, now, toDateStr } from "@/lib/db";
+import { db, newId, now } from "@/lib/db";
 import type { Activity, ActivityStreak, DailyEntry } from "@/lib/db/types";
-import { shouldShowActivity } from "@/lib/activity-utils";
-import { startOfDay, addDays } from "@/lib/date-utils";
+import { shouldShowActivity } from "@/lib/activity";
+import { shiftDate, startOfDay, toDateString } from "@/lib/time-utils";
 
 function isStreakEligible(activity: Activity): boolean {
   return activity.routine !== "anytime";
@@ -123,7 +120,7 @@ async function ensureStreakForActivityOnDate(
   if (!isStreakEligible(activity)) return 0;
 
   const targetDay = startOfDay(targetDate);
-  const targetDateStr = toDateStr(targetDay);
+  const targetDateStr = toDateString(targetDay);
   const creationDay = getCreationDay(activity);
 
   if (targetDay < creationDay) return 0;
@@ -156,7 +153,7 @@ async function ensureStreakForActivityOnDate(
     const latestDay = startOfDay(
       new Date(`${latestBeforeTarget.date}T00:00:00`)
     );
-    computeStartDay = addDays(latestDay, 1);
+    computeStartDay = shiftDate(latestDay, 1);
     previousStreak = latestBeforeTarget.streak;
   }
 
@@ -164,7 +161,7 @@ async function ensureStreakForActivityOnDate(
     return existingTargetRow?.streak ?? previousStreak;
   }
 
-  const startDateStr = toDateStr(computeStartDay);
+  const startDateStr = toDateString(computeStartDay);
   const entriesByDate = await getDailyEntriesByDateRange(
     startDateStr,
     targetDateStr
@@ -176,11 +173,11 @@ async function ensureStreakForActivityOnDate(
 
   while (cursorDay <= targetDay) {
     if (!shouldShowActivity(activity, cursorDay)) {
-      cursorDay = addDays(cursorDay, 1);
+      cursorDay = shiftDate(cursorDay, 1);
       continue;
     }
 
-    const dateStr = toDateStr(cursorDay);
+    const dateStr = toDateString(cursorDay);
     const streakStatus = getDailyTaskStreakStatus(
       activity,
       entriesByDate.get(dateStr)
@@ -210,7 +207,7 @@ async function ensureStreakForActivityOnDate(
     }
 
     previousStreak = nextStreak;
-    cursorDay = addDays(cursorDay, 1);
+    cursorDay = shiftDate(cursorDay, 1);
   }
 
   return targetStreak;

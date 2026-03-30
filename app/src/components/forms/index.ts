@@ -1,8 +1,6 @@
-/**
- * SRP: Re-exports shared form composition building blocks.
- */
 export * from "@/components/forms/form-date-field";
 export * from "@/components/forms/form-character-count";
+export * from "@/components/forms/form-control-button";
 export * from "@/components/forms/form-dialog-actions";
 export * from "@/components/forms/form-dialog";
 export * from "@/components/forms/form-field";

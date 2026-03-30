@@ -1,13 +1,11 @@
-/**
- * SRP: Tracks group activity toggles and computes completed elapsed time totals.
- */
 import { useCallback, useEffect, useState } from "react";
-import { db, todayStr } from "@/lib/db";
+import { db } from "@/lib/db";
 import { getOrCreateDailyEntry } from "@/lib/db/daily-entry";
+import { todayDateString } from "@/lib/time-utils";
 import { useActivityTracking } from "@/components/tasks/hooks/use-activity-tracking";
 
 export function useGroupActivityTracking() {
-  const dateString = todayStr();
+  const dateString = todayDateString();
   const [currentActivityId, setCurrentActivityId] = useState<string | null>(
     null
   );

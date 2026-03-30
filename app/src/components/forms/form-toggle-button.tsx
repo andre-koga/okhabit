@@ -1,8 +1,6 @@
-/**
- * SRP: Renders a reusable boolean toggle button for form controls.
- */
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface FormToggleButtonProps {
   toggled: boolean;
@@ -24,21 +22,23 @@ export function FormToggleButton({
   inactiveClassName,
 }: FormToggleButtonProps) {
   return (
-    <button
+    <Button
       type="button"
+      variant="outline"
+      size="icon"
       onClick={() => onToggle(!toggled)}
       aria-label={label}
       aria-pressed={toggled}
       className={cn(
-        "flex h-9 w-9 shrink-0 items-center justify-center rounded-md border transition-colors",
+        "shrink-0 border transition-colors",
         toggled
-          ? "border-primary bg-primary/20 text-primary"
+          ? "border-primary bg-primary/20 text-primary hover:bg-primary/25"
           : "border-border text-muted-foreground hover:text-foreground",
         toggled ? activeClassName : inactiveClassName,
         className
       )}
     >
       {children ?? label}
-    </button>
+    </Button>
   );
 }

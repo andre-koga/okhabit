@@ -1,8 +1,6 @@
-/**
- * SRP: Renders a group as a pill with optional settings (cog), name, and start/stop action.
- */
 import { Settings, Play, Square } from "lucide-react";
 import { getContrastColor } from "@/lib/color-utils";
+import { Button } from "@/components/ui/button";
 
 export interface GroupPillProps {
   name: string;
@@ -63,29 +61,32 @@ export default function GroupPill({
       }}
     >
       {onSettingsClick && (
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={onSettingsClick}
-          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:text-foreground"
+          className="h-10 w-10 shrink-0 rounded-full border-border p-0 text-muted-foreground"
           aria-label="Group settings"
         >
           <Settings className="h-4 w-4" />
-        </button>
+        </Button>
       )}
       <div className="flex w-full items-stretch rounded-full border border-border">
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={onNameClick}
-          className="h-full flex-1 truncate px-4 text-left text-sm font-medium"
+          className="h-full flex-1 justify-start truncate rounded-none px-4 text-left text-sm font-medium shadow-none hover:bg-transparent"
         >
           {name || (
             <span className="font-normal text-muted-foreground/50">Name…</span>
           )}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="ghost"
           onClick={onActionClick}
-          className="relative flex h-full flex-shrink-0 items-center justify-center gap-1.5 rounded-full px-4 text-xs font-semibold"
+          className="relative h-full shrink-0 gap-1.5 rounded-full px-4 text-xs font-semibold shadow-none hover:opacity-95"
           style={{ backgroundColor: color, color: textColor }}
         >
           {isRunning ? (
@@ -100,7 +101,7 @@ export default function GroupPill({
             />
           )}
           <span className="mb-px w-8">{actionLabel}</span>
-        </button>
+        </Button>
       </div>
     </div>
   );

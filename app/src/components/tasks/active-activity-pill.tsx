@@ -1,17 +1,15 @@
-/**
- * SRP: Displays the currently running activity with elapsed time and stop/edit actions.
- */
 import { useEffect, useState, memo, useMemo } from "react";
 import { useRef } from "react";
 import { db } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import { Square } from "lucide-react";
-import { HOLD_ACTION_DELAY_MS } from "@/lib/consts";
+import { Button } from "@/components/ui/button";
+import { HOLD_ACTION_DELAY_MS } from "@/lib/constants";
 import {
   formatTimerDisplay,
   getActivityDisplayName,
   getGroup,
-} from "@/lib/activity-utils";
+} from "@/lib/activity";
 import { getContrastColor } from "@/lib/color-utils";
 
 function hexToRgba(hex: string, alpha: number): string {
@@ -197,8 +195,9 @@ function ActiveActivityPill({
       </div>
 
       <div className="mt-2 flex justify-end">
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={() => {
             if (suppressNextStopClickRef.current) {
               suppressNextStopClickRef.current = false;
@@ -206,13 +205,13 @@ function ActiveActivityPill({
             }
             onStop();
           }}
-          className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide"
+          className="h-auto gap-2 p-0 text-sm font-semibold uppercase tracking-wide shadow-none hover:bg-transparent"
           style={{ color: textColor }}
           title="Stop this activity"
         >
           <Square className="h-3.5 w-3.5" style={{ fill: textColor }} />
           <span className="shrink-0 text-base">STOP</span>
-        </button>
+        </Button>
       </div>
     </div>
   );

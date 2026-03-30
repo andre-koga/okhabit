@@ -1,7 +1,3 @@
-/**
- * SRP: Coordinates Supabase push/pull, auto-sync scheduling, and safe pull application
- * (skipping remote rows that changed locally during an in-flight sync).
- */
 import { db } from "@/lib/db";
 import {
   supabase,
@@ -29,7 +25,7 @@ export interface SyncState {
 
 type StateListener = (state: SyncState) => void;
 
-export class SyncEngine {
+class SyncEngine {
   private state: SyncState = {
     isSyncing: false,
     lastSyncAt: loadLastSyncAt(),

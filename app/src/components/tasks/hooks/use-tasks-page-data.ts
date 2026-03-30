@@ -1,6 +1,3 @@
-/**
- * SRP: Loads activities/groups for the Today page and refreshes after sync completes.
- */
 import { useState, useEffect, useCallback, useRef } from "react";
 import { db } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
@@ -8,7 +5,7 @@ import {
   isActiveActivity,
   isActiveGroup,
   sortActivitiesByOrder,
-} from "@/lib/activity-utils";
+} from "@/lib/activity";
 import { logError } from "@/lib/error-utils";
 import { syncEngine } from "@/lib/sync";
 

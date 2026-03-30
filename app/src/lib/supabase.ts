@@ -16,14 +16,38 @@ export const supabase = isSupabaseConfigured
 let _cachedSession: Session | null = null;
 
 if (supabase) {
+  const clearInvalidSession = async () => {
+    _cachedSession = null;
+    try {
+      await supabase.auth.signOut({ scope: "local" });
+    } catch {
+      // ignore; clearing local cache is sufficient fallback
+    }
+  };
+
+  const validateSession = async (session: Session | null) => {
+    if (!session) {
+      _cachedSession = null;
+      return;
+    }
+
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user || data.user.id !== session.user.id) {
+      await clearInvalidSession();
+      return;
+    }
+
+    _cachedSession = session;
+  };
+
   // Populate cache immediately from storage (no network round-trip needed)
   supabase.auth.getSession().then(({ data }) => {
-    _cachedSession = data.session ?? null;
+    void validateSession(data.session ?? null);
   });
 
   // Stay up to date reactively
   supabase.auth.onAuthStateChange((_event, session) => {
-    _cachedSession = session;
+    void validateSession(session);
   });
 }
 
@@ -35,20 +59,4 @@ export function getCachedUserId(): string | null {
 /** Synchronous – returns the cached session or null. */
 export function getCachedSession(): Session | null {
   return _cachedSession;
-}
-
-// ─── Convenience helpers ──────────────────────────────────────────────────────
-
-/** Returns true when a user is signed in (synchronous, no I/O). */
-export function isAuthenticated(): boolean {
-  return _cachedSession !== null;
-}
-
-/** Async – resolves the userId, waiting for the initial session load.
- *  Prefer getCachedUserId() everywhere the cache is already warm. */
-export async function getCurrentUserId(): Promise<string | null> {
-  if (!supabase) return null;
-  const { data } = await supabase.auth.getSession();
-  _cachedSession = data.session ?? null;
-  return _cachedSession?.user?.id ?? null;
 }

@@ -1,6 +1,3 @@
-/**
- * SRP: Configures Vite build behavior and exposes client build timestamp metadata.
- */
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
@@ -88,22 +85,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        runtimeCaching: [
-          {
-            // Cache YouTube thumbnails via the service worker so they work offline
-            urlPattern: /^https:\/\/img\.youtube\.com\/vi\//,
-            handler: "CacheFirst",
-            options: {
-              cacheName: "youtube-thumbnails",
-              expiration: {
-                maxEntries: 60,
-                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
-              },
-              // status 0 = opaque response (cross-origin without CORS headers) — still cacheable
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-        ],
+        runtimeCaching: [],
       },
     }),
   ],

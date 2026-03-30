@@ -1,6 +1,3 @@
-/**
- * SRP: Shared sync configuration — table lists, Dexie table mapping, and timing constants.
- */
 import { db } from "@/lib/db";
 import type { SyncTable } from "./sync-transformers";
 
@@ -20,7 +17,6 @@ export const SYNC_TABLES: SyncTable[] = [
   "journal_entries",
   "one_time_tasks",
   "activity_streaks",
-  "memo_periods",
 ];
 
 export const TABLE_MAP: Record<SyncTable, keyof typeof db> = {
@@ -31,7 +27,6 @@ export const TABLE_MAP: Record<SyncTable, keyof typeof db> = {
   journal_entries: "journalEntries",
   one_time_tasks: "oneTimeTasks",
   activity_streaks: "activityStreaks",
-  memo_periods: "memoPeriods",
 };
 
 /**

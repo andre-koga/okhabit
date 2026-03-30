@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { db } from "@/lib/db";
 import type { ActivityGroup, Activity } from "@/lib/db/types";
-import { isHiddenGroupDefaultActivity } from "@/lib/activity-utils";
+import { isHiddenGroupDefaultActivity } from "@/lib/activity";
 import { logError } from "@/lib/error-utils";
 
 export function useGroupActivitiesData(group: ActivityGroup) {
@@ -29,7 +29,7 @@ export function useGroupActivitiesData(group: ActivityGroup) {
   }, [group.id]);
 
   useEffect(() => {
-    loadActivities();
+    void loadActivities();
   }, [loadActivities]);
 
   return { activities, loading, loadActivities };

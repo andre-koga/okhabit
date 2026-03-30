@@ -1,6 +1,3 @@
-/**
- * SRP: Renders a reusable dialog form for creating or editing an activity.
- */
 import { useEffect, useState } from "react";
 import { db, newId, now } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
@@ -8,8 +5,8 @@ import {
   isActiveActivity,
   isScheduledRoutine,
   parseRoutine,
-} from "@/lib/activity-utils";
-import { validateActivityData } from "@/lib/activity-validation";
+  validateActivityData,
+} from "@/lib/activity";
 import { ERROR_MESSAGES } from "@/lib/error-utils";
 import RoutineSelector from "@/components/activities/routine-selector";
 import {

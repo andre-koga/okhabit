@@ -1,6 +1,3 @@
-/**
- * SRP: Manages daily-entry state and persistence for counts, paused tasks, and break-day flags.
- */
 import { useState, useCallback, useRef } from "react";
 import { db, now, newId } from "@/lib/db";
 import { getOrCreateDailyEntry as getOrCreateDailyEntryDb } from "@/lib/db/daily-entry";
@@ -30,7 +27,6 @@ export function useDailyEntry(dateString: string) {
   const [currentActivityId, setCurrentActivityId] = useState<string | null>(
     null
   );
-  const [currentMemoId, setCurrentMemoId] = useState<string | null>(null);
 
   // Refs let us compute the exact next persisted values without relying on
   // React state updater callbacks having run before awaiting persistence.
@@ -49,12 +45,12 @@ export function useDailyEntry(dateString: string) {
           .equals(dateString)
           .filter((e) => !e.deleted_at)
           .first();
+
         setDailyEntry(entry || null);
         setTaskCounts(normalizeTaskCounts(entry ?? null));
         setPausedTaskIds(normalizePausedTaskIds(entry ?? null));
         setIsBreakDay(normalizeBreakDay(entry ?? null));
         setCurrentActivityId(entry?.current_activity_id || null);
-        setCurrentMemoId(entry?.current_memo_id || null);
       } catch (error) {
         console.error("Error loading daily entry:", error);
       } finally {
@@ -106,7 +102,6 @@ export function useDailyEntry(dateString: string) {
             paused_task_ids: newPausedTaskIds,
             is_break_day: false,
             current_activity_id: null,
-            current_memo_id: null,
             created_at: n,
             updated_at: n,
             synced_at: null,
@@ -227,7 +222,6 @@ export function useDailyEntry(dateString: string) {
           paused_task_ids: nextPausedTaskIds,
           is_break_day: false,
           current_activity_id: null,
-          current_memo_id: null,
           created_at: n,
           updated_at: n,
           synced_at: null,
@@ -277,7 +271,6 @@ export function useDailyEntry(dateString: string) {
         paused_task_ids: [],
         is_break_day: nextIsBreakDay,
         current_activity_id: null,
-        current_memo_id: null,
         created_at: n,
         updated_at: n,
         synced_at: null,
@@ -300,8 +293,6 @@ export function useDailyEntry(dateString: string) {
     loading,
     currentActivityId,
     setCurrentActivityId,
-    currentMemoId,
-    setCurrentMemoId,
     streakDbVersion,
     loadDailyEntry,
     getOrCreateDailyEntry,

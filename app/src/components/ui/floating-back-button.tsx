@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 import { X, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 const FLOATING_BACK_BUTTON_CLASSES =
-  "fixed bottom-3 left-4 z-50 h-12 w-12 border border-border flex items-center justify-center rounded-full bg-background shadow-md text-muted-foreground hover:text-foreground transition-colors";
+  "fixed bottom-3 left-4 z-50 border-border bg-background text-muted-foreground hover:text-foreground";
 
 interface FloatingBackButtonProps {
   to?: string;
@@ -23,16 +24,35 @@ export function FloatingBackButton({
   className,
 }: FloatingBackButtonProps) {
   const Icon = icon === "settings" ? Settings : X;
-  const commonProps = {
-    title,
-    "aria-label": ariaLabel ?? title,
-    className: cn(FLOATING_BACK_BUTTON_CLASSES, className),
-    children: <Icon className="h-5 w-5" />,
-  };
+  const merged = cn(FLOATING_BACK_BUTTON_CLASSES, className);
 
   if (to !== undefined) {
-    return <Link to={to} {...commonProps} />;
+    return (
+      <Button
+        asChild
+        type="button"
+        variant="outline"
+        size="floatingNav"
+        className={merged}
+      >
+        <Link to={to} title={title} aria-label={ariaLabel ?? title}>
+          <Icon className="h-5 w-5" />
+        </Link>
+      </Button>
+    );
   }
 
-  return <button type="button" onClick={onClick} {...commonProps} />;
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="floatingNav"
+      title={title}
+      aria-label={ariaLabel ?? title}
+      onClick={onClick}
+      className={merged}
+    >
+      <Icon className="h-5 w-5" />
+    </Button>
+  );
 }

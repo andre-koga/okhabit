@@ -1,12 +1,11 @@
-/**
- * SRP: Renders one activity row with completion, pause state, timer, and streak controls.
- */
 import { memo, useEffect, useRef, useState } from "react";
 import { Flame, X } from "lucide-react";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
-import { getActivityDisplayName } from "@/lib/activity-utils";
+import { getActivityDisplayName } from "@/lib/activity";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
-import { HOLD_ACTION_DELAY_MS } from "@/lib/consts";
+import { HOLD_ACTION_DELAY_MS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import Pill from "@/components/ui/pill";
 import TaskCheckbox from "@/components/tasks/task-checkbox";
 
@@ -195,7 +194,7 @@ function ActivityTaskItem({
         >
           {!isComplete ? (
             <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none">
-              <Flame className="h-3 w-3 fill-inherit" />
+              <Flame className="h-3 w-3 fill-foreground" />
               <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
             </span>
           ) : count === 1 ? (
@@ -214,7 +213,7 @@ function ActivityTaskItem({
           title={isPaused ? "Task paused for this day" : undefined}
           completeContent={
             <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none">
-              <Flame className="h-3 w-3 fill-inherit" />
+              <Flame className="h-3 w-3 fill-background" />
               <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
             </span>
           }
@@ -227,24 +226,27 @@ function ActivityTaskItem({
           }
         />
       ) : (
-        <button
+        <Button
+          type="button"
+          variant="outline"
           onClick={
             canUpdateCount ? () => onIncrement(activity.id, target) : undefined
           }
           disabled={!canUpdateCount}
-          className={`flex h-7 min-w-[2.75rem] items-center justify-center rounded-full border px-2 text-xs font-semibold transition-colors ${
+          className={cn(
+            "h-7 min-h-[1.75rem] min-w-[2.75rem] rounded-full px-2 text-xs font-semibold shadow-none disabled:cursor-default disabled:opacity-60",
             isBreakDay || isPaused
               ? isComplete
-                ? "border-amber-500 bg-amber-500 text-amber-950"
+                ? "border-amber-500 bg-amber-500 text-amber-950 hover:bg-amber-500"
                 : count > 0
-                  ? "border-amber-500/80 bg-amber-500/20 text-amber-700"
-                  : "border-amber-500/60 bg-amber-500/10 text-amber-500"
+                  ? "border-amber-500/80 bg-amber-500/20 text-amber-700 hover:bg-amber-500/25"
+                  : "border-amber-500/60 bg-amber-500/10 text-amber-500 hover:bg-amber-500/15"
               : isComplete
-                ? "border-primary bg-primary text-primary-foreground"
+                ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90"
                 : count > 0
-                  ? "border-primary/40 bg-primary/20 text-primary"
+                  ? "border-primary/40 bg-primary/20 text-primary hover:bg-primary/25"
                   : "border-muted-foreground text-muted-foreground"
-          } disabled:cursor-default disabled:opacity-60`}
+          )}
           title={
             canUpdateCount
               ? `${count} / ${target} — click to increment`
@@ -253,7 +255,7 @@ function ActivityTaskItem({
         >
           {isComplete ? (
             <span className="inline-flex items-center gap-0.5 text-xs font-semibold leading-none">
-              <Flame className="h-3 w-3 fill-inherit" />
+              <Flame className="h-3 w-3 fill-background" />
               <span className="mt-0.5 font-mono tabular-nums">{streak}</span>
             </span>
           ) : (
@@ -261,7 +263,7 @@ function ActivityTaskItem({
               {count}/{target}
             </p>
           )}
-        </button>
+        </Button>
       )}
 
       <div

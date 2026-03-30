@@ -1,7 +1,3 @@
-/**
- * SRP: Defines local-first database entity types shared by storage, sync, and UI layers.
- */
-
 export interface ActivityGroup {
   id: string;
   name: string;
@@ -35,7 +31,6 @@ export interface DailyEntry {
   paused_task_ids: string[] | null;
   is_break_day: boolean | null;
   current_activity_id: string | null;
-  current_memo_id: string | null;
   created_at: string;
   updated_at: string;
   synced_at: string | null;
@@ -71,7 +66,7 @@ export interface JournalEntry {
   text_content: string | null;
   day_emoji: string | null;
   is_bookmarked: boolean | null;
-  youtube_url: string | null;
+  video_path: string | null;
   video_thumbnail: string | null;
   is_journal_complete: boolean | null;
   journal_entry_number: number | null;
@@ -92,18 +87,6 @@ export interface OneTimeTask {
   order_index: number | null;
   is_pinned: boolean | null;
   due_date: string | null; // YYYY-MM-DD, when memo is due
-  created_at: string;
-  updated_at: string;
-  synced_at: string | null;
-  deleted_at: string | null;
-}
-
-export interface MemoPeriod {
-  id: string;
-  daily_entry_id: string;
-  one_time_task_id: string;
-  start_time: string; // ISO string
-  end_time: string | null; // ISO string
   created_at: string;
   updated_at: string;
   synced_at: string | null;

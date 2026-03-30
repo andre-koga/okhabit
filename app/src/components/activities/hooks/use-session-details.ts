@@ -1,8 +1,4 @@
-/**
- * SRP: Loads and updates one activity session's editable details.
- */
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import { db, newId, now } from "@/lib/db";
 import type {
   Activity,
@@ -13,19 +9,19 @@ import type {
 import {
   getOrCreateHiddenGroupDefaultActivity,
   isHiddenGroupDefaultActivity,
-} from "@/lib/activity-utils";
+} from "@/lib/activity";
 import {
   fromDateString,
   toDateString,
   formatTimeInput,
   combineDateAndTime,
   startOfDay,
-} from "@/lib/date-utils";
+} from "@/lib/time-utils";
 import { ERROR_MESSAGES } from "@/lib/error-utils";
 
 const NONE_ACTIVITY_VALUE = "__none__";
 
-export interface SessionDetailsData {
+interface SessionDetailsData {
   group: ActivityGroup;
   activity: Activity | null;
   period: ActivityPeriod;
@@ -46,13 +42,8 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     onDone,
     onUpdated,
   } = options;
-  const params = useParams<{
-    groupId: string;
-    sessionId: string;
-  }>();
-  const navigate = useNavigate();
-  const groupId = groupIdOption ?? params.groupId;
-  const sessionId = sessionIdOption ?? params.sessionId;
+  const groupId = groupIdOption;
+  const sessionId = sessionIdOption;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -64,11 +55,6 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
 
-  const backPath = useMemo(() => {
-    if (!groupId) return "/";
-    return `/activities/${groupId}`;
-  }, [groupId]);
-
   const onDoneRef = useRef(onDone);
   const onUpdatedRef = useRef(onUpdated);
   useEffect(() => {
@@ -79,12 +65,8 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
   }, [onUpdated]);
 
   const finish = useCallback(() => {
-    if (onDoneRef.current) {
-      onDoneRef.current();
-      return;
-    }
-    navigate(backPath);
-  }, [backPath, navigate]);
+    onDoneRef.current?.();
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -213,7 +195,6 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
           paused_task_ids: [],
           is_break_day: false,
           current_activity_id: null,
-          current_memo_id: null,
           created_at: timestamp,
           updated_at: timestamp,
           synced_at: null,
@@ -281,8 +262,6 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
     setStartTime,
     endTime,
     setEndTime,
-    backPath,
-    navigate,
     handleDelete,
     handleSave,
     today: useMemo(() => startOfDay(new Date()), []),
