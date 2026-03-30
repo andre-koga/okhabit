@@ -1,5 +1,9 @@
+/**
+ * SRP: Compact sync + auth affordances for the status bar pill.
+ */
 import { Cloud, CloudOff, RefreshCw, LogIn, AlertCircle } from "lucide-react";
 import { syncEngine } from "@/lib/sync";
+import { Button } from "@/components/ui/button";
 
 interface SyncStatusPillProps {
   syncState: ReturnType<typeof syncEngine.getState>;
@@ -24,10 +28,12 @@ export function SyncStatusPill({
   return (
     <div className="rounded-full border border-border bg-background shadow-lg">
       <div className="flex items-center gap-2 px-4 py-2">
-        <button
+        <Button
+          type="button"
+          variant="ghost"
           onClick={onManualSync}
           disabled={syncState.isSyncing || !canSync}
-          className="flex items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+          className="h-auto gap-2 px-1 py-0 text-xs text-muted-foreground shadow-none hover:text-foreground"
           title={
             !isOnline
               ? "Offline"
@@ -61,16 +67,18 @@ export function SyncStatusPill({
                   ? "Error"
                   : lastSyncTime}
           </span>
-        </button>
+        </Button>
 
         {!isAuthed && (
-          <button
+          <Button
+            type="button"
+            variant="ghost"
             onClick={onToggleAuth}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            className="h-auto gap-1.5 px-1 py-0 text-xs text-muted-foreground shadow-none hover:text-foreground"
             title="Sign in to sync"
           >
             <LogIn className="h-3 w-3" />
-          </button>
+          </Button>
         )}
       </div>
     </div>

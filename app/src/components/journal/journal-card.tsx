@@ -254,20 +254,18 @@ export default function JournalCard({
             </div>
           </div>
 
-          <div className="mx-auto max-w-2xl space-y-3 px-4">
-            <div className="px-1">
-              <JournalTextSection
-                title={journal.draftTitle}
-                text={journal.draftText}
-                location={location ?? undefined}
-                journalCompletionStreak={
-                  journal.isJournalComplete &&
-                  typeof journal.journalCompletionStreak === "number"
-                    ? journal.journalCompletionStreak
-                    : null
-                }
-              />
-            </div>
+          <div className="mx-auto max-w-2xl space-y-3 px-5">
+            <JournalTextSection
+              title={journal.draftTitle}
+              text={journal.draftText}
+              location={location ?? undefined}
+              journalCompletionStreak={
+                journal.isJournalComplete &&
+                typeof journal.journalCompletionStreak === "number"
+                  ? journal.journalCompletionStreak
+                  : null
+              }
+            />
           </div>
         </div>
 

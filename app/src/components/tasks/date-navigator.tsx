@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { toDateStr } from "@/lib/db";
+import { Button } from "@/components/ui/button";
 import { JournalDateCalendarDialog } from "@/components/tasks/journal-date-calendar-dialog";
 
 interface DateNavigatorProps {
@@ -45,21 +46,25 @@ export default function DateNavigator({
 
   return (
     <div className="flex h-12 items-center gap-1 rounded-full border border-border bg-background px-1 py-1 shadow-lg">
-      <button
+      <Button
+        type="button"
+        variant="ghost"
+        size="iconRoundLg"
         onClick={() => changeDate(-1)}
-        className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-accent"
         aria-label="Previous day"
       >
         <ChevronLeft className="h-5 w-5" />
-      </button>
+      </Button>
 
       <div className="flex items-center gap-1.5">
-        <button
-          className="whitespace-nowrap rounded-md px-3 py-1.5 text-base font-semibold transition-colors hover:bg-accent hover:text-primary"
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-auto whitespace-nowrap rounded-md px-3 py-1.5 text-base font-semibold hover:text-primary"
           onClick={() => setDatePopoverOpen(true)}
         >
           {dateLabel}
-        </button>
+        </Button>
 
         <JournalDateCalendarDialog
           open={datePopoverOpen}
@@ -72,25 +77,31 @@ export default function DateNavigator({
         />
 
         {!isToday && (
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => onDateChange(new Date())}
-            className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="text-muted-foreground"
             aria-label="Go to today"
             title="Go to today"
           >
             <RotateCcw className="h-4 w-4" />
-          </button>
+          </Button>
         )}
       </div>
 
-      <button
+      <Button
+        type="button"
+        variant="ghost"
+        size="iconRoundLg"
         onClick={() => changeDate(1)}
         disabled={isToday}
-        className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-accent disabled:opacity-30"
+        className="disabled:opacity-30"
         aria-label="Next day"
       >
         <ChevronRight className="h-5 w-5" />
-      </button>
+      </Button>
     </div>
   );
 }

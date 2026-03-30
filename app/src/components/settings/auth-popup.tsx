@@ -1,3 +1,6 @@
+/**
+ * SRP: Modal sign-in / sign-up form for Supabase sync authentication.
+ */
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/use-auth";
 import {
@@ -6,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface AuthPopupProps {
   onClose?: () => void;
@@ -80,21 +84,23 @@ export function AuthPopup({ onClose, onSignedIn }: AuthPopupProps) {
             </p>
           )}
           <div className="flex gap-2">
-            <button
+            <Button
               type="submit"
+              variant="default"
               disabled={authLoading}
-              className="flex-1 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              className="flex-1 text-xs"
             >
               {authLoading ? "..." : "Sign In"}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="outline"
               onClick={handleSignUp}
               disabled={authLoading}
-              className="flex-1 rounded-md border border-border px-3 py-2 text-xs font-medium transition-colors hover:bg-accent disabled:opacity-50"
+              className="flex-1 text-xs"
             >
               {authLoading ? "..." : "Sign Up"}
-            </button>
+            </Button>
           </div>
         </form>
       </DialogContent>

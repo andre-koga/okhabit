@@ -1,6 +1,10 @@
+/**
+ * SRP: Hero header for group activities — gradient title area with edit and archive controls.
+ */
 import type { ActivityGroup } from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import { Pencil, Archive, ArchiveRestore } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface GroupActivitiesHeaderProps {
   group: ActivityGroup;
@@ -40,9 +44,12 @@ export default function GroupActivitiesHeader({
       </div>
 
       <div className="absolute -bottom-12 right-3 z-20">
-        <button
+        <Button
+          type="button"
+          variant="outline"
+          size="smIcon"
           onClick={onToggleArchiveGroup}
-          className="flex h-7 w-7 items-center justify-center rounded-full border border-muted bg-background/80 shadow-sm backdrop-blur-sm transition-colors hover:bg-background"
+          className="h-7 w-7 rounded-full border-muted bg-background/80 shadow-sm backdrop-blur-sm hover:bg-background"
           title={isArchived ? "Unarchive group" : "Archive group"}
         >
           {isArchived ? (
@@ -50,17 +57,20 @@ export default function GroupActivitiesHeader({
           ) : (
             <Archive className="h-3.5 w-3.5 text-muted-foreground" />
           )}
-        </button>
+        </Button>
       </div>
 
       <div className="absolute -bottom-4 right-3 z-20">
-        <button
+        <Button
+          type="button"
+          variant="outline"
+          size="smIcon"
           onClick={onEditGroup}
-          className="flex h-7 w-7 items-center justify-center rounded-full border border-muted bg-background/80 shadow-sm backdrop-blur-sm transition-colors hover:bg-background"
+          className="h-7 w-7 rounded-full border-muted bg-background/80 shadow-sm backdrop-blur-sm hover:bg-background"
           title="Edit group"
         >
           <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@
 import { memo } from "react";
 import { formatTimerDisplay } from "@/lib/activity-utils";
 import { Play } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ActivityTimelineItemProps {
   activityName: string;
@@ -51,17 +52,19 @@ function ActivityTimelineItem({
         <span className="truncate text-sm">{activityName}</span>
       </div>
       {hasPlayAction ? (
-        <button
+        <Button
+          type="button"
+          variant="outline"
           onClick={(event) => {
             event.stopPropagation();
             onStartActivity?.(activityId);
           }}
-          className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2 py-0.5 font-mono text-xs text-muted-foreground transition-colors"
+          className="h-auto shrink-0 gap-1.5 rounded-full border-border px-2 py-0.5 font-mono text-xs font-normal text-muted-foreground shadow-none"
           title="Start this activity"
         >
           <Play className="h-2.5 w-2.5" />
           {formatTimerDisplay(intervalMs)}
-        </button>
+        </Button>
       ) : (
         <span className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2 py-0.5 font-mono text-xs text-muted-foreground">
           <Play className="h-2.5 w-2.5" />

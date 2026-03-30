@@ -6,6 +6,7 @@ import type { MouseEventHandler, PointerEventHandler } from "react";
 import { Play, Square } from "lucide-react";
 import { formatTimerDisplay } from "@/lib/activity-utils";
 import { getContrastColor } from "@/lib/color-utils";
+import { Button } from "@/components/ui/button";
 
 export interface PillProps {
   name: string;
@@ -121,9 +122,14 @@ function Pill({
     className;
 
   const timerControl = onPlayStop ? (
-    <button type="button" onClick={onPlayStop} className="h-full flex-shrink-0">
+    <Button
+      type="button"
+      variant="ghost"
+      onClick={onPlayStop}
+      className="h-full shrink-0 rounded-none p-0 shadow-none hover:bg-transparent focus-visible:ring-offset-0"
+    >
       {playTimerButton}
-    </button>
+    </Button>
   ) : (
     <div className="h-full flex-shrink-0">{playTimerButton}</div>
   );
@@ -140,18 +146,19 @@ function Pill({
   if (onNameClick) {
     return (
       <div className={base + " w-full"}>
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={onNameClick}
           onPointerDown={onNamePointerDown}
           onPointerUp={onNamePointerUp}
           onPointerLeave={onNamePointerLeave}
           onPointerCancel={onNamePointerCancel}
           onContextMenu={onNameContextMenu}
-          className="flex min-w-0 flex-1 items-center text-left"
+          className="min-w-0 flex-1 justify-start rounded-none text-left shadow-none hover:bg-transparent"
         >
           {nameContent}
-        </button>
+        </Button>
         {timerControl}
       </div>
     );

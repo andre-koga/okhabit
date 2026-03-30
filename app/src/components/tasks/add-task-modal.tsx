@@ -5,6 +5,8 @@ import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { MemoEditDialog } from "@/components/tasks/memo-edit-dialog";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface AddTaskModalProps {
   /** Called with the task title and optional options; return true on success to close the modal. */
@@ -76,16 +78,20 @@ export default function AddTaskModal({
         confirmDisabled={adding || !title.trim()}
       />
 
-      <button
+      <Button
         type="button"
+        variant="default"
+        size={triggerLabel ? "default" : "floatingNav"}
         onClick={() => setOpen((v) => !v)}
         disabled={disabled}
         title={triggerTitle}
         aria-label={triggerTitle}
-        className={
-          triggerClassName ||
-          "fixed bottom-2 right-2 z-[60] flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
-        }
+        className={cn(
+          !triggerLabel &&
+            "fixed bottom-2 right-2 z-[60] gap-0 px-0 text-primary-foreground shadow-md hover:bg-primary/90",
+          triggerLabel && "rounded-full shadow-md",
+          triggerClassName
+        )}
       >
         {triggerLabel ? (
           <span className="flex items-center justify-center gap-2">
@@ -103,7 +109,7 @@ export default function AddTaskModal({
         ) : (
           <Icon className="h-5 w-5" aria-hidden />
         )}
-      </button>
+      </Button>
     </>
   );
 }

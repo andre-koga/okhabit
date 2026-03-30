@@ -17,6 +17,7 @@ import GroupPill from "@/components/activities/group-pill";
 import ActivityPill from "@/components/activities/activity-pill";
 import { ActivityDialogForm } from "@/components/activities/activity-dialog-form";
 import { NewGroupDialog } from "@/components/activities/new-group-dialog";
+import { Button } from "@/components/ui/button";
 
 interface ActivityGroupsDrawerProps {
   currentActivityId?: string | null;
@@ -137,10 +138,10 @@ export default function ActivityGroupsDrawer({
         }}
       >
         <div className="flex max-h-[70vh] flex-col rounded-t-2xl border-t border-border/50 bg-background shadow-xl">
-          {/* Handle */}
-          <div className="flex shrink-0 justify-center pb-1 pt-3">
-            <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
-          </div>
+          <div
+            className="mx-auto mb-1 mt-3 h-1 w-10 shrink-0 rounded-full bg-muted-foreground/30"
+            aria-hidden
+          />
 
           {/* Content: groups or activities (switched after close-then-open) */}
           <div className="min-h-0 flex-1 overflow-y-auto">
@@ -150,16 +151,18 @@ export default function ActivityGroupsDrawer({
                   <h2 className="text-center text-lg font-semibold">Groups</h2>
                 </div>
                 <div className="flex shrink-0 justify-center px-4 pb-6">
-                  <button
+                  <Button
+                    type="button"
+                    variant="outlineDashed"
+                    className="rounded-full px-4 py-2 text-sm"
                     onClick={() => {
                       setOpen(false);
                       setNewGroupDialogOpen(true);
                     }}
-                    className="flex items-center gap-2 rounded-full border border-dashed border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   >
                     <Plus className="h-4 w-4" />
                     New Group
-                  </button>
+                  </Button>
                 </div>
                 <div className="space-y-2 px-4 pb-12">
                   {groups.length === 0 ? (
@@ -212,14 +215,16 @@ export default function ActivityGroupsDrawer({
             ) : (
               <>
                 <div className="flex shrink-0 items-center gap-2 px-4 pb-3 pt-2">
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="iconRoundMd"
                     onClick={handleBackToGroups}
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    className="text-muted-foreground"
                     aria-label="Back to groups"
                   >
                     <ChevronLeft className="h-5 w-5" />
-                  </button>
+                  </Button>
                   <h2 className="flex-1 text-center text-lg font-semibold">
                     {selectedGroup?.name ?? ""}
                   </h2>
@@ -227,16 +232,18 @@ export default function ActivityGroupsDrawer({
                 </div>
                 {selectedGroup && (
                   <div className="flex shrink-0 justify-center px-4 pb-6">
-                    <button
+                    <Button
+                      type="button"
+                      variant="outlineDashed"
+                      className="rounded-full px-4 py-2 text-sm"
                       onClick={() => {
                         setOpen(false);
                         setNewActivityDialogGroup(selectedGroup);
                       }}
-                      className="flex items-center gap-2 rounded-full border border-dashed border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                     >
                       <Plus className="h-4 w-4" />
                       New Activity
-                    </button>
+                    </Button>
                   </div>
                 )}
                 <div className="space-y-2 px-4 pb-12">
@@ -280,19 +287,21 @@ export default function ActivityGroupsDrawer({
       </div>
 
       {/* FAB */}
-      <button
+      <Button
         type="button"
+        variant="default"
+        size="floatingNav"
         onClick={() => setOpen((v) => !v)}
         title={open ? "Close activity picker" : "Pick group or activity"}
         aria-label={open ? "Close activity picker" : "Pick group or activity"}
-        className="fixed bottom-2 right-2 z-[60] flex h-12 w-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-primary-foreground shadow-md transition-colors hover:bg-primary/90"
+        className="fixed bottom-2 right-2 z-[60] gap-0 px-0 text-primary-foreground hover:bg-primary/90"
       >
         {open ? (
           <X className="h-5 w-5 shrink-0" aria-hidden />
         ) : (
           <Plus className="h-5 w-5 shrink-0" aria-hidden />
         )}
-      </button>
+      </Button>
 
       <NewGroupDialog
         open={newGroupDialogOpen}

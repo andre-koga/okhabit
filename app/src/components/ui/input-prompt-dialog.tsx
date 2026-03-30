@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface InputPromptDialogProps {
@@ -79,28 +80,28 @@ export function InputPromptDialog({
         />
         <div className="flex items-center justify-center gap-3 pt-2">
           {secondaryAction && (
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={secondaryAction.onClick}
               disabled={secondaryAction.disabled}
               className={cn(
-                "flex items-center gap-1 rounded-full bg-secondary px-5 py-2.5 text-sm font-semibold text-secondary-foreground shadow-md transition-colors hover:bg-secondary/90 hover:text-destructive disabled:cursor-not-allowed disabled:opacity-40",
+                "gap-1 rounded-full px-5 py-2.5 font-semibold shadow-md hover:text-destructive",
                 secondaryAction.className
               )}
             >
               {secondaryAction.label}
-            </button>
+            </Button>
           )}
-          <button
+          <Button
             type="button"
+            variant="default"
             onClick={onConfirm}
             disabled={confirmDisabled}
-            className={cn(
-              "w-full max-w-[12rem] rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40"
-            )}
+            className="w-full max-w-[12rem] rounded-full px-5 py-2.5 font-semibold shadow-md"
           >
             {confirmLabel}
-          </button>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

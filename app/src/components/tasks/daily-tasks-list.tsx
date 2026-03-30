@@ -12,6 +12,8 @@ import AddTaskModal from "./add-task-modal";
 import AssignActivityDialog from "./assign-activity-dialog";
 import { useDailyTasks } from "./hooks/use-daily-tasks";
 import { CircleCheckBig, Palmtree } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import SessionDetailsDialog from "@/components/activities/session-details-dialog";
 
 export type DailyTasksState = ReturnType<typeof useDailyTasks>;
@@ -143,22 +145,24 @@ export default function DailyTasksList({
       </div>
 
       <div className="mt-4 flex flex-col items-center justify-center gap-1">
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={() => {
             void toggleBreakDay();
           }}
           disabled={!isToday}
-          className={`inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-4 py-1.5 text-xs font-medium transition-colors ${
+          className={cn(
+            "inline-flex gap-1.5 rounded-full border-border bg-background px-4 py-1.5 text-xs font-medium disabled:cursor-default disabled:opacity-70",
             isBreakDay
               ? "text-amber-500"
               : "text-muted-foreground hover:text-foreground"
-          } disabled:cursor-default disabled:opacity-70`}
+          )}
           title={isBreakDay ? "Unset break day" : "Mark this day as break day"}
         >
           <Palmtree className="h-3.5 w-3.5" />
           {isBreakDay ? "Break Day Active" : "Mark as Break Day"}
-        </button>
+        </Button>
         {!isBreakDay && (
           <p className="text-center text-[11px] text-muted-foreground">
             Incomplete tasks won&apos;t affect streaks.

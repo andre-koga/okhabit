@@ -1,3 +1,6 @@
+/**
+ * SRP: Session edit screen — activity, date, times, save and delete actions.
+ */
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import {
@@ -95,14 +98,16 @@ export default function SessionDetailsContent() {
       <div className="mx-auto max-w-2xl">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold">Session Details</h1>
-          <button
+          <Button
+            type="button"
+            variant="outline"
             onClick={handleDelete}
-            className="flex h-8 items-center justify-center gap-1 rounded-full border border-destructive bg-background px-2 transition-colors hover:bg-destructive/20 hover:text-destructive-foreground"
+            className="h-8 gap-1 rounded-full border-destructive px-2 hover:bg-destructive/20 hover:text-destructive"
             title="Delete session"
           >
             <Trash2 className="h-3.5 w-3.5" />
             <span className="pt-0.5 text-xs">Delete</span>
-          </button>
+          </Button>
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-border bg-background">
@@ -144,12 +149,14 @@ export default function SessionDetailsContent() {
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <Dialog open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-                <button
-                  className="w-36 rounded-md px-2 py-1 transition-colors hover:bg-accent"
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-auto w-36 px-2 py-1 font-normal"
                   onClick={() => setDatePickerOpen(true)}
                 >
                   {formatDate(selectedDate)}
-                </button>
+                </Button>
                 <DialogContent
                   size="sm"
                   className="w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-2xl p-2"
@@ -250,14 +257,15 @@ export default function SessionDetailsContent() {
       <FloatingBackButton onClick={() => navigate(backPath)} title="Back" />
 
       <div className="fixed bottom-3 left-1/2 z-50 -translate-x-1/2">
-        <button
+        <Button
           type="button"
+          variant="default"
           onClick={handleSave}
           disabled={saving}
-          className="flex items-center gap-1.5 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
+          className="rounded-full px-5 py-2.5 text-sm font-semibold shadow-lg"
         >
           {saving ? "Saving…" : "Save"}
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -1,3 +1,6 @@
+/**
+ * SRP: Group activities page body — list, timeline, dialogs, and archive flows.
+ */
 import { useState, useEffect } from "react";
 import { db, now } from "@/lib/db";
 import type { ActivityGroup } from "@/lib/db/types";
@@ -14,6 +17,7 @@ import { EditGroupDialog } from "@/components/activities/edit-group-dialog";
 import { useGroupActivityTracking } from "@/components/activities/hooks/use-group-activity-tracking";
 import { useGroupActivitiesData } from "@/components/activities/hooks/use-group-activities-data";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
+import { Button } from "@/components/ui/button";
 import { logError } from "@/lib/error-utils";
 
 interface GroupActivitiesContentProps {
@@ -80,17 +84,17 @@ export default function GroupActivitiesContent({
         onToggleArchiveGroup={handleArchiveGroup}
       />
 
-      <div className="mb-6" />
-
-      <div className="px-4">
+      <div className="px-4 pt-6">
         <div className="mb-6 flex justify-center">
-          <button
+          <Button
+            type="button"
+            variant="outlineDashed"
+            className="rounded-full px-4 py-2 text-sm"
             onClick={() => setNewActivityDialogOpen(true)}
-            className="flex items-center gap-2 rounded-full border border-dashed border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <Plus className="h-4 w-4" />
             New Activity
-          </button>
+          </Button>
         </div>
 
         <GroupActivitiesList

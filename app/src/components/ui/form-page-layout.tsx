@@ -1,5 +1,9 @@
+/**
+ * SRP: Full-page form shell with back control, scrollable fields, and fixed submit bar.
+ */
 import { useNavigate } from "react-router-dom";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
+import { Button } from "@/components/ui/button";
 import { formSubmitButton } from "@/lib/form-styles";
 
 interface FormPageLayoutProps {
@@ -44,14 +48,14 @@ export default function FormPageLayout({
       />
 
       <div className="fixed bottom-3 left-1/2 z-50 -translate-x-1/2">
-        <button
+        <Button
           type="submit"
           form={formId}
           disabled={isSubmitting || submitDisabled}
           className={formSubmitButton}
         >
           {isSubmitting ? "Saving…" : submitLabel}
-        </button>
+        </Button>
       </div>
     </div>
   );

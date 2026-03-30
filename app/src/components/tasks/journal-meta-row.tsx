@@ -1,4 +1,9 @@
+/**
+ * SRP: Optional journal header row with bookmark toggle for editable entries.
+ */
 import { Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface JournalMetaRowProps {
   canEdit: boolean;
@@ -15,21 +20,23 @@ export default function JournalMetaRow({
 
   return (
     <div className="flex justify-end">
-      {/* Bookmark */}
-      <button
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
         onClick={onBookmarkToggle}
-        className={`flex h-9 w-9 items-center justify-center rounded-md transition-colors ${
+        className={cn(
           bookmarked
-            ? "bg-primary/10 text-primary"
-            : "text-muted-foreground hover:bg-accent hover:text-foreground"
-        }`}
+            ? "bg-primary/10 text-primary hover:bg-primary/15"
+            : "text-muted-foreground"
+        )}
         title={bookmarked ? "Remove bookmark" : "Bookmark this day"}
       >
         <Heart
           className="h-5 w-5"
           fill={bookmarked ? "currentColor" : "none"}
         />
-      </button>
+      </Button>
     </div>
   );
 }

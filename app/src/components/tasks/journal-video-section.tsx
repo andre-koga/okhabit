@@ -5,6 +5,7 @@ import { useState } from "react";
 import { CloudOff } from "lucide-react";
 import { useDirectVideoThumbnail } from "./hooks/use-direct-video-thumbnail";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export interface JournalThumbnailSource {
   videoSrc: string | null;
@@ -69,9 +70,11 @@ export default function JournalVideoSection({
             autoPlay
           />
         ) : directVideoThumb ? (
-          <button
+          <Button
+            type="button"
+            variant="ghost"
             onClick={handlePlayClick}
-            className="group absolute inset-0 h-full w-full"
+            className="group absolute inset-0 h-full w-full rounded-none p-0 shadow-none hover:bg-transparent focus-visible:ring-2 focus-visible:ring-ring"
             title={canPlay ? "Play video" : "Offline – connect to play"}
           >
             <img
@@ -80,11 +83,13 @@ export default function JournalVideoSection({
               className="absolute inset-0 h-full w-full object-cover"
             />
             <JournalVideoPlayOverlay canPlay={canPlay} />
-          </button>
+          </Button>
         ) : directVideoThumbError ? (
-          <button
+          <Button
+            type="button"
+            variant="ghost"
             onClick={handlePlayClick}
-            className="group absolute inset-0 h-full w-full"
+            className="group absolute inset-0 h-full w-full rounded-none p-0 shadow-none hover:bg-transparent focus-visible:ring-2 focus-visible:ring-ring"
             title={canPlay ? "Play video" : "Offline – connect to play"}
           >
             <div className="absolute inset-0 flex h-full w-full items-center justify-center bg-muted">
@@ -93,7 +98,7 @@ export default function JournalVideoSection({
               </span>
             </div>
             <JournalVideoPlayOverlay canPlay={canPlay} />
-          </button>
+          </Button>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="select-none text-sm text-muted-foreground/40">

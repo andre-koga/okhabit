@@ -3,6 +3,7 @@
  */
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { dialogFormControlButtonClassName } from "@/components/forms/styles";
 
 export interface FormControlButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -16,12 +17,13 @@ export function FormControlButton({
   ...props
 }: FormControlButtonProps) {
   return (
-    <button
+    <Button
       type={type}
+      variant="outline"
       className={cn(dialogFormControlButtonClassName, className)}
       {...props}
     >
       {children}
-    </button>
+    </Button>
   );
 }
