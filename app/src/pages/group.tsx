@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import type { ActivityGroup } from "@/lib/db/types";
 import { db, now } from "@/lib/db";
-import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getActivityDisplayName } from "@/lib/activity";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
@@ -11,10 +10,8 @@ import GroupActivitiesTimeline from "@/components/activities/group-activities-ti
 import { ActivityDialogForm } from "@/components/activities/activity-dialog-form";
 import { ArchiveActivityDialog } from "@/components/activities/archive-activity-dialog";
 import { EditGroupDialog } from "@/components/activities/edit-group-dialog";
-import { useGroupActivityTracking } from "@/components/activities/hooks/use-group-activity-tracking";
 import { useGroupActivitiesData } from "@/components/activities/hooks/use-group-activities-data";
 import { FloatingBackButton } from "@/components/ui/floating-back-button";
-import { Button } from "@/components/ui/button";
 import { logError } from "@/lib/error-utils";
 import { useGroupPage } from "@/hooks/use-group-page";
 
@@ -35,14 +32,11 @@ function GroupPageBody({ group }: { group: ActivityGroup }) {
   const [isArchived, setIsArchived] = useState(group.is_archived ?? false);
   const [editGroupDialogOpen, setEditGroupDialogOpen] = useState(false);
   const { activities, loading, loadActivities } = useGroupActivitiesData(group);
-  const { currentActivityId, getElapsedMs, toggleActivity } =
-    useGroupActivityTracking();
   const [archiveDialog, setArchiveDialog] = useState<{
     open: boolean;
     activityId: string | null;
     activityName: string | null;
   }>({ open: false, activityId: null, activityName: null });
-  const [newActivityDialogOpen, setNewActivityDialogOpen] = useState(false);
   const [editActivityId, setEditActivityId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -87,31 +81,15 @@ function GroupPageBody({ group }: { group: ActivityGroup }) {
       />
 
       <div className="px-4 pt-6">
-        <div className="mb-6 flex justify-center">
-          <Button
-            type="button"
-            variant="outlineDashed"
-            className="rounded-full px-4 py-2 text-sm"
-            onClick={() => setNewActivityDialogOpen(true)}
-          >
-            <Plus className="h-4 w-4" />
-            New Activity
-          </Button>
-        </div>
-
         <GroupActivitiesList
           activities={activities}
           group={groupDetails}
-          groupColor={groupDetails.color || DEFAULT_GROUP_COLOR}
-          currentActivityId={currentActivityId}
-          getElapsedMs={getElapsedMs}
-          onToggleActivity={toggleActivity}
           onEditActivity={(activityId) => setEditActivityId(activityId)}
           onArchiveActivity={(activity) =>
             setArchiveDialog({
               open: true,
               activityId: activity.id,
-              activityName: getActivityDisplayName(activity, group),
+              activityName: getActivityDisplayName(activity, groupDetails),
             })
           }
         />
@@ -148,15 +126,6 @@ function GroupPageBody({ group }: { group: ActivityGroup }) {
         group={groupDetails}
         onUpdated={(updatedGroup) => {
           setGroupDetails(updatedGroup);
-        }}
-      />
-
-      <ActivityDialogForm
-        open={newActivityDialogOpen}
-        onOpenChange={setNewActivityDialogOpen}
-        group={groupDetails}
-        onSaved={() => {
-          void loadActivities();
         }}
       />
 

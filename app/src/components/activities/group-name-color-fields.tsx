@@ -76,14 +76,12 @@ export function GroupNameColorFields({
           }}
         >
           <p className={sectionLabelClassName}>Color</p>
-          <span className="inline-flex items-center gap-2">
-            <span
-              className="inline-block h-5 w-16 rounded-full pt-px text-center text-xs font-medium"
-              style={{ backgroundColor: color, color: getContrastColor(color) }}
-              aria-label="Selected color preview"
-            >
-              Aa
-            </span>
+          <span
+            className="inline-block h-5 w-16 rounded-full pt-0.5 text-center text-xs font-medium"
+            style={{ backgroundColor: color, color: getContrastColor(color) }}
+            aria-label="Selected color preview"
+          >
+            Aa
           </span>
         </div>
         <div className="space-y-3">
