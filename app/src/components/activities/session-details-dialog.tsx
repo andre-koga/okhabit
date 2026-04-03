@@ -37,7 +37,9 @@ export default function SessionDetailsDialog({
     nextTime: string,
     previousTime: string
   ) => {
-    if (!nextTime) return "";
+    // Mobile native pickers can emit a transient empty value while opening.
+    // Treat it as "no change" so we don't lose previously stored seconds.
+    if (!nextTime) return previousTime;
     const nextParts = nextTime.split(":");
     const previousSecondValue = getWholeSecond(previousTime);
     const previousSeconds = String(previousSecondValue).padStart(2, "0");
