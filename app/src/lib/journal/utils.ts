@@ -76,7 +76,9 @@ export async function getCompletionMetadata(
     };
   }
 
-  const yesterday = toDateString(shiftDate(new Date(`${dateStr}T00:00:00`), -1));
+  const yesterday = toDateString(
+    shiftDate(new Date(`${dateStr}T00:00:00`), -1)
+  );
   const yesterdayEntry = await db.journalEntries
     .where("entry_date")
     .equals(yesterday)
@@ -130,7 +132,9 @@ export async function propagateJournalCompletionStreaksAfterSave(
 
     if (!entry?.is_journal_complete) break;
 
-    const yesterday = toDateString(shiftDate(new Date(`${cursor}T00:00:00`), -1));
+    const yesterday = toDateString(
+      shiftDate(new Date(`${cursor}T00:00:00`), -1)
+    );
     const yesterdayEntry = await db.journalEntries
       .where("entry_date")
       .equals(yesterday)

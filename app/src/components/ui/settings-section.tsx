@@ -19,7 +19,10 @@ export function SettingsSection({
 }: SettingsSectionProps) {
   return (
     <section
-      className={cn("overflow-hidden rounded-lg border border-border", className)}
+      className={cn(
+        "overflow-hidden rounded-lg border border-border",
+        className
+      )}
       {...props}
     >
       <header className="border-b border-border px-4 py-3">

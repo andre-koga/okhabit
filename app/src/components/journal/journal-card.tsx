@@ -286,10 +286,7 @@ export default function JournalCard({
           }}
         />
 
-        <JournalMetaBar
-          journal={journal}
-          onEditRequest={openJournalEditor}
-        />
+        <JournalMetaBar journal={journal} onEditRequest={openJournalEditor} />
       </div>
     </>
   );

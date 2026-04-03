@@ -17,9 +17,7 @@ export default function SettingsPage() {
     <div className="space-y-3 p-4 pb-24">
       <header className="space-y-1">
         <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage your preferences
-        </p>
+        <p className="text-sm text-muted-foreground">Manage your preferences</p>
       </header>
 
       <AppearanceCard />

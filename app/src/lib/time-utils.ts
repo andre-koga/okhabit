@@ -53,7 +53,10 @@ export function formatTimeInput(isoTime: string | null): string {
 /**
  * Format sync timestamp for compact UI surfaces.
  */
-export function formatSyncTime(isoTime: string | null, fallback = "Never"): string {
+export function formatSyncTime(
+  isoTime: string | null,
+  fallback = "Never"
+): string {
   if (!isoTime) return fallback;
   const date = new Date(isoTime);
   if (Number.isNaN(date.getTime())) return fallback;
