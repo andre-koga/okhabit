@@ -26,18 +26,26 @@ export default function SessionDetailsDialog({
   onOpenChange,
   onSessionUpdated,
 }: SessionDetailsDialogProps) {
+  const getWholeSecond = (time: string): number => {
+    const secondSegment = time.split(":")[2];
+    if (!secondSegment) return 0;
+    const second = Number.parseFloat(secondSegment);
+    return Number.isFinite(second) ? Math.floor(second) : 0;
+  };
+
   const normalizeTimeWithPreservedSeconds = (
     nextTime: string,
     previousTime: string
   ) => {
     if (!nextTime) return "";
     const nextParts = nextTime.split(":");
-    const previousSeconds = previousTime.split(":")[2] ?? "00";
+    const previousSecondValue = getWholeSecond(previousTime);
+    const previousSeconds = String(previousSecondValue).padStart(2, "0");
 
     if (nextParts.length >= 3) {
       // Some mobile time pickers reopen with seconds snapped to 00.
       // Keep the previously stored seconds to avoid silent precision loss.
-      if (nextParts[2] === "00" && previousSeconds !== "00") {
+      if (getWholeSecond(nextTime) === 0 && previousSecondValue !== 0) {
         return `${nextParts[0]}:${nextParts[1]}:${previousSeconds}`;
       }
       return nextTime;
