@@ -77,7 +77,7 @@ export default function GroupPill({
           className="h-full flex-1 justify-start gap-2 truncate rounded-full px-4 text-left text-sm font-medium shadow-none hover:bg-transparent"
         >
           <span
-            className="h-3 w-3 shrink-0 rounded-full"
+            className="h-2.5 w-2.5 shrink-0 rounded-full"
             style={{ backgroundColor: color }}
           />
           {name || (

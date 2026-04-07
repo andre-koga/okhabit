@@ -2,63 +2,164 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuLabel,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Laptop, Moon, Sun } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useTheme } from "next-themes";
+import {
+  PALETTE_OPTIONS,
+  THEME_MODE_OPTIONS,
+  type PaletteOption,
+  type PaletteValue,
+  type ThemeModeOption,
+  type ThemeModeValue,
+} from "@/lib/themes";
+import {
+  getStoredPalette,
+  isPaletteValue,
+  setStoredPalette,
+} from "@/lib/palette";
+import { useState } from "react";
 
 const ThemeSwitcher = () => {
   const { theme, setTheme } = useTheme();
+  const [palette, setPalette] = useState<PaletteValue>(getStoredPalette());
 
   const ICON_SIZE = 16;
+  const activeMode: ThemeModeValue =
+    theme === "light" || theme === "dark" || theme === "system"
+      ? theme
+      : "system";
+
+  const activeModeOption =
+    THEME_MODE_OPTIONS.find((modeOption) => modeOption.value === activeMode) ??
+    THEME_MODE_OPTIONS[0];
+  const activePaletteOption =
+    PALETTE_OPTIONS.find((paletteOption) => paletteOption.value === palette) ??
+    PALETTE_OPTIONS[0];
+
+  const ActiveModeIcon = activeModeOption.icon;
+  const ActivePaletteIcon = activePaletteOption.icon;
+
+  const renderModeItem = (modeOption: ThemeModeOption) => {
+    const OptionIcon = modeOption.icon;
+
+    return (
+      <DropdownMenuRadioItem
+        key={modeOption.value}
+        className="flex gap-2"
+        value={modeOption.value}
+      >
+        <OptionIcon size={ICON_SIZE} className="text-muted-foreground" />
+        <span>{modeOption.label}</span>
+      </DropdownMenuRadioItem>
+    );
+  };
+
+  const renderPaletteItem = (paletteOption: PaletteOption) => {
+    const OptionIcon = paletteOption.icon;
+
+    return (
+      <DropdownMenuRadioItem
+        key={paletteOption.value}
+        className="flex gap-2"
+        value={paletteOption.value}
+      >
+        <OptionIcon size={ICON_SIZE} className="text-muted-foreground" />
+        <span>{paletteOption.label}</span>
+      </DropdownMenuRadioItem>
+    );
+  };
+
+  const handlePaletteChange = (value: string) => {
+    if (!isPaletteValue(value)) {
+      return;
+    }
+
+    setPalette(value);
+    setStoredPalette(value);
+  };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size={"sm"}>
-          {theme === "light" ? (
-            <Sun
-              key="light"
-              size={ICON_SIZE}
-              className={"text-muted-foreground"}
-            />
-          ) : theme === "dark" ? (
-            <Moon
-              key="dark"
-              size={ICON_SIZE}
-              className={"text-muted-foreground"}
-            />
-          ) : (
-            <Laptop
-              key="system"
-              size={ICON_SIZE}
-              className={"text-muted-foreground"}
-            />
-          )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-content" align="start">
-        <DropdownMenuRadioGroup
-          value={theme}
-          onValueChange={(e) => setTheme(e)}
-        >
-          <DropdownMenuRadioItem className="flex gap-2" value="light">
-            <Sun size={ICON_SIZE} className="text-muted-foreground" />{" "}
-            <span>Light</span>
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem className="flex gap-2" value="dark">
-            <Moon size={ICON_SIZE} className="text-muted-foreground" />{" "}
-            <span>Dark</span>
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem className="flex gap-2" value="system">
-            <Laptop size={ICON_SIZE} className="text-muted-foreground" />{" "}
-            <span>System</span>
-          </DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="space-y-3">
+      <div className="space-y-1">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Theme
+        </p>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-between px-3"
+            >
+              <span className="flex items-center gap-2">
+                <ActiveModeIcon
+                  size={ICON_SIZE}
+                  className="text-muted-foreground"
+                />
+                <span className="text-sm">{activeModeOption.label}</span>
+              </span>
+              <ChevronDown size={ICON_SIZE} className="text-muted-foreground" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-52"
+            align="start"
+            sideOffset={6}
+          >
+            <DropdownMenuLabel>Theme</DropdownMenuLabel>
+            <DropdownMenuRadioGroup value={activeMode} onValueChange={setTheme}>
+              {THEME_MODE_OPTIONS.map((modeOption) =>
+                renderModeItem(modeOption)
+              )}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <div className="space-y-1">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Palette
+        </p>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full justify-between px-3"
+            >
+              <span className="flex items-center gap-2">
+                <ActivePaletteIcon
+                  size={ICON_SIZE}
+                  className="text-muted-foreground"
+                />
+                <span className="text-sm">{activePaletteOption.label}</span>
+              </span>
+              <ChevronDown size={ICON_SIZE} className="text-muted-foreground" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-52"
+            align="start"
+            sideOffset={6}
+          >
+            <DropdownMenuLabel>Palette</DropdownMenuLabel>
+            <DropdownMenuRadioGroup
+              value={palette}
+              onValueChange={handlePaletteChange}
+            >
+              {PALETTE_OPTIONS.map((paletteOption) =>
+                renderPaletteItem(paletteOption)
+              )}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
   );
 };
 

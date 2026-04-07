@@ -5,6 +5,7 @@ import App from "./App.tsx";
 import "./index.css";
 import { syncEngine } from "./lib/sync";
 import { supabase, isSupabaseConfigured } from "./lib/supabase";
+import { initializeStoredPalette } from "./lib/palette";
 
 void (async () => {
   try {
@@ -30,6 +31,8 @@ if (isSupabaseConfigured && supabase) {
     }
   });
 }
+
+initializeStoredPalette();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

@@ -50,12 +50,9 @@ function Pill({
   const isSm = size === "sm";
 
   const playTimerButton = (
-    <Button
-      type="button"
-      variant="secondary"
-      onClick={onPlayStop}
+    <div
       className={
-        "relative flex h-full flex-shrink-0 items-center justify-center gap-2 rounded-full " +
+        "relative flex h-full flex-shrink-0 items-center justify-center gap-2 rounded-full bg-secondary text-secondary-foreground transition-all " +
         (isSm ? "px-2" : "px-3")
       }
       style={{ backgroundColor: bgColor }}
@@ -72,7 +69,7 @@ function Pill({
           className={
             isSm
               ? "h-2.5 w-2.5 flex-shrink-0 translate-x-px fill-foreground"
-              : "h-3 w-3 flex-shrink-0 translate-x-px fill-foreground"
+              : "h-3 w-3 flex-shrink-0 translate-x-px fill-secondary-foreground"
           }
         />
       )}
@@ -87,7 +84,7 @@ function Pill({
       >
         {formatTimerDisplay(elapsedMs)}
       </span>
-    </Button>
+    </div>
   );
 
   const nameContent = (
