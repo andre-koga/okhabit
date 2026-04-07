@@ -5,6 +5,7 @@ export interface ActivityPillProps {
   color?: string;
   elapsedMs?: number;
   isRunning?: boolean;
+  onNameClick?: () => void;
   onClick?: () => void;
   /** When true, renders as a non-interactive div instead of a button */
   readOnly?: boolean;
@@ -16,6 +17,7 @@ export default function ActivityPill({
   color = "#3b82f6",
   elapsedMs,
   isRunning,
+  onNameClick,
   onClick,
   readOnly = false,
   className = "",
@@ -27,6 +29,7 @@ export default function ActivityPill({
       elapsedMs={elapsedMs}
       isRunning={isRunning}
       onPlayStop={onClick}
+      onNameClick={onNameClick}
       readOnly={readOnly}
       className={className}
     />

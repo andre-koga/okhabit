@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ChevronLeft, Plus, X } from "lucide-react";
+import { ChevronLeft, Pencil, Plus, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { db } from "@/lib/db";
@@ -7,7 +7,6 @@ import type { ActivityGroup, Activity } from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import { cn } from "@/lib/utils";
 import {
-  getOrCreateHiddenGroupDefaultActivity,
   getActivityDisplayName,
   isActiveGroup,
   isHiddenGroupDefaultActivity,
@@ -15,6 +14,7 @@ import {
 import GroupPill from "@/components/activities/group-pill";
 import ActivityPill from "@/components/activities/activity-pill";
 import { ActivityDialogForm } from "@/components/activities/activity-dialog-form";
+import { EditGroupDialog } from "@/components/activities/edit-group-dialog";
 import { NewGroupDialog } from "@/components/activities/new-group-dialog";
 import { Button } from "@/components/ui/button";
 
@@ -54,6 +54,8 @@ export default function ActivityGroupsDrawer({
   const [newGroupDialogOpen, setNewGroupDialogOpen] = useState(false);
   const [newActivityDialogGroup, setNewActivityDialogGroup] =
     useState<ActivityGroup | null>(null);
+  const [editingGroup, setEditingGroup] = useState<ActivityGroup | null>(null);
+  const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const pendingContentRef = useRef<
     { type: "activities"; group: ActivityGroup } | { type: "groups" } | null
   >(null);
@@ -195,28 +197,15 @@ export default function ActivityGroupsDrawer({
                           name={group.name}
                           color={group.color || DEFAULT_GROUP_COLOR}
                           isRunning={isRunningInGroup}
-                          onNameClick={() => handleOpenGroup(group)}
-                          onSettingsClick={() => {
+                          onNameClick={() => {
                             setView("groups");
                             setOpen(false);
                             navigate(`/activities/${group.id}`);
                           }}
-                          onActionClick={async () => {
-                            if (isRunningInGroup) {
-                              await onStopActivity?.();
-                              setView("groups");
-                              setOpen(false);
-                              return;
-                            }
-
-                            const hiddenActivity =
-                              await getOrCreateHiddenGroupDefaultActivity(
-                                group
-                              );
-                            await onStartActivity?.(hiddenActivity.id);
-                            setView("groups");
-                            setOpen(false);
+                          onSettingsClick={() => {
+                            setEditingGroup(group);
                           }}
+                          onActionClick={() => handleOpenGroup(group)}
                         />
                       );
                     })
@@ -272,21 +261,46 @@ export default function ActivityGroupsDrawer({
                       const groupColor =
                         selectedGroup.color || DEFAULT_GROUP_COLOR;
                       return (
-                        <ActivityPill
+                        <div
                           key={activity.id}
-                          name={getActivityDisplayName(activity, selectedGroup)}
-                          color={groupColor}
-                          elapsedMs={calculateActivityTime(activity.id)}
-                          isRunning={isRunning}
-                          onClick={async () => {
-                            if (isRunning) {
-                              await onStopActivity?.();
-                            } else {
-                              await onStartActivity?.(activity.id);
-                            }
-                            closeDrawer();
-                          }}
-                        />
+                          className="flex items-center gap-2"
+                        >
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="iconRoundMd"
+                            className="h-10 w-10 border-border/80 bg-background"
+                            title="Edit activity"
+                            aria-label="Edit activity"
+                            onClick={() => {
+                              setEditingActivity(activity);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <ActivityPill
+                            name={getActivityDisplayName(
+                              activity,
+                              selectedGroup
+                            )}
+                            color={groupColor}
+                            elapsedMs={calculateActivityTime(activity.id)}
+                            isRunning={isRunning}
+                            onNameClick={() => {
+                              setOpen(false);
+                              navigate(`/activities/stats/${activity.id}`);
+                            }}
+                            onClick={async () => {
+                              if (isRunning) {
+                                await onStopActivity?.();
+                              } else {
+                                await onStartActivity?.(activity.id);
+                              }
+                              closeDrawer();
+                            }}
+                            className="flex-1"
+                          />
+                        </div>
                       );
                     })
                   )}
@@ -352,6 +366,41 @@ export default function ActivityGroupsDrawer({
           group={newActivityDialogGroup}
           onSaved={() => {
             navigate(`/activities/${newActivityDialogGroup.id}`);
+          }}
+        />
+      ) : null}
+
+      {editingActivity && selectedGroup ? (
+        <ActivityDialogForm
+          open={editingActivity !== null}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) setEditingActivity(null);
+          }}
+          group={selectedGroup}
+          activity={editingActivity}
+          onSaved={() => {
+            setEditingActivity(null);
+          }}
+        />
+      ) : null}
+
+      {editingGroup ? (
+        <EditGroupDialog
+          open={editingGroup !== null}
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) setEditingGroup(null);
+          }}
+          group={editingGroup}
+          onUpdated={(updatedGroup) => {
+            setGroups((prev) =>
+              prev.map((group) =>
+                group.id === updatedGroup.id ? updatedGroup : group
+              )
+            );
+            setSelectedGroup((prev) =>
+              prev && prev.id === updatedGroup.id ? updatedGroup : prev
+            );
+            setEditingGroup(updatedGroup);
           }}
         />
       ) : null}

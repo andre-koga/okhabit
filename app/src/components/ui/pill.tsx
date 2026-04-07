@@ -45,15 +45,20 @@ function Pill({
   className = "",
 }: PillProps) {
   const resolvedTextColor = textColor ?? getContrastColor(color);
+  const resolvedRunningColor = isRunning ? resolvedTextColor : "";
+  const bgColor = isRunning ? color : "";
   const isSm = size === "sm";
 
   const playTimerButton = (
-    <div
+    <Button
+      type="button"
+      variant="secondary"
+      onClick={onPlayStop}
       className={
         "relative flex h-full flex-shrink-0 items-center justify-center gap-2 rounded-full " +
         (isSm ? "px-2" : "px-3")
       }
-      style={{ backgroundColor: color }}
+      style={{ backgroundColor: bgColor }}
     >
       {isRunning ? (
         <Square
@@ -66,10 +71,9 @@ function Pill({
         <Play
           className={
             isSm
-              ? "h-2.5 w-2.5 flex-shrink-0 translate-x-px"
-              : "h-3 w-3 flex-shrink-0 translate-x-px"
+              ? "h-2.5 w-2.5 flex-shrink-0 translate-x-px fill-foreground"
+              : "h-3 w-3 flex-shrink-0 translate-x-px fill-foreground"
           }
-          style={{ color: resolvedTextColor, fill: resolvedTextColor }}
         />
       )}
       <span
@@ -78,12 +82,12 @@ function Pill({
           (isSm ? "mt-[1px] text-[10px]" : "mt-0.5 text-xs")
         }
         style={{
-          color: resolvedTextColor,
+          color: resolvedRunningColor,
         }}
       >
         {formatTimerDisplay(elapsedMs)}
       </span>
-    </div>
+    </Button>
   );
 
   const nameContent = (
@@ -91,7 +95,7 @@ function Pill({
       <span
         className={
           "flex-1 truncate text-left font-medium " +
-          (isSm ? "px-3 text-xs" : "px-4 text-sm") +
+          (isSm ? "px-2 text-xs" : "px-3 text-sm") +
           (nameClassName ? " " + nameClassName : "")
         }
       >
@@ -99,17 +103,6 @@ function Pill({
           <span className="font-normal text-muted-foreground/50">Name…</span>
         )}
       </span>
-      {/* Gradient fade from button colour to transparent */}
-      <div
-        className={
-          "pointer-events-none absolute inset-y-0 right-0.5 w-full rounded-r-full"
-        }
-        style={{
-          background: isSm
-            ? `linear-gradient(to left, ${color}, transparent 28%)`
-            : `linear-gradient(to left, ${color}, transparent 40%)`,
-        }}
-      />
     </>
   );
 
@@ -140,9 +133,13 @@ function Pill({
     );
   }
 
-  if (onNameClick) {
-    return (
-      <div className={base + " w-full"}>
+  return (
+    <div className={base + " w-full"}>
+      <div
+        className="ml-4 h-2.5 w-2.5 shrink-0 rounded-full"
+        style={{ backgroundColor: color }}
+      />
+      {onNameClick ? (
         <Button
           type="button"
           variant="ghost"
@@ -152,18 +149,13 @@ function Pill({
           onPointerLeave={onNamePointerLeave}
           onPointerCancel={onNamePointerCancel}
           onContextMenu={onNameContextMenu}
-          className="min-w-0 flex-1 justify-start rounded-none text-left shadow-none hover:bg-transparent"
+          className="h-full min-w-0 flex-1 justify-start rounded-none p-0 text-left shadow-none hover:bg-transparent focus-visible:ring-offset-0"
         >
           {nameContent}
         </Button>
-        {timerControl}
-      </div>
-    );
-  }
-
-  return (
-    <div className={base + " w-full"}>
-      <div className="flex min-w-0 flex-1 items-center">{nameContent}</div>
+      ) : (
+        <div className="flex min-w-0 flex-1 items-center">{nameContent}</div>
+      )}
       {timerControl}
     </div>
   );
