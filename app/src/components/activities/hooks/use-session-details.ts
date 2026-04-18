@@ -168,9 +168,9 @@ export function useSessionDetails(options: UseSessionDetailsOptions = {}) {
 
     if (
       nextEndIso &&
-      new Date(nextEndIso).getTime() < new Date(nextStartIso).getTime()
+      new Date(nextEndIso).getTime() <= new Date(nextStartIso).getTime()
     ) {
-      setError("End time cannot be before start time.");
+      setError("End time must be after start time.");
       return;
     }
 

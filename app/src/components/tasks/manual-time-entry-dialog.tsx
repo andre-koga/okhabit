@@ -76,8 +76,8 @@ export default function ManualTimeEntryDialog({
       return;
     }
 
-    if (timeToSeconds(endTime) < timeToSeconds(startTime)) {
-      setError("End time cannot be before start time.");
+    if (timeToSeconds(endTime) <= timeToSeconds(startTime)) {
+      setError("End time must be after start time.");
       return;
     }
 

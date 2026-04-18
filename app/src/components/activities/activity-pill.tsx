@@ -85,33 +85,37 @@ export default function ActivityPill({
         />
         <span className={cn("truncate", nameClassName)}>
           {name || (
-            <span className="font-normal text-muted-foreground/50">Name...</span>
+            <span className="font-normal text-muted-foreground/50">
+              Name...
+            </span>
           )}
         </span>
       </Button>
-      {onManualEntry ? (
+      <div>
+        {onManualEntry ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onManualEntry}
+            className="relative -mr-4 h-full w-12 shrink-0 rounded-l-full border-r-0 pr-6 shadow-none"
+            title="Add manual time entry"
+            aria-label="Add manual time entry"
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </Button>
+        ) : null}
         <Button
           type="button"
-          variant="outline"
-          onClick={onManualEntry}
-          className="relative h-full w-10 shrink-0 rounded-full p-0 shadow-none"
-          title="Add manual time entry"
-          aria-label="Add manual time entry"
+          variant="secondary"
+          onClick={onClick}
+          className="relative h-full shrink-0 gap-1.5 rounded-full px-4 font-semibold shadow-none"
+          style={
+            isRunning ? { backgroundColor: color, color: textColor } : undefined
+          }
         >
-          <Plus className="h-3.5 w-3.5" />
+          {actionContent}
         </Button>
-      ) : null}
-      <Button
-        type="button"
-        variant="secondary"
-        onClick={onClick}
-        className="relative h-full shrink-0 gap-1.5 rounded-full px-4 font-semibold shadow-none"
-        style={
-          isRunning ? { backgroundColor: color, color: textColor } : undefined
-        }
-      >
-        {actionContent}
-      </Button>
+      </div>
     </div>
   );
 }

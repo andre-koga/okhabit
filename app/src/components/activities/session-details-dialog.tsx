@@ -20,6 +20,18 @@ interface SessionDetailsDialogProps {
   onSessionUpdated?: () => void;
 }
 
+function addOneSecond(time: string): string {
+  const [hours = 0, minutes = 0, seconds = 0] = time.split(":").map(Number);
+  const totalSeconds = Math.min(hours * 3600 + minutes * 60 + seconds + 1, 86399);
+  const nextHours = Math.floor(totalSeconds / 3600);
+  const nextMinutes = Math.floor((totalSeconds % 3600) / 60);
+  const nextSeconds = totalSeconds % 60;
+  return `${String(nextHours).padStart(2, "0")}:${String(nextMinutes).padStart(
+    2,
+    "0"
+  )}:${String(nextSeconds).padStart(2, "0")}`;
+}
+
 export default function SessionDetailsDialog({
   groupId,
   sessionId,
@@ -61,14 +73,14 @@ export default function SessionDetailsDialog({
 
   const handleStartTimeChange = (newStartTime: string) => {
     setStartTime(newStartTime);
-    if (endTime && timeToSeconds(endTime) < timeToSeconds(newStartTime)) {
-      setEndTime(newStartTime);
+    if (endTime && timeToSeconds(endTime) <= timeToSeconds(newStartTime)) {
+      setEndTime(addOneSecond(newStartTime));
     }
   };
 
   const handleEndTimeChange = (newEndTime: string) => {
-    if (startTime && timeToSeconds(newEndTime) < timeToSeconds(startTime)) {
-      setEndTime(startTime);
+    if (startTime && timeToSeconds(newEndTime) <= timeToSeconds(startTime)) {
+      setEndTime(addOneSecond(startTime));
       return;
     }
     setEndTime(newEndTime);
