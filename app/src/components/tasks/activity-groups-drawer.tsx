@@ -34,6 +34,7 @@ interface ActivityGroupsDrawerProps {
     startIso: string;
     endIso: string;
   }) => Promise<void>;
+  onTasksDataChanged?: () => void;
   triggerClassName?: string;
   triggerTitle?: string;
   triggerLabel?: string;
@@ -49,6 +50,7 @@ export default function ActivityGroupsDrawer({
   onStopActivity,
   initialDate = new Date(),
   onAddManualEntry,
+  onTasksDataChanged,
   triggerClassName,
   triggerTitle = "Pick group or activity",
   triggerLabel,
@@ -406,6 +408,10 @@ export default function ActivityGroupsDrawer({
           onSaved={() => {
             setEditingActivity(null);
           }}
+          onArchived={() => {
+            setEditingActivity(null);
+            onTasksDataChanged?.();
+          }}
         />
       ) : null}
 
@@ -426,6 +432,16 @@ export default function ActivityGroupsDrawer({
               prev && prev.id === updatedGroup.id ? updatedGroup : prev
             );
             setEditingGroup(updatedGroup);
+          }}
+          onArchived={() => {
+            const id = editingGroup.id;
+            setEditingGroup(null);
+            setGroups((prev) => prev.filter((g) => g.id !== id));
+            setSelectedGroup((prev) =>
+              prev && prev.id === id ? null : prev
+            );
+            setView("groups");
+            onTasksDataChanged?.();
           }}
         />
       ) : null}

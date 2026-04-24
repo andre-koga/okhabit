@@ -24,6 +24,7 @@ interface DailyTasksListProps {
   entryDates: Set<string>;
   bookmarkedDates: Set<string>;
   loadJournalMeta: () => Promise<void>;
+  onTasksDataChanged?: () => void;
 }
 
 export default function DailyTasksList({
@@ -35,6 +36,7 @@ export default function DailyTasksList({
   entryDates,
   bookmarkedDates,
   loadJournalMeta,
+  onTasksDataChanged,
 }: DailyTasksListProps) {
   const [assignPeriodId, setAssignPeriodId] = useState<string | null>(null);
   const [assignIntervalMs, setAssignIntervalMs] = useState(0);
@@ -250,6 +252,7 @@ export default function DailyTasksList({
         onStopActivity={handleStopActivity}
         onAddManualActivityPeriod={addManualActivityPeriod}
         onAddQuickMemo={createOneTimeTask}
+        onTasksDataChanged={onTasksDataChanged}
       />
 
       {assignPeriodId && (

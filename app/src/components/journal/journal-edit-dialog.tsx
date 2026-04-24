@@ -11,6 +11,11 @@ import {
 } from "@/components/forms";
 import { getFirstEmoji } from "@/lib/emoji-utils";
 import { JournalVideoUploadError, uploadJournalVideo } from "@/lib/journal";
+import {
+  clearJournalEditSessionDraft,
+  getJournalEditSessionDraft,
+  setJournalEditSessionDraft,
+} from "@/lib/dialog-session-drafts";
 
 const TITLE_LIMIT = 30;
 const TEXT_LIMIT = 300;
@@ -52,17 +57,53 @@ export default function JournalEditDialog({
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const prevOpenRef = useRef(open);
+  const closeReasonRef = useRef<"save" | "cancel" | null>(null);
+  /** Journal day this form session is for; used as stash key on dismiss. */
+  const entryDateSessionRef = useRef(entryDate);
+
+  useEffect(() => {
+    if (open) {
+      entryDateSessionRef.current = entryDate;
+    }
+  }, [open, entryDate]);
 
   useEffect(() => {
     if (!open) return;
-    setEmoji(initialEmoji);
-    setTitle(initialTitle);
-    setText(initialText);
-    setVideoPath(initialVideoPath);
+    const draft = getJournalEditSessionDraft(entryDate);
+    if (draft) {
+      setEmoji(draft.emoji);
+      setTitle(draft.title);
+      setText(draft.text);
+      setVideoPath(draft.videoPath);
+    } else {
+      setEmoji(initialEmoji);
+      setTitle(initialTitle);
+      setText(initialText);
+      setVideoPath(initialVideoPath);
+    }
     setUploadError(null);
-  }, [open, initialEmoji, initialTitle, initialText, initialVideoPath]);
+  }, [open, entryDate, initialEmoji, initialTitle, initialText, initialVideoPath]);
+
+  useEffect(() => {
+    if (prevOpenRef.current && !open) {
+      if (closeReasonRef.current === "save" || closeReasonRef.current === "cancel") {
+        closeReasonRef.current = null;
+      } else {
+        setJournalEditSessionDraft(entryDateSessionRef.current, {
+          emoji,
+          title,
+          text,
+          videoPath,
+        });
+      }
+    }
+    prevOpenRef.current = open;
+  }, [open, emoji, title, text, videoPath]);
 
   const handleSave = () => {
+    closeReasonRef.current = "save";
+    clearJournalEditSessionDraft(entryDateSessionRef.current);
     onSave({
       emoji: getFirstEmoji(emoji),
       title: title.trim(),
@@ -141,7 +182,7 @@ export default function JournalEditDialog({
           maxLength={TEXT_LIMIT}
           onChange={(e) => setText(e.target.value)}
           placeholder="Write your thoughts for the day..."
-          rows={6}
+          rows={4}
           className="leading-relaxed"
           message={
             <FormCharacterCount current={text.length} max={TEXT_LIMIT} />
@@ -206,7 +247,11 @@ export default function JournalEditDialog({
         confirmLabel="Save"
         secondaryAction={{
           label: "Cancel",
-          onClick: () => onOpenChange(false),
+          onClick: () => {
+            closeReasonRef.current = "cancel";
+            clearJournalEditSessionDraft(entryDateSessionRef.current);
+            onOpenChange(false);
+          },
         }}
       />
     </FormDialog>

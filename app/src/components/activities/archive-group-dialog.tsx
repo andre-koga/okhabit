@@ -3,52 +3,53 @@ import { db, now } from "@/lib/db";
 import { stopCurrentActivity } from "@/lib/activity";
 import { logError } from "@/lib/error-utils";
 
-interface ArchiveActivityDialogProps {
+interface ArchiveGroupDialogProps {
   open: boolean;
-  activityId: string | null;
-  activityName: string | null;
+  groupId: string | null;
+  groupName: string | null;
   onOpenChange: (open: boolean) => void;
   onArchived: () => void;
   cancelLabel?: string;
   confirmLabel?: string;
 }
 
-export function ArchiveActivityDialog({
+export function ArchiveGroupDialog({
   open,
-  activityId,
-  activityName,
+  groupId,
+  groupName,
   onOpenChange,
   onArchived,
   cancelLabel = "Cancel",
   confirmLabel = "Archive",
-}: ArchiveActivityDialogProps) {
+}: ArchiveGroupDialogProps) {
   const handleArchive = async () => {
-    if (!activityId) return;
+    if (!groupId) return;
     try {
-      await stopCurrentActivity({ activityId });
+      await stopCurrentActivity({ groupId });
       const n = now();
-      await db.activities.update(activityId, {
+      await db.activityGroups.update(groupId, {
         is_archived: true,
         updated_at: n,
       });
       onOpenChange(false);
       onArchived();
     } catch (error) {
-      logError("Error archiving activity", error);
+      logError("Error archiving group", error);
     }
   };
 
-  const displayName = activityName?.trim() || "this activity";
+  const displayName = groupName?.trim() || "this group";
 
   return (
     <FormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Archive Activity"
+      title="Archive group"
       description={
         <>
           Are you sure you want to archive &quot;{displayName}&quot;? This will
-          remove it from your active activities list.
+          remove it from your active groups list. You can restore it from
+          Settings → Archived.
         </>
       }
       contentClassName="sm:max-w-md"
@@ -56,7 +57,7 @@ export function ArchiveActivityDialog({
       <FormDialogActions
         onConfirm={handleArchive}
         confirmLabel={confirmLabel}
-        confirmDisabled={!activityId}
+        confirmDisabled={!groupId}
         confirmClassName="bg-destructive text-destructive-foreground shadow-md hover:bg-destructive/90 focus-visible:ring-destructive"
         secondaryAction={{
           label: cancelLabel,

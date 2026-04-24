@@ -105,8 +105,11 @@ export function useOneTimeTasks(dateString: string) {
   }, []);
 
   const deleteOneTimeTask = useCallback(async (taskId: string) => {
+    const n = now();
     setOneTimeTasks((prev) => prev.filter((t) => t.id !== taskId));
-    await db.oneTimeTasks.delete(taskId);
+    // Soft delete so the next push can sync deletion to Supabase; a hard delete
+    // leaves the row on the server and full pull brings it back.
+    await db.oneTimeTasks.update(taskId, { deleted_at: n, updated_at: n });
   }, []);
 
   const updateOneTimeTask = useCallback(

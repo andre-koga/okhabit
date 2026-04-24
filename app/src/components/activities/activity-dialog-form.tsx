@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
+import { Archive } from "lucide-react";
+import { ArchiveActivityDialog } from "@/components/activities/archive-activity-dialog";
+import { Button } from "@/components/ui/button";
 import { db, newId, now } from "@/lib/db";
 import type { Activity, ActivityGroup } from "@/lib/db/types";
 import {
+  getActivityDisplayName,
   isActiveActivity,
   isScheduledRoutine,
   parseRoutine,
@@ -25,6 +29,7 @@ interface ActivityDialogFormProps {
   group: ActivityGroup;
   activity?: Activity;
   onSaved?: () => void;
+  onArchived?: () => void;
 }
 
 interface ActivityFormData {
@@ -112,6 +117,7 @@ export function ActivityDialogForm({
   group,
   activity,
   onSaved,
+  onArchived,
 }: ActivityDialogFormProps) {
   const isEditing = Boolean(activity);
   const [formData, setFormData] = useState<ActivityFormData>(() =>
@@ -119,6 +125,7 @@ export function ActivityDialogForm({
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [archiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -126,11 +133,14 @@ export function ActivityDialogForm({
     setFormData(computeFormDataFromInitial(activity));
     setError(null);
     setSaving(false);
+    setArchiveConfirmOpen(false);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [open, activity]);
 
   const handleOpenChange = (nextOpen: boolean) => {
-    if (!nextOpen) {
+    if (nextOpen) {
+      setArchiveConfirmOpen(false);
+    } else {
       setError(null);
       setSaving(false);
     }
@@ -214,13 +224,30 @@ export function ActivityDialogForm({
   };
 
   return (
-    <FormDialog
-      open={open}
-      onOpenChange={handleOpenChange}
-      title={isEditing ? "Edit Activity" : "New Activity"}
-      contentClassName="sm:max-w-md"
-    >
-      <FormStack>
+    <>
+      <FormDialog
+        open={open}
+        onOpenChange={handleOpenChange}
+        title={isEditing ? "Edit Activity" : "New Activity"}
+        headerEnd={
+          isEditing ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 shrink-0 rounded-full border-destructive/50 text-destructive hover:bg-destructive/10 hover:text-destructive"
+              disabled={saving}
+              onClick={() => setArchiveConfirmOpen(true)}
+              title="Archive activity"
+              aria-label="Archive activity"
+            >
+              <Archive className="h-4 w-4" aria-hidden />
+            </Button>
+          ) : undefined
+        }
+        contentClassName="sm:max-w-md"
+      >
+        <FormStack>
         <FormField
           id="activity-name"
           label="Activity name"
@@ -294,7 +321,24 @@ export function ActivityDialogForm({
             disabled: saving,
           }}
         />
-      </FormStack>
-    </FormDialog>
+        </FormStack>
+      </FormDialog>
+
+      {isEditing && activity ? (
+        <ArchiveActivityDialog
+          open={open && archiveConfirmOpen}
+          activityId={activity.id}
+          activityName={getActivityDisplayName(activity, group)}
+          onOpenChange={setArchiveConfirmOpen}
+          cancelLabel="No"
+          confirmLabel="Yes"
+          onArchived={() => {
+            setArchiveConfirmOpen(false);
+            onArchived?.();
+            handleOpenChange(false);
+          }}
+        />
+      ) : null}
+    </>
   );
 }

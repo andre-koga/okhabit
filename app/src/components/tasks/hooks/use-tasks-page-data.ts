@@ -74,10 +74,16 @@ export function useTasksPageData({
     return unsubscribe;
   }, [loadDataInBackground, loadJournalEntry, loadJournalMeta]);
 
+  const refreshTasksData = useCallback(async () => {
+    await loadDataInBackground();
+    setRefreshTrigger((t) => t + 1);
+  }, [loadDataInBackground]);
+
   return {
     activities,
     groups,
     loading,
     refreshTrigger,
+    refreshTasksData,
   };
 }

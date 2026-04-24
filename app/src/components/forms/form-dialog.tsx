@@ -17,6 +17,8 @@ interface FormDialogProps {
   onOpenChange: (open: boolean) => void;
   title: ReactNode;
   description?: ReactNode;
+  /** Renders at the top right of the dialog header (e.g. icon-only actions). */
+  headerEnd?: ReactNode;
   children: ReactNode;
   size?: "default" | "sm";
   contentClassName?: string;
@@ -32,6 +34,7 @@ export function FormDialog({
   onOpenChange,
   title,
   description,
+  headerEnd,
   children,
   size = "sm",
   contentClassName,
@@ -47,14 +50,33 @@ export function FormDialog({
         className={cn("p-4", contentClassName)}
         onPointerDownOutside={onContentPointerDownOutside}
       >
-        <DialogHeader className={headerClassName}>
-          <DialogTitle className={titleClassName}>{title}</DialogTitle>
-          {description ? (
-            <DialogDescription className={descriptionClassName}>
-              {description}
-            </DialogDescription>
-          ) : null}
-        </DialogHeader>
+        {headerEnd ? (
+          <div className="flex items-start justify-between gap-3">
+            <DialogHeader
+              className={cn(
+                headerClassName,
+                "flex-1 min-w-0 text-left sm:text-left"
+              )}
+            >
+              <DialogTitle className={titleClassName}>{title}</DialogTitle>
+              {description ? (
+                <DialogDescription className={descriptionClassName}>
+                  {description}
+                </DialogDescription>
+              ) : null}
+            </DialogHeader>
+            <div className="flex shrink-0 items-center pt-0.5">{headerEnd}</div>
+          </div>
+        ) : (
+          <DialogHeader className={headerClassName}>
+            <DialogTitle className={titleClassName}>{title}</DialogTitle>
+            {description ? (
+              <DialogDescription className={descriptionClassName}>
+                {description}
+              </DialogDescription>
+            ) : null}
+          </DialogHeader>
+        )}
         {children}
       </DialogContent>
     </Dialog>

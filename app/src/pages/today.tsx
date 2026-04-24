@@ -34,6 +34,7 @@ export default function TodayPage() {
     groups,
     loading,
     dailyTasks,
+    refreshTasksData,
   } = useTodayPage(currentDate);
 
   if (loading) {
@@ -193,6 +194,9 @@ export default function TodayPage() {
           entryDates={entryDates}
           bookmarkedDates={bookmarkedDates}
           loadJournalMeta={loadJournalMeta}
+          onTasksDataChanged={() => {
+            void refreshTasksData();
+          }}
         />
 
         <blockquote className="pb-12 pt-8 text-center font-crimson text-sm italic leading-relaxed text-muted-foreground/60">

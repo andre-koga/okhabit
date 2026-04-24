@@ -1,8 +1,13 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { MemoEditDialog } from "@/components/tasks/memo-edit-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  clearQuickMemoSessionDraft,
+  getQuickMemoSessionDraft,
+  setQuickMemoSessionDraft,
+} from "@/lib/dialog-session-drafts";
 import { cn } from "@/lib/utils";
 
 interface AddTaskModalProps {
@@ -34,12 +39,27 @@ export default function AddTaskModal({
   const [dueDate, setDueDate] = useState<string | null>(null);
   const [isPinned, setIsPinned] = useState(false);
   const [adding, setAdding] = useState(false);
+  const closingFromSuccessRef = useRef(false);
 
   const handleOpenChange = (next: boolean) => {
-    if (!next) {
-      setTitle("");
-      setDueDate(null);
-      setIsPinned(false);
+    if (next) {
+      closingFromSuccessRef.current = false;
+      const draft = getQuickMemoSessionDraft();
+      if (draft) {
+        setTitle(draft.title);
+        setDueDate(draft.dueDate);
+        setIsPinned(draft.isPinned);
+      } else {
+        setTitle("");
+        setDueDate(null);
+        setIsPinned(false);
+      }
+    } else {
+      if (closingFromSuccessRef.current) {
+        closingFromSuccessRef.current = false;
+      } else {
+        setQuickMemoSessionDraft({ title, dueDate, isPinned });
+      }
     }
     setOpen(next);
   };
@@ -52,10 +72,12 @@ export default function AddTaskModal({
       is_pinned: isPinned,
     });
     if (success) {
+      clearQuickMemoSessionDraft();
+      closingFromSuccessRef.current = true;
       setTitle("");
       setDueDate(null);
       setIsPinned(false);
-      setOpen(false);
+      handleOpenChange(false);
     }
     setAdding(false);
   };
@@ -81,7 +103,7 @@ export default function AddTaskModal({
         type="button"
         variant="default"
         size={triggerLabel ? "default" : "floatingNav"}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => handleOpenChange(!open)}
         disabled={disabled}
         title={triggerTitle}
         aria-label={triggerTitle}

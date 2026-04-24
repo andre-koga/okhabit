@@ -127,6 +127,11 @@ function GroupPageBody({ group }: { group: ActivityGroup }) {
         onUpdated={(updatedGroup) => {
           setGroupDetails(updatedGroup);
         }}
+        onArchived={() => {
+          setIsArchived(true);
+          setGroupDetails((prev) => ({ ...prev, is_archived: true }));
+          void loadActivities();
+        }}
       />
 
       <ActivityDialogForm
@@ -137,6 +142,9 @@ function GroupPageBody({ group }: { group: ActivityGroup }) {
         group={groupDetails}
         activity={activities.find((activity) => activity.id === editActivityId)}
         onSaved={() => {
+          void loadActivities();
+        }}
+        onArchived={() => {
           void loadActivities();
         }}
       />

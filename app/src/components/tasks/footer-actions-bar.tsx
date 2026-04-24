@@ -5,6 +5,7 @@ import {
   CircleCheckBig,
   Folder,
   Menu,
+  MessageSquare,
   Settings,
   Sparkles,
 } from "lucide-react";
@@ -16,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import AddTaskModal from "./add-task-modal";
 import ActivityGroupsDrawer from "./activity-groups-drawer";
+import FeedbackDialog from "./feedback-dialog";
 
 interface FooterActionsBarProps {
   currentDate: Date;
@@ -38,6 +40,7 @@ interface FooterActionsBarProps {
     title: string,
     options?: { due_date?: string | null; is_pinned?: boolean }
   ) => Promise<boolean>;
+  onTasksDataChanged?: () => void;
 }
 
 export default function FooterActionsBar({
@@ -53,10 +56,12 @@ export default function FooterActionsBar({
   onStopActivity,
   onAddManualActivityPeriod,
   onAddQuickMemo,
+  onTasksDataChanged,
 }: FooterActionsBarProps) {
   const navigate = useNavigate();
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [pathsDrawerOpen, setPathsDrawerOpen] = useState(false);
+  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
   const { bottomInset } = useVisualViewportLayout();
   const isSelectedToday =
     toDateString(currentDate) === toDateString(new Date());
@@ -92,11 +97,11 @@ export default function FooterActionsBar({
               className="h-11 w-full justify-start rounded-xl"
               onClick={() => {
                 setPathsDrawerOpen(false);
-                navigate("/settings");
+                navigate("/stats");
               }}
             >
-              <Settings className="h-4 w-4" />
-              Settings
+              <Sparkles className="h-4 w-4" />
+              Stats
             </Button>
             <Button
               type="button"
@@ -104,11 +109,23 @@ export default function FooterActionsBar({
               className="h-11 w-full justify-start rounded-xl"
               onClick={() => {
                 setPathsDrawerOpen(false);
-                navigate("/stats");
+                setFeedbackDialogOpen(true);
               }}
             >
-              <Sparkles className="h-4 w-4" />
-              Stats
+              <MessageSquare className="h-4 w-4" />
+              Feedback / requests
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 w-full justify-start rounded-xl"
+              onClick={() => {
+                setPathsDrawerOpen(false);
+                navigate("/settings");
+              }}
+            >
+              <Settings className="h-4 w-4" />
+              Settings
             </Button>
           </div>
         </div>
@@ -153,6 +170,7 @@ export default function FooterActionsBar({
           onStopActivity={onStopActivity}
           initialDate={currentDate}
           onAddManualEntry={onAddManualActivityPeriod}
+          onTasksDataChanged={onTasksDataChanged}
           floating={false}
           triggerLabel="Projects"
           triggerTitle="Open projects"
@@ -177,6 +195,10 @@ export default function FooterActionsBar({
         entryDates={entryDates}
         bookmarkedDates={bookmarkedDates}
         onCalendarOpen={loadJournalMeta}
+      />
+      <FeedbackDialog
+        open={feedbackDialogOpen}
+        onOpenChange={setFeedbackDialogOpen}
       />
     </>
   );

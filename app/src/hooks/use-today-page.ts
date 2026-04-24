@@ -7,10 +7,11 @@ export function useTodayPage(currentDate: Date) {
   const journal = useJournalEntry(currentDate);
   const { entryDates, bookmarkedDates, loadJournalMeta } = useJournalMeta();
 
-  const { activities, groups, loading, refreshTrigger } = useTasksPageData({
-    loadJournalEntry: journal.loadJournalEntry,
-    loadJournalMeta,
-  });
+  const { activities, groups, loading, refreshTrigger, refreshTasksData } =
+    useTasksPageData({
+      loadJournalEntry: journal.loadJournalEntry,
+      loadJournalMeta,
+    });
 
   const dailyTasks = useDailyTasks({
     activities,
@@ -29,5 +30,6 @@ export function useTodayPage(currentDate: Date) {
     loading,
     refreshTrigger,
     dailyTasks,
+    refreshTasksData,
   };
 }

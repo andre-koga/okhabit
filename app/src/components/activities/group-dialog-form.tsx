@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { FormDialog, FormDialogActions, FormStack } from "@/components/forms";
 import {
   dialogFieldClassName,
@@ -21,6 +21,7 @@ interface GroupDialogFormProps {
   confirmLabel: string;
   initialData?: Partial<GroupDialogFormData>;
   onSubmit: (data: GroupDialogFormData) => Promise<void>;
+  headerEnd?: ReactNode;
 }
 
 export function GroupDialogForm({
@@ -30,6 +31,7 @@ export function GroupDialogForm({
   confirmLabel,
   initialData,
   onSubmit,
+  headerEnd,
 }: GroupDialogFormProps) {
   const [name, setName] = useState(initialData?.name ?? "");
   const [color, setColor] = useState(initialData?.color ?? DEFAULT_COLOR);
@@ -77,6 +79,7 @@ export function GroupDialogForm({
       open={open}
       onOpenChange={handleOpenChange}
       title={title}
+      headerEnd={headerEnd}
       contentClassName="sm:max-w-md"
     >
       <FormStack>
