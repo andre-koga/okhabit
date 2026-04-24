@@ -73,7 +73,7 @@ Deno.serve(async (request) => {
   }
 
   const emailText = [
-    "New OkHabit feedback submission",
+    "New Upwards feedback submission",
     "",
     `User ID: ${user.id}`,
     `Email: ${user.email ?? "(not available)"}`,

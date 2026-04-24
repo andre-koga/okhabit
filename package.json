@@ -1,5 +1,5 @@
 {
-  "name": "okhabit",
+  "name": "upwards",
   "private": true,
   "scripts": {
     "strip-scaffolding": "node scripts/strip-context-and-srp.mjs",

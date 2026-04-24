@@ -4,7 +4,7 @@ import {
     type PaletteValue,
 } from "@/lib/themes";
 
-const PALETTE_STORAGE_KEY = "okhabit-color-palette";
+const PALETTE_STORAGE_KEY = "upwards-color-palette";
 
 export function isPaletteValue(value: string): value is PaletteValue {
     return PALETTE_OPTIONS.some((palette) => palette.value === value);

@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="app/public/icon-192x192.png" alt="OkHabit icon" width="64" height="64" />
+<img src="app/public/icon-192x192.png" alt="Upwards icon" width="64" height="64" />
 
-# OkHabit
+# Upwards
 
 **A focused, local-first habit and daily activity tracker**
 
@@ -12,7 +12,7 @@
 
 ## What the App Is About
 
-OkHabit is built to help you stay consistent with daily habits while keeping context around each day.
+Upwards is built to help you stay consistent with daily habits while keeping context around each day.
 It combines activity tracking, streaks, session timelines, and lightweight journaling in one place.
 
 ---
@@ -61,4 +61,4 @@ It combines activity tracking, streaks, session timelines, and lightweight journ
 
 ## Product Focus
 
-OkHabit is designed to make consistency visible, reduce friction in daily tracking, and preserve meaningful day-by-day progress over time.
+Upwards is designed to make consistency visible, reduce friction in daily tracking, and preserve meaningful day-by-day progress over time.

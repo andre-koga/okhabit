@@ -1,4 +1,4 @@
-# OkHabit Supabase Local Development
+# Upwards Supabase Local Development
 
 Local Supabase stack for development, with migrations kept in sync with the cloud project.
 
