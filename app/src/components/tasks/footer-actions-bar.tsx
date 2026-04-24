@@ -3,7 +3,7 @@ import { useVisualViewportLayout } from "@/hooks/use-visual-viewport-layout";
 import {
   Calendar,
   CircleCheckBig,
-  FolderKanban,
+  Folder,
   Menu,
   Settings,
   Sparkles,
@@ -156,7 +156,7 @@ export default function FooterActionsBar({
           floating={false}
           triggerLabel="Projects"
           triggerTitle="Open projects"
-          triggerIcon={FolderKanban}
+          triggerIcon={Folder}
           triggerClassName="z-[60] h-12 shadow-lg rounded-full px-6"
         />
 
