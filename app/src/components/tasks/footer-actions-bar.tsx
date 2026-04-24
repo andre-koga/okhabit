@@ -4,6 +4,7 @@ import {
   Calendar,
   CircleCheckBig,
   Folder,
+  History,
   Menu,
   MessageSquare,
   Settings,
@@ -97,11 +98,11 @@ export default function FooterActionsBar({
               className="h-11 w-full justify-start rounded-xl"
               onClick={() => {
                 setPathsDrawerOpen(false);
-                navigate("/stats");
+                navigate("/whats-new");
               }}
             >
-              <Sparkles className="h-4 w-4" />
-              Stats
+              <History className="h-4 w-4" />
+              What’s new
             </Button>
             <Button
               type="button"
@@ -115,16 +116,33 @@ export default function FooterActionsBar({
               <MessageSquare className="h-4 w-4" />
               Feedback / requests
             </Button>
+          </div>
+
+          <div className="my-2" role="separator" aria-hidden />
+
+          <div className="flex gap-2">
             <Button
               type="button"
               variant="outline"
-              className="h-11 w-full justify-start rounded-xl"
+              className="h-14 min-h-14 flex-1 flex-row gap-2 rounded-xl text-sm font-semibold"
+              onClick={() => {
+                setPathsDrawerOpen(false);
+                navigate("/activities/stats");
+              }}
+            >
+              <Sparkles className="h-5 w-5 shrink-0 text-amber-500" />
+              Stats
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-14 min-h-14 flex-1 flex-row gap-2 rounded-xl text-sm font-semibold"
               onClick={() => {
                 setPathsDrawerOpen(false);
                 navigate("/settings");
               }}
             >
-              <Settings className="h-4 w-4" />
+              <Settings className="h-5 w-5 shrink-0" />
               Settings
             </Button>
           </div>

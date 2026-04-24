@@ -6,6 +6,7 @@ import ActivityStatsPage from "@/pages/activity-stats";
 import SettingsPage from "@/pages/settings";
 import ArchivedPage from "@/pages/archived";
 import TaskOrderPage from "@/pages/task-order";
+import WhatsNewPage from "@/pages/whats-new";
 import SyncStatus from "@/components/settings/sync-status";
 
 export default function App() {
@@ -36,6 +37,7 @@ export default function App() {
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/settings/archived" element={<ArchivedPage />} />
               <Route path="/settings/task-order" element={<TaskOrderPage />} />
+              <Route path="/whats-new" element={<WhatsNewPage />} />
             </Routes>
           </div>
         </main>
