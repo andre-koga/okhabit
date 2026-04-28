@@ -221,6 +221,7 @@ export default function ActivityGroupsDrawer({
                         <GroupPill
                           key={group.id}
                           name={group.name}
+                          emoji={group.emoji}
                           color={group.color || DEFAULT_GROUP_COLOR}
                           isRunning={isRunningInGroup}
                           onNameClick={() => {

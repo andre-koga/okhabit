@@ -14,8 +14,18 @@ interface AddTaskModalProps {
   /** Called with the task title and optional options; return true on success to close the modal. */
   onAdd: (
     title: string,
-    options?: { due_date?: string | null; is_pinned?: boolean }
+    options?: {
+      due_date?: string | null;
+      is_pinned?: boolean;
+      group_id?: string | null;
+    }
   ) => Promise<boolean>;
+  groupOptions: Array<{
+    value: string;
+    label: string;
+    emoji?: string | null;
+    color?: string | null;
+  }>;
   triggerClassName?: string;
   triggerTitle?: string;
   /** Shown next to the icon inside the trigger (wider layouts). */
@@ -27,6 +37,7 @@ interface AddTaskModalProps {
 
 export default function AddTaskModal({
   onAdd,
+  groupOptions,
   triggerClassName,
   triggerTitle = "Add one-time task",
   triggerLabel,
@@ -38,6 +49,7 @@ export default function AddTaskModal({
   const [title, setTitle] = useState("");
   const [dueDate, setDueDate] = useState<string | null>(null);
   const [isPinned, setIsPinned] = useState(false);
+  const [groupId, setGroupId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const closingFromSuccessRef = useRef(false);
 
@@ -49,16 +61,18 @@ export default function AddTaskModal({
         setTitle(draft.title);
         setDueDate(draft.dueDate);
         setIsPinned(draft.isPinned);
+        setGroupId(draft.groupId);
       } else {
         setTitle("");
         setDueDate(null);
         setIsPinned(false);
+        setGroupId(null);
       }
     } else {
       if (closingFromSuccessRef.current) {
         closingFromSuccessRef.current = false;
       } else {
-        setQuickMemoSessionDraft({ title, dueDate, isPinned });
+        setQuickMemoSessionDraft({ title, dueDate, isPinned, groupId });
       }
     }
     setOpen(next);
@@ -70,6 +84,7 @@ export default function AddTaskModal({
     const success = await onAdd(title, {
       due_date: dueDate || null,
       is_pinned: isPinned,
+      group_id: groupId,
     });
     if (success) {
       clearQuickMemoSessionDraft();
@@ -77,6 +92,7 @@ export default function AddTaskModal({
       setTitle("");
       setDueDate(null);
       setIsPinned(false);
+      setGroupId(null);
       handleOpenChange(false);
     }
     setAdding(false);
@@ -92,6 +108,9 @@ export default function AddTaskModal({
         onTitleChange={setTitle}
         dueDate={dueDate}
         onDueDateChange={setDueDate}
+        groupId={groupId}
+        onGroupChange={setGroupId}
+        groupOptions={groupOptions}
         isPinned={isPinned}
         onPinnedChange={setIsPinned}
         onConfirm={handleAdd}

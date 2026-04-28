@@ -1,5 +1,6 @@
 import { memo, useEffect, useRef, useState } from "react";
 import type { OneTimeTask } from "@/lib/db/types";
+import { Pin } from "lucide-react";
 import TaskCheckbox from "@/components/tasks/task-checkbox";
 import { MemoEditDialog } from "@/components/tasks/memo-edit-dialog";
 import { HOLD_ACTION_DELAY_MS } from "@/lib/constants";
@@ -30,17 +31,26 @@ function getDueDateDisplayLabel(dueDate: string): string {
 interface OneTimeTaskItemProps {
   task: OneTimeTask;
   isToday: boolean;
+  groupOptions: Array<{
+    value: string;
+    label: string;
+    emoji?: string | null;
+    color?: string | null;
+  }>;
   onToggle: (task: OneTimeTask) => void;
   onDelete: (taskId: string) => void;
   onUpdate: (
     taskId: string,
-    patch: Partial<Pick<OneTimeTask, "title" | "is_pinned" | "due_date">>
+    patch: Partial<
+      Pick<OneTimeTask, "title" | "is_pinned" | "due_date" | "group_id">
+    >
   ) => Promise<boolean>;
 }
 
 function OneTimeTaskItem({
   task,
   isToday,
+  groupOptions,
   onToggle,
   onDelete,
   onUpdate,
@@ -51,6 +61,9 @@ function OneTimeTaskItem({
     task.due_date
   );
   const [draftPinned, setDraftPinned] = useState(!!task.is_pinned);
+  const [draftGroupId, setDraftGroupId] = useState<string | null>(
+    task.group_id
+  );
   const [saving, setSaving] = useState(false);
 
   const handleOpenEdit = (open: boolean) => {
@@ -58,6 +71,7 @@ function OneTimeTaskItem({
       setDraftTitle(task.title);
       setDraftDueDate(task.due_date);
       setDraftPinned(!!task.is_pinned);
+      setDraftGroupId(task.group_id);
     }
     setEditOpen(open);
   };
@@ -69,6 +83,7 @@ function OneTimeTaskItem({
       title: draftTitle.trim(),
       due_date: draftDueDate || null,
       is_pinned: draftPinned,
+      group_id: draftGroupId,
     });
     if (success) setEditOpen(false);
     setSaving(false);
@@ -137,7 +152,10 @@ function OneTimeTaskItem({
   const dueDateDisplay = task.due_date
     ? getDueDateDisplayLabel(task.due_date)
     : null;
-  const memoBorderClass = task.is_pinned ? "border-primary" : "border-border";
+  const categoryOption = task.group_id
+    ? groupOptions.find((option) => option.value === task.group_id)
+    : null;
+  const categoryEmoji = categoryOption?.emoji ?? null;
 
   return (
     <div className="flex items-center gap-2">
@@ -149,7 +167,7 @@ function OneTimeTaskItem({
       />
 
       <div
-        className={`relative flex min-h-8 min-w-0 flex-1 cursor-pointer flex-col overflow-hidden rounded-xl border ${memoBorderClass}`}
+        className="relative flex min-h-8 min-w-0 flex-1 cursor-pointer flex-col overflow-hidden rounded-xl border border-border"
         onClick={isToday ? handleMemoClick : undefined}
         onPointerDown={isToday ? handleMemoPointerDown : undefined}
         onPointerUp={isToday ? handleMemoPointerUp : undefined}
@@ -175,11 +193,24 @@ function OneTimeTaskItem({
         >
           {task.title}
         </p>
-        {dueDateDisplay && (
-          <span className="px-3 pb-2 text-xs text-muted-foreground">
-            Due {dueDateDisplay}
-          </span>
+        {(dueDateDisplay || categoryEmoji) && (
+          <div className="flex items-center gap-2 px-3 pb-2 text-xs text-muted-foreground">
+            {categoryEmoji ? (
+              <span className="shrink-0 text-sm leading-none" aria-hidden>
+                {categoryEmoji}
+              </span>
+            ) : null}
+            {dueDateDisplay ? <span>Due {dueDateDisplay}</span> : null}
+          </div>
         )}
+        {task.is_pinned ? (
+          <span
+            className="pointer-events-none absolute bottom-2 right-2 text-primary"
+            aria-label="Pinned memo"
+          >
+            <Pin className="h-3.5 w-3.5 fill-current" />
+          </span>
+        ) : null}
       </div>
 
       <MemoEditDialog
@@ -189,6 +220,9 @@ function OneTimeTaskItem({
         onTitleChange={setDraftTitle}
         dueDate={draftDueDate}
         onDueDateChange={setDraftDueDate}
+        groupId={draftGroupId}
+        onGroupChange={setDraftGroupId}
+        groupOptions={groupOptions}
         isPinned={draftPinned}
         onPinnedChange={setDraftPinned}
         onConfirm={handleSave}

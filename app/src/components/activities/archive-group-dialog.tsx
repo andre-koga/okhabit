@@ -31,6 +31,17 @@ export function ArchiveGroupDialog({
         is_archived: true,
         updated_at: n,
       });
+      const groupActivities = await db.activities
+        .filter((activity) => activity.group_id === groupId && !activity.deleted_at)
+        .toArray();
+      await Promise.all(
+        groupActivities.map((activity) =>
+          db.activities.update(activity.id, {
+            is_archived: true,
+            updated_at: n,
+          })
+        )
+      );
       onOpenChange(false);
       onArchived();
     } catch (error) {

@@ -54,6 +54,15 @@ function sanitizeUuidReferences(
     sanitized.activity_id = null;
   }
 
+  if (
+    table === "one_time_tasks" &&
+    sanitized.group_id !== undefined &&
+    sanitized.group_id !== null &&
+    !isValidUuid(sanitized.group_id)
+  ) {
+    sanitized.group_id = null;
+  }
+
   return sanitized;
 }
 

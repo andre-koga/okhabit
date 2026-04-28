@@ -19,11 +19,12 @@ export function NewGroupDialog({
       onOpenChange={onOpenChange}
       title="New Group"
       confirmLabel="Create Group"
-      onSubmit={async ({ name, color }) => {
+      onSubmit={async ({ name, emoji, color }) => {
         const timestamp = now();
         const createdGroup: ActivityGroup = {
           id: newId(),
           name,
+          emoji: emoji || null,
           color,
           is_archived: false,
           order_index: null,

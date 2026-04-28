@@ -1,7 +1,11 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { db, newId, now } from "@/lib/db";
 import { toDateString } from "@/lib/time-utils";
-import type { Activity, ActivityGroup, ActivityPeriod } from "@/lib/db/types";
+import type {
+  Activity,
+  ActivityGroup,
+  ActivityPeriod,
+} from "@/lib/db/types";
 import { DEFAULT_GROUP_COLOR } from "@/lib/color-utils";
 import {
   shouldShowActivity,

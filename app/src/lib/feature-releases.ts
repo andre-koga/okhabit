@@ -11,12 +11,14 @@ export interface FeatureRelease {
 export const FEATURE_RELEASES: FeatureRelease[] = [
   {
     date: "2026-04-28",
-    title: "Smarter Location Tracking",
+    title: "Smarter Location Tracking and Memo Categories",
     bullets: [
       "Journal entries now support multiple locations in a single day, kept in visit order.",
       "Locations can be reviewed and edited in a dedicated Locations visited dialog.",
       "Add, replace, and delete stops with built-in location search and map preview.",
       "Location chip on the journal stays clickable even before any location is set, so adding locations is faster.",
+      "Added category support to memos, so you can now assign a category to a memo and filter memos by category.",
+      "Pinned memos are now easier to spot with a pin icon on each memo card.",
     ],
     fixes: [
       "Removed location transition timers to simplify journaling and keep focus on ordered places visited.",

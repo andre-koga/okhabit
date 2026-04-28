@@ -33,6 +33,7 @@ export type QuickMemoSessionValues = {
   title: string;
   dueDate: string | null;
   isPinned: boolean;
+  groupId: string | null;
 };
 
 let quickMemoDraft: QuickMemoSessionValues | null = null;

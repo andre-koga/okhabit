@@ -56,6 +56,21 @@ function GroupPageBody({ group }: { group: ActivityGroup }) {
         is_archived: newArchiveStatus,
         updated_at: n,
       });
+      const groupActivities = await db.activities
+        .filter(
+          (activity) => activity.group_id === groupDetails.id && !activity.deleted_at
+        )
+        .toArray();
+      await Promise.all(
+        groupActivities.map((activity) =>
+          db.activities.update(activity.id, {
+            is_archived: newArchiveStatus,
+            updated_at: n,
+          })
+        )
+      );
+      setGroupDetails((prev) => ({ ...prev, is_archived: newArchiveStatus }));
+      void loadActivities();
     } catch (error) {
       logError("Error archiving group", error);
       setIsArchived(!isArchived);

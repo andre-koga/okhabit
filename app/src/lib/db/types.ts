@@ -1,6 +1,7 @@
 export interface ActivityGroup {
   id: string;
   name: string;
+  emoji: string | null;
   color: string | null;
   order_index: number | null;
   is_archived: boolean | null;
@@ -92,6 +93,7 @@ export interface OneTimeTask {
   order_index: number | null;
   is_pinned: boolean | null;
   due_date: string | null; // YYYY-MM-DD, when memo is due
+  group_id: string | null; // FK to activity_groups (projects)
   created_at: string;
   updated_at: string;
   synced_at: string | null;
