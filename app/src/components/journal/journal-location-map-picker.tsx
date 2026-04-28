@@ -146,8 +146,6 @@ function JournalLocationMapSurface({
     startOffsetY: number;
     moved: boolean;
   } | null>(null);
-  const touchPointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
-  const lastPinchDistanceRef = useRef<number | null>(null);
   const [mapSize, setMapSize] = useState(DEFAULT_MAP_SIZE);
   const mapLocations = useMemo(
     () => (selectedLocation ? [...locations, selectedLocation] : locations),
@@ -265,28 +263,6 @@ function JournalLocationMapSurface({
     event.stopPropagation();
   };
 
-  const maybeApplyPinchZoom = () => {
-    if (!fullscreen || !interactive) return;
-    const pointers = Array.from(touchPointersRef.current.values());
-    if (pointers.length < 2) {
-      lastPinchDistanceRef.current = null;
-      return;
-    }
-    const [a, b] = pointers;
-    const distance = Math.hypot(a.x - b.x, a.y - b.y);
-    if (!Number.isFinite(distance) || distance <= 0) return;
-    const previousDistance = lastPinchDistanceRef.current;
-    if (previousDistance == null) {
-      lastPinchDistanceRef.current = distance;
-      return;
-    }
-    const delta = distance - previousDistance;
-    if (Math.abs(delta) >= 20) {
-      zoomBy(delta > 0 ? 1 : -1);
-      lastPinchDistanceRef.current = distance;
-    }
-  };
-
   return (
     <div
       ref={mapRef}
@@ -313,13 +289,6 @@ function JournalLocationMapSurface({
           event.preventDefault();
         }
         if (!interactive || picking) return;
-        if (event.pointerType === "touch" && fullscreen) {
-          touchPointersRef.current.set(event.pointerId, {
-            x: event.clientX,
-            y: event.clientY,
-          });
-          maybeApplyPinchZoom();
-        }
         dragRef.current = {
           pointerId: event.pointerId,
           startX: event.clientX,
@@ -335,21 +304,7 @@ function JournalLocationMapSurface({
           event.stopPropagation();
           event.preventDefault();
         }
-        if (event.pointerType === "touch" && fullscreen) {
-          touchPointersRef.current.set(event.pointerId, {
-            x: event.clientX,
-            y: event.clientY,
-          });
-          maybeApplyPinchZoom();
-        }
         if (!interactive || picking || !dragRef.current) return;
-        if (
-          event.pointerType === "touch" &&
-          fullscreen &&
-          touchPointersRef.current.size > 1
-        ) {
-          return;
-        }
         const drag = dragRef.current;
         if (drag.pointerId !== event.pointerId) return;
         const deltaX = event.clientX - drag.startX;
@@ -366,12 +321,6 @@ function JournalLocationMapSurface({
         if (fullscreen) {
           event.stopPropagation();
           event.preventDefault();
-        }
-        if (event.pointerType === "touch" && fullscreen) {
-          touchPointersRef.current.delete(event.pointerId);
-          if (touchPointersRef.current.size < 2) {
-            lastPinchDistanceRef.current = null;
-          }
         }
         if (!interactive || picking || !dragRef.current) return;
         const drag = dragRef.current;
@@ -398,12 +347,6 @@ function JournalLocationMapSurface({
         if (fullscreen) {
           event.stopPropagation();
           event.preventDefault();
-        }
-        if (event.pointerType === "touch" && fullscreen) {
-          touchPointersRef.current.delete(event.pointerId);
-          if (touchPointersRef.current.size < 2) {
-            lastPinchDistanceRef.current = null;
-          }
         }
         dragRef.current = null;
       }}
